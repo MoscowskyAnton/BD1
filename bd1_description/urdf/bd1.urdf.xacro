@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="BD1" >
+        
+    <xacro:property name="head_x" value="-0.05"/>
+    <xacro:property name="head_z" value="0.05"/>
+    
+    <xacro:property name="legs_baseline" value="0.2"/>
+        
+    <link name="body_link">
+        <visual>
+            <geometry>
+                <mesh filename="file://$(find bd1_description)/mesh/body_m.dae"/>
+            </geometry>
+        </visual>
+    </link>
+    
+    <link name="head_link">
+        <visual>
+            <geometry>
+                <mesh filename="file://$(find bd1_description)/mesh/head_m.dae"/>
+            </geometry>
+        </visual>
+    </link>
+    
+    <joint name="head_j" type="fixed">
+        <parent link="body_link"/>
+        <child link="head_link"/>
+        
+        <origin xyz="${head_x} 0 ${head_z}" rpy="0 0 0"/>
+    </joint>
+    
+</robot>

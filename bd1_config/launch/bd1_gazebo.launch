@@ -1,0 +1,24 @@
+<launch>
+    <arg name="robot" value="bd1"/>
+    
+    <!--<group name="$(arg robot)">-->
+        <include file="$(find bd1_config)/launch/bd1_software.launch">
+            <arg name="robot" value="$(arg robot)"/>
+            
+        </include>
+        
+    <!--</group>-->
+    
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="debug" value="false" />
+        <arg name="gui" value="true" />
+        <arg name="paused" value="true"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="headless" value="false"/>
+    </include>
+    
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" 
+    args="-param robot_description -urdf -z 0.1 -x 0 -y 0 -Y 0 -model $(arg robot)" />
+    
+</launch>
+    
