@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+    
+    <xacro:property name="up_leg_aprox_x" value="0.24"/>
+    <xacro:property name="up_leg_aprox_y" value="0.05"/>
+    <xacro:property name="up_leg_aprox_z" value="0.12"/>
+    <xacro:property name="up_leg_mass" value="0.25"/>
+    
+    
+    <xacro:macro name="bd1_leg" params="side y_offset">
+        
+        <link name="up_leg_${side}_link">
+            <visual>            
+                <geometry>
+                    <mesh filename="file://$(find bd1_description)/mesh/up_leg_${side}_m.dae"/>                
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.08 0.02 0.0" rpy=" 0 0 0"/>
+                <geometry>                
+                    <box size="${up_leg_aprox_x} ${up_leg_aprox_y} ${up_leg_aprox_z}"/>
+                </geometry>
+            </collision>
+            
+            <inertial>
+                <mass value="${up_leg_mass}"/>
+                <!--<origin xyz="0.0 0 0.1" rpy=" 0 0 0"/>-->
+                <inertia
+                    ixx="${0.08*up_leg_mass*(up_leg_aprox_y*up_leg_aprox_y+up_leg_aprox_z*up_leg_aprox_z)}" ixy="0" ixz="0"
+                    iyy="${0.08*up_leg_mass*(up_leg_aprox_x*up_leg_aprox_x+up_leg_aprox_z*up_leg_aprox_z)}" iyz="0"
+                    izz="${0.08*up_leg_mass*(up_leg_aprox_y*up_leg_aprox_y+up_leg_aprox_x*up_leg_aprox_x)}"
+                />
+            </inertial>
+        </link>
+
+        <joint name="up_leg_${side}_j" type="fixed">
+            <parent link="body_link"/>
+            <child link="up_leg_${side}_link"/>
+            
+            <origin xyz="0 ${y_offset} 0" rpy="0 ${pi/2} 0"/>
+        </joint>
+        
+    </xacro:macro>
+    
+</robot>
+    

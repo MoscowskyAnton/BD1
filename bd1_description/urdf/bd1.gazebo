@@ -3,9 +3,9 @@
 
 
   <gazebo>
-    <gazebo reference="body_link">
+    <!--<gazebo reference="body_link">
         <material>Gazebo/Blue</material>
-    </gazebo>
+    </gazebo>-->
   
   </gazebo>
   

@@ -1,57 +1,86 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="BD1" >
+    
+    <xacro:include filename="$(find bd1_description)/urdf/bd1_leg.xacro"/>
         
-    <xacro:property name="head_x" value="-0.05"/>
-    <xacro:property name="head_z" value="0.05"/>
+    <xacro:property name="body_aprox_x" value="0.18"/>
+    <xacro:property name="body_aprox_y" value="0.12"/>
+    <xacro:property name="body_aprox_z" value="0.13"/>
+    <xacro:property name="body_mass" value="0.5"/>
+    
+    <xacro:property name="head_aprox_x" value="0.29"/>
+    <xacro:property name="head_aprox_y" value="0.24"/>
+    <xacro:property name="head_aprox_z" value="0.1"/>
+    <xacro:property name="head_mass" value="0.5"/>
+    <xacro:property name="head_x_offset" value="-0.05"/>
+    <xacro:property name="head_z_offset" value="0.1"/>
     
     <xacro:property name="legs_baseline" value="0.2"/>
+    
+    <link name="base_link">
+    </link>        
         
+    
+    <!--
+        BODY
+    -->
     <link name="body_link">
         <visual>
             <geometry>
-                <mesh filename="file://$(find bd1_description)/mesh/body_m.dae"/>
-                <!--<cylinder length="0.6" radius="0.2"/>-->
+                <mesh filename="file://$(find bd1_description)/mesh/body_m.dae"/>                
             </geometry>
         </visual>
         
         <collision>
-            <geometry>                
-                <box size="0.1 0.1 0.1"/>
+            <origin xyz="-0.02 0 0.005" rpy=" 0 0 0"/>
+            <geometry>                                
+                <box size="${body_aprox_x} ${body_aprox_y} ${body_aprox_z}"/>
             </geometry>
         </collision>
         
         <inertial>
-            <mass value="10.0"/>
-            <origin xyz="0.0 0 0.1" rpy=" 0 0 0"/>
+            <mass value="${body_mass}"/>
+            <!--<origin xyz="0.0 0 0.1" rpy=" 0 0 0"/>-->
             <inertia
-                ixx="0.5" ixy="0" ixz="0"
-                iyy="1.0" iyz="0"
-                izz="0.1"
+                ixx="${0.08*body_mass*(body_aprox_y*body_aprox_y+body_aprox_z*body_aprox_z)}" ixy="0" ixz="0"
+                iyy="${0.08*body_mass*(body_aprox_x*body_aprox_x+body_aprox_z*body_aprox_z)}" iyz="0"
+                izz="${0.08*body_mass*(body_aprox_x*body_aprox_x+body_aprox_y*body_aprox_y)}"
             />
+
         </inertial>
     </link>
     
+    <joint name="body_j" type="fixed">
+        <parent link="base_link"/>
+        <child link="body_link"/>
+        
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+    
+    <!--
+        HEAD
+    -->
     <link name="head_link">
         <visual>
             <geometry>
-                <mesh filename="file://$(find bd1_description)/mesh/head_m.dae"/>
-                
+                <mesh filename="file://$(find bd1_description)/mesh/head_m.dae"/>                
             </geometry>
         </visual>
         
         <collision>
-            <geometry>
-                <box size="0.1 0.1 0.1"/>
+            <origin xyz="0.04 0 0.07" rpy=" 0 0 0"/>
+            <geometry>                
+                <box size="${head_aprox_x} ${head_aprox_y} ${head_aprox_z}"/>
             </geometry>
         </collision>
         
         <inertial>
-            <mass value="10.0"/>
-            <origin xyz="0.0 0 0.1" rpy=" 0 0 0"/>
+            <mass value="${head_mass}"/>
+            <!--<origin xyz="0.0 0 0.1" rpy=" 0 0 0"/>-->
             <inertia
-                ixx="0.5" ixy="0" ixz="0"
-                iyy="1.0" iyz="0"
-                izz="0.1"
+                ixx="${0.08*head_mass*(head_aprox_y*head_aprox_y+head_aprox_z*head_aprox_z)}" ixy="0" ixz="0"
+                iyy="${0.08*head_mass*(head_aprox_x*head_aprox_x+head_aprox_z*head_aprox_z)}" iyz="0"
+                izz="${0.08*head_mass*(head_aprox_x*head_aprox_x+head_aprox_y*head_aprox_y)}"
             />
         </inertial>
     </link>
@@ -60,7 +89,13 @@
         <parent link="body_link"/>
         <child link="head_link"/>
         
-        <origin xyz="${head_x} 0 ${head_z}" rpy="0 0 0"/>
+        <origin xyz="${head_x_offset} 0 ${head_z_offset}" rpy="0 0 0"/>
     </joint>
+    
+    <!--
+        LEGS
+    -->
+    <xacro:bd1_leg side="r" y_offset="${-legs_baseline/2}"/>
+    <xacro:bd1_leg side="l" y_offset="${legs_baseline/2}"/>
     
 </robot>

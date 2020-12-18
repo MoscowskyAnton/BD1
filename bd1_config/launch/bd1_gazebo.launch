@@ -1,5 +1,6 @@
 <launch>
-    <arg name="robot" value="bd1"/>
+    <arg name="robot" default="bd1"/>
+    <arg name="paused" default="false"/>
     
     <!--<group name="$(arg robot)">-->
         <include file="$(find bd1_config)/launch/bd1_software.launch">
@@ -12,7 +13,7 @@
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
         <arg name="debug" value="false" />
         <arg name="gui" value="true" />
-        <arg name="paused" value="false"/>
+        <arg name="paused" value="$(arg paused)"/>
         <arg name="use_sim_time" value="true"/>
         <arg name="headless" value="false"/>
     </include>
