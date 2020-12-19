@@ -29,6 +29,9 @@
             <geometry>
                 <mesh filename="file://$(find bd1_description)/mesh/body_m.dae"/>                
             </geometry>
+            <material name="white">
+                <color rgba="1 1 1 1"/>
+            </material>
         </visual>
         
         <collision>
@@ -63,7 +66,10 @@
         <visual>
             <geometry>
                 <mesh filename="file://$(find bd1_description)/mesh/head_m.dae"/>                
-            </geometry>
+            </geometry>            
+            <material name="white">
+                <color rgba="1 1 1 1"/>
+            </material>
         </visual>
         
         <collision>

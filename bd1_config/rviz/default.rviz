@@ -3,9 +3,7 @@ Panels:
     Help Height: 84
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /RobotModel1
-        - /RobotModel1/Status1
+      Expanded: ~
       Splitter Ratio: 0.5
     Tree Height: 670
   - Class: rviz/Selection
@@ -61,6 +59,10 @@ Visualization Manager:
           Value: true
         body_link:
           Value: true
+        feet_l_link:
+          Value: true
+        feet_r_link:
+          Value: true
         head_link:
           Value: true
         mid_leg_l_link:
@@ -83,13 +85,15 @@ Visualization Manager:
               {}
             up_leg_l_link:
               mid_leg_l_link:
-                {}
+                feet_l_link:
+                  {}
             up_leg_r_link:
               mid_leg_r_link:
-                {}
+                feet_r_link:
+                  {}
       Update Interval: 0
       Value: true
-    - Alpha: 0.5
+    - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: true
       Enabled: true
@@ -104,6 +108,16 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
         body_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        feet_l_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        feet_r_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -167,25 +181,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.3957672119140625
+      Distance: 4.386479377746582
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.30535781383514404
-        Y: -0.148625910282135
-        Z: -0.11322185397148132
+        X: 0.3548032343387604
+        Y: -0.10618652403354645
+        Z: -0.11757452040910721
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4453984498977661
+      Pitch: 0.5553984642028809
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.453579425811768
+      Yaw: 5.548581600189209
     Saved: ~
 Window Geometry:
   "&Displays":
