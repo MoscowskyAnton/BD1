@@ -2,6 +2,7 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="BD1" >
     
     <xacro:include filename="$(find bd1_description)/urdf/bd1_leg.xacro"/>
+    <xacro:include filename="$(find bd1_description)/urdf/bd1.gazebo"/>
         
     <xacro:property name="body_aprox_x" value="0.18"/>
     <xacro:property name="body_aprox_y" value="0.12"/>
@@ -42,7 +43,8 @@
     <link name="body_link">
         <visual>
             <geometry>
-                <mesh filename="file://$(find bd1_description)/mesh/body_m.dae"/>                
+                <mesh filename="file://$(find bd1_description)/mesh/body_m.dae"/> 
+                <!--<box size="${body_aprox_x} ${body_aprox_y} ${body_aprox_z}"/>-->
             </geometry>
             <material name="white">
                 <color rgba="1 1 1 1"/>
@@ -87,7 +89,7 @@
         <child link="neck_link"/>
         
         <origin xyz="0.02 0 0.02" rpy="0 0 0"/>
-        <limit effort="300000" velocity="0.1" lower="${-pi/2}" upper="${pi/2}"/>
+        <limit effort="3000" velocity="0.1" lower="${-pi/2}" upper="${pi/2}"/>
         <axis xyz="0 1 0"/>
     </joint>
     
@@ -100,6 +102,7 @@
         <visual>
             <geometry>
                 <mesh filename="file://$(find bd1_description)/mesh/head_m.dae"/>                
+                <!--<box size="${head_aprox_x} ${head_aprox_y} ${head_aprox_z}"/>-->
             </geometry>            
             <material name="white">
                 <color rgba="1 1 1 1"/>
@@ -135,5 +138,7 @@
     -->
     <xacro:bd1_leg side="r" y_mul="-1"/>
     <xacro:bd1_leg side="l" y_mul="1"/>
+    
+    
     
 </robot>
