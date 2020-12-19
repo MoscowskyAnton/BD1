@@ -8,16 +8,25 @@
     <xacro:property name="up_leg_aprox_y" value="0.04"/>
     <xacro:property name="up_leg_aprox_z" value="0.12"/>
     <xacro:property name="up_leg_mass" value="0.25"/>
+    <xacro:property name="up_shift_x" value="0.065"/>
+    <xacro:property name="up_shift_y" value="0.03"/>
+    <xacro:property name="up_shift_z" value="0.0"/>    
     
     <xacro:property name="mid_leg_aprox_x" value="0.22"/>
     <xacro:property name="mid_leg_aprox_y" value="0.02"/>
     <xacro:property name="mid_leg_aprox_z" value="0.08"/>
     <xacro:property name="mid_leg_mass" value="0.25"/>
+    <xacro:property name="mid_shift_x" value="0.07"/>
+    <xacro:property name="mid_shift_y" value="0.01"/>
+    <xacro:property name="mid_shift_z" value="0.0"/>
     
     <xacro:property name="feet_aprox_x" value="0.25"/>
     <xacro:property name="feet_aprox_y" value="0.06"/>
     <xacro:property name="feet_aprox_z" value="0.025"/>
     <xacro:property name="feet_mass" value="0.25"/>
+    <xacro:property name="feet_shift_x" value="0.02"/>
+    <xacro:property name="feet_shift_y" value="0.0"/>
+    <xacro:property name="feet_shift_z" value="-0.065"/>
     
     <!--
     SERVO TRANS
@@ -54,13 +63,14 @@
             </visual>
             
             <collision>
-                <origin xyz="0.065 ${y_mul*0.03} 0.0" rpy=" 0 0 0"/>
+                <origin xyz="${up_shift_x} ${y_mul*up_shift_y} ${up_shift_z}" rpy=" 0 0 0"/>
                 <geometry>                
                     <box size="${up_leg_aprox_x} ${up_leg_aprox_y} ${up_leg_aprox_z}"/>
                 </geometry>
             </collision>
             
             <inertial>
+                <origin xyz="${up_shift_x} ${y_mul*up_shift_y} ${up_shift_z}" rpy=" 0 0 0"/>
                 <mass value="${up_leg_mass}"/>
                 <inertia
                     ixx="${0.08*up_leg_mass*(up_leg_aprox_y*up_leg_aprox_y+up_leg_aprox_z*up_leg_aprox_z)}" ixy="0" ixz="0"
@@ -96,13 +106,14 @@
             </visual>
             
             <collision>
-                <origin xyz="0.07 ${-y_mul*0.01} 0.0" rpy=" 0 0 0"/>
+                <origin xyz="${mid_shift_x} ${-y_mul*mid_shift_y} ${mid_shift_z}" rpy=" 0 0 0"/>
                 <geometry>                
                     <box size="${mid_leg_aprox_x} ${mid_leg_aprox_y} ${mid_leg_aprox_z}"/>
                 </geometry>
             </collision>
             
             <inertial>
+                <origin xyz="${mid_shift_x} ${-y_mul*mid_shift_y} ${mid_shift_z}" rpy=" 0 0 0"/>
                 <mass value="${mid_leg_mass}"/>                
                 <inertia
                     ixx="${0.08*mid_leg_mass*(mid_leg_aprox_y*mid_leg_aprox_y+mid_leg_aprox_z*mid_leg_aprox_z)}" ixy="0" ixz="0"
@@ -117,7 +128,7 @@
             <child link="mid_leg_${side}_link"/>
             
             <origin xyz="0.15 ${y_mul*0.009} 0" rpy="0 0 0"/>
-            <limit effort="30" velocity="${servo_velocity}" lower="${-pi/2}" upper="${pi/2}"/>
+            <limit effort="30" velocity="${servo_velocity*2}" lower="${-pi/2}" upper="${pi/2}"/>
             <axis xyz="0 1 0"/>
         </joint>
         
@@ -139,13 +150,14 @@
             </visual>
             
             <collision>
-                <origin xyz="0.02 ${-y_mul*0.0} -0.065" rpy=" 0 0 0"/>
+                <origin xyz="${feet_shift_x} ${-y_mul*feet_shift_y} ${feet_shift_z}" rpy=" 0 0 0"/>
                 <geometry>                
                     <box size="${feet_aprox_x} ${feet_aprox_y} ${feet_aprox_z}"/>
                 </geometry>
             </collision>
             
             <inertial>
+                <origin xyz="${feet_shift_x} ${-y_mul*feet_shift_y} ${feet_shift_z}" rpy=" 0 0 0"/>
                 <mass value="${feet_mass}"/>                
                 <inertia
                     ixx="${0.08*feet_mass*(feet_aprox_y*feet_aprox_y+feet_aprox_z*feet_aprox_z)}" ixy="0" ixz="0"
@@ -166,8 +178,8 @@
         
         <gazebo reference="feet_${side}_link">
             <!--<material>Gazebo/Black</material>-->
-            <mu1>20</mu1>
-            <mu2>30</mu2>
+            <mu1>2</mu1>
+            <mu2>5</mu2>
             <!--<dampingFactor>0.05</dampingFactor>-->
             <!--<kp>10000000000</kp>-->
         </gazebo>
