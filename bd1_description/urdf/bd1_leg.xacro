@@ -19,7 +19,25 @@
     <xacro:property name="feet_aprox_z" value="0.025"/>
     <xacro:property name="feet_mass" value="0.25"/>
     
-    <xacro:macro name="bd1_leg" params="side y_mul">
+    <!--
+    SERVO TRANS
+    -->
+    <xacro:macro name="servtransmission" params="joint">
+        <transmission name="${joint}_transm">
+            <type>transmission_interface/SimpleTransmission</type>
+            <joint name="${joint}">
+                <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+            </joint>
+            <actuator name="${joint}_motor">
+                <hardwareInterface>hardware_interface/PositionActuatorInterface</hardwareInterface>
+            </actuator>
+        </transmission>
+    </xacro:macro>
+    
+    <!-- 
+    FULL LEG
+    -->
+    <xacro:macro name="bd1_leg" params="side y_mul servo_velocity">
         
         <!--
         UP
@@ -52,12 +70,16 @@
             </inertial>
         </link>
 
-        <joint name="up_leg_${side}_j" type="fixed">
+        <joint name="up_leg_${side}_j" type="revolute">
             <parent link="body_link"/>
             <child link="up_leg_${side}_link"/>
             
             <origin xyz="0 ${y_mul*legs_baseline/2} 0" rpy="0 ${pi/2} 0"/>
+            <limit effort="30" velocity="${servo_velocity}" lower="${-pi/2}" upper="${pi/2}"/>
+            <axis xyz="0 1 0"/>
         </joint>
+        
+        <xacro:servtransmission joint="up_leg_${side}_j"/>
         
         <!--
         MID
@@ -135,6 +157,14 @@
             
             <origin xyz="0.15 ${-y_mul*0.0045} 0" rpy="0 ${-pi/2} 0"/>
         </joint>
+        
+        <gazebo reference="feet_${side}_link">
+            <!--<material>Gazebo/Black</material>-->
+            <mu1>20</mu1>
+            <mu2>30</mu2>
+            <!--<dampingFactor>0.05</dampingFactor>-->
+            <!--<kp>10000000000</kp>-->
+        </gazebo>
         
     </xacro:macro>
     

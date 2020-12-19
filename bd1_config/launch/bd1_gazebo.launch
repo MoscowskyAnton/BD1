@@ -3,17 +3,19 @@
     <arg name="paused" default="false"/>
     
     <rosparam file="$(find bd1_description)/config/bd1_control_gazebo.yaml" command="load" subst_value="true"/>    
-        
+    
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find bd1_description)/urdf/bd1.xacro'"/>                        
+    
+    <include file="$(find bd1_config)/launch/bd1_software.launch">
+        <arg name="robot" value="$(arg robot)"/>        
+    </include>            
+    
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" 
     args="-param robot_description -urdf -z 1 -x 0 -y 0 -Y 0 -model $(arg robot)" />
     
     <node name="controller_spawner" pkg="controller_manager" type="spawner" 
         respawn="false" output="screen" 
-        args="neck_servo_state_controller joint_state_controller" />
-    
-    <include file="$(find bd1_config)/launch/bd1_software.launch">
-        <arg name="robot" value="$(arg robot)"/>        
-    </include>            
+        args="up_leg_right_state_controller up_leg_left_state_controller neck_servo_state_controller head_servo_state_controller joint_state_controller" />
     
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
         <arg name="debug" value="false" />
@@ -22,6 +24,7 @@
         <arg name="use_sim_time" value="true"/>
         <arg name="headless" value="false"/>
     </include>                
+    
     
     <node name="bd1_rviz_gazebo" pkg="rviz" type="rviz" args="-d $(find bd1_config)/rviz/default.rviz"/>
     

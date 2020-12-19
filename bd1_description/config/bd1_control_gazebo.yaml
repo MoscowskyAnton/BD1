@@ -6,3 +6,18 @@ neck_servo_state_controller:
   type: 'position_controllers/JointPositionController'
   joint: 'neck_j'
   pid: {p: 1.0, i: 0.01, d: 0.1}
+  
+head_servo_state_controller:
+  type: 'position_controllers/JointPositionController'
+  joint: 'head_j'
+  pid: {p: 1.0, i: 0.01, d: 0.1}
+  
+up_leg_right_state_controller:
+  type: 'position_controllers/JointPositionController'
+  joint: 'up_leg_r_j'
+  pid: {p: 1.0, i: 0.01, d: 0.1}
+  
+up_leg_left_state_controller:
+  type: 'position_controllers/JointPositionController'
+  joint: 'up_leg_l_j'
+  pid: {p: 1.0, i: 0.01, d: 0.1}
