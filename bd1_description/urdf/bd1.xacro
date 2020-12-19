@@ -11,15 +11,30 @@
     <xacro:property name="head_aprox_x" value="0.29"/>
     <xacro:property name="head_aprox_y" value="0.24"/>
     <xacro:property name="head_aprox_z" value="0.1"/>
-    <xacro:property name="head_mass" value="0.5"/>
+    <xacro:property name="head_mass" value="0.01"/>
     <xacro:property name="head_x_offset" value="-0.05"/>
     <xacro:property name="head_z_offset" value="0.1"/>
     
     
+    <!--
+    COMMON
+    -->
+    <xacro:macro name="servtransmission" params="joint">
+        <transmission name="${joint}_transm">
+            <type>transmission_interface/SimpleTransmission</type>
+            <joint name="${joint}">
+                <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+            </joint>
+            <actuator name="${joint}_motor">
+                <hardwareInterface>hardware_interface/PositionActuatorInterface</hardwareInterface>
+            </actuator>
+        </transmission>
+    </xacro:macro> 
     
     <link name="base_link">
     </link>        
         
+    
     
     <!--
         BODY
@@ -60,6 +75,25 @@
     </joint>
     
     <!--
+        NECK
+    -->
+    
+    <link name="neck_link">
+        
+    </link>
+    
+    <joint name="neck_j" type="revolute">
+        <parent link="body_link"/>
+        <child link="neck_link"/>
+        
+        <origin xyz="0.02 0 0.02" rpy="0 0 0"/>
+        <limit effort="300000" velocity="0.1" lower="${-pi/2}" upper="${pi/2}"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+    
+    <xacro:servtransmission joint="neck_j"/>
+    
+    <!--
         HEAD
     -->
     <link name="head_link">
@@ -90,10 +124,10 @@
     </link>
     
     <joint name="head_j" type="fixed">
-        <parent link="body_link"/>
+        <parent link="neck_link"/>
         <child link="head_link"/>
         
-        <origin xyz="${head_x_offset} 0 ${head_z_offset}" rpy="0 0 0"/>
+        <origin xyz="0 0 ${head_z_offset}" rpy="0 0 0"/>
     </joint>
     
     <!--

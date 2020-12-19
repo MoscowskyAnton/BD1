@@ -2,13 +2,18 @@
     <arg name="robot" default="bd1"/>
     <arg name="paused" default="false"/>
     
-    <!--<group name="$(arg robot)">-->
-        <include file="$(find bd1_config)/launch/bd1_software.launch">
-            <arg name="robot" value="$(arg robot)"/>
-            
-        </include>
+    <rosparam file="$(find bd1_description)/config/bd1_control_gazebo.yaml" command="load" subst_value="true"/>    
         
-    <!--</group>-->
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" 
+    args="-param robot_description -urdf -z 1 -x 0 -y 0 -Y 0 -model $(arg robot)" />
+    
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" 
+        respawn="false" output="screen" 
+        args="neck_servo_state_controller joint_state_controller" />
+    
+    <include file="$(find bd1_config)/launch/bd1_software.launch">
+        <arg name="robot" value="$(arg robot)"/>        
+    </include>            
     
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
         <arg name="debug" value="false" />
@@ -16,10 +21,7 @@
         <arg name="paused" value="$(arg paused)"/>
         <arg name="use_sim_time" value="true"/>
         <arg name="headless" value="false"/>
-    </include>
-    
-    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" 
-    args="-param robot_description -urdf -z 1 -x 0 -y 0 -Y 0 -model $(arg robot)" />
+    </include>                
     
     <node name="bd1_rviz_gazebo" pkg="rviz" type="rviz" args="-d $(find bd1_config)/rviz/default.rviz"/>
     

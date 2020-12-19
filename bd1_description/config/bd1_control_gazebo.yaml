@@ -1,0 +1,8 @@
+joint_state_controller:
+  type: 'joint_state_controller/JointStateController'
+  publish_rate: 10  
+
+neck_servo_state_controller:
+  type: 'position_controllers/JointPositionController'
+  joint: 'neck_j'
+  pid: {p: 1.0, i: 0.01, d: 0.1}
