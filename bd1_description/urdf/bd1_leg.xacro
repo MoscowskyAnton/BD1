@@ -112,12 +112,16 @@
             </inertial>
         </link>
 
-        <joint name="mid_leg_${side}_j" type="fixed">
+        <joint name="mid_leg_${side}_j" type="revolute">
             <parent link="up_leg_${side}_link"/>
             <child link="mid_leg_${side}_link"/>
             
             <origin xyz="0.15 ${y_mul*0.009} 0" rpy="0 0 0"/>
+            <limit effort="30" velocity="${servo_velocity}" lower="${-pi/2}" upper="${pi/2}"/>
+            <axis xyz="0 1 0"/>
         </joint>
+        
+        <xacro:servtransmission joint="mid_leg_${side}_j"/>
         
         <!--
         FEET
@@ -151,11 +155,13 @@
             </inertial>
         </link>
 
-        <joint name="feet_${side}_j" type="fixed">
+        <joint name="feet_${side}_j" type="revolute">
             <parent link="mid_leg_${side}_link"/>
             <child link="feet_${side}_link"/>
             
             <origin xyz="0.15 ${-y_mul*0.0045} 0" rpy="0 ${-pi/2} 0"/>
+            <limit effort="30" velocity="${servo_velocity}" lower="${-pi/2}" upper="${pi/2}"/>
+            <axis xyz="0 1 0"/>
         </joint>
         
         <gazebo reference="feet_${side}_link">
@@ -165,6 +171,8 @@
             <!--<dampingFactor>0.05</dampingFactor>-->
             <!--<kp>10000000000</kp>-->
         </gazebo>
+        
+        <xacro:servtransmission joint="feet_${side}_j"/>
         
     </xacro:macro>
     

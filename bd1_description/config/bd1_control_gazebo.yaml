@@ -21,3 +21,23 @@ up_leg_left_state_controller:
   type: 'position_controllers/JointPositionController'
   joint: 'up_leg_l_j'
   pid: {p: 1.0, i: 0.01, d: 0.1}
+  
+mid_leg_right_state_controller:
+  type: 'position_controllers/JointPositionController'
+  joint: 'mid_leg_r_j'
+  pid: {p: 1.0, i: 0.01, d: 0.1}
+  
+mid_leg_left_state_controller:
+  type: 'position_controllers/JointPositionController'
+  joint: 'mid_leg_l_j'
+  pid: {p: 1.0, i: 0.01, d: 0.1}
+  
+feet_left_state_controller:
+  type: 'position_controllers/JointPositionController'
+  joint: 'feet_l_j'
+  pid: {p: 1.0, i: 0.01, d: 0.1}
+
+feet_right_state_controller:
+  type: 'position_controllers/JointPositionController'
+  joint: 'feet_r_j'
+  pid: {p: 1.0, i: 0.01, d: 0.1}
