@@ -39,8 +39,7 @@
         </collision>
         
         <inertial>
-            <mass value="${body_mass}"/>
-            <!--<origin xyz="0.0 0 0.1" rpy=" 0 0 0"/>-->
+            <mass value="${body_mass}"/>            
             <inertia
                 ixx="${0.08*body_mass*(body_aprox_y*body_aprox_y+body_aprox_z*body_aprox_z)}" ixy="0" ixz="0"
                 iyy="${0.08*body_mass*(body_aprox_x*body_aprox_x+body_aprox_z*body_aprox_z)}" iyz="0"
@@ -76,7 +75,6 @@
         
         <inertial>
             <mass value="${head_mass}"/>
-            <!--<origin xyz="0.0 0 0.1" rpy=" 0 0 0"/>-->
             <inertia
                 ixx="${0.08*head_mass*(head_aprox_y*head_aprox_y+head_aprox_z*head_aprox_z)}" ixy="0" ixz="0"
                 iyy="${0.08*head_mass*(head_aprox_x*head_aprox_x+head_aprox_z*head_aprox_z)}" iyz="0"
