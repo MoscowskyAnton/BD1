@@ -2,7 +2,7 @@
 
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
     
-    <xacro:property name="legs_baseline" value="0.2"/>
+    <xacro:property name="legs_baseline" value="0.12"/>
     
     <xacro:property name="up_leg_aprox_x" value="0.24"/>
     <xacro:property name="up_leg_aprox_y" value="0.05"/>
@@ -28,7 +28,7 @@
             </visual>
             
             <collision>
-                <origin xyz="0.08 ${y_mul*0.02} 0.0" rpy=" 0 0 0"/>
+                <origin xyz="0.065 ${y_mul*0.03} 0.0" rpy=" 0 0 0"/>
                 <geometry>                
                     <box size="${up_leg_aprox_x} ${up_leg_aprox_y} ${up_leg_aprox_z}"/>
                 </geometry>
