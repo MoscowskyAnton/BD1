@@ -30,5 +30,7 @@
     
     <!--<node name="bd1_rviz_gazebo" pkg="rviz" type="rviz" args="-d $(find bd1_config)/rviz/default.rviz"/>-->
     
+    <node name="environment_interface_standup" pkg="bd1_environment_interface" type="env_iface_standup.py" output="screen"/>
+    
 </launch>
     

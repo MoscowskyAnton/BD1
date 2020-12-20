@@ -140,7 +140,7 @@
             <child link="mid_leg_${side}_link"/>
             
             <origin xyz="0.15 ${y_mul*0.009} 0" rpy="0 0 0"/>
-            <limit effort="30" velocity="${servo_velocity*2}" lower="${-pi}" upper="${pi}"/>
+            <limit effort="30" velocity="${servo_velocity*2}" lower="${-pi}" upper="0"/>
             <axis xyz="0 1 0"/>
         </joint>
         

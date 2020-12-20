@@ -10,7 +10,7 @@ import numpy as np
 
 class BasicMoves(object):
     def __init__(self):
-        rospy.init_node('test_servos')            
+        rospy.init_node('basic_moves')            
         
         self.left_leg_pub = rospy.Publisher("/left_leg_servo_states_controller/command", JointTrajectory, queue_size = 10)
         
