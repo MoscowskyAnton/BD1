@@ -193,7 +193,8 @@
             <mu1>2</mu1>
             <mu2>5</mu2>
             <!--<dampingFactor>0.05</dampingFactor>-->
-            <!--<kp>10000000000</kp>-->
+            <kp>50000</kp>
+            <kd>1</kd>
         </gazebo>
         
         <xacro:servtransmission_v joint="feet_${side}_j"/>
