@@ -3,7 +3,7 @@ ROS-based BD-1 droid from Star Wars The Fallen Order
 
 ![BD1 Gazebo](doc/images/bd1_gazebo.png)
 
-## Goal of projects
+## Goal of project
 Make a real BD1 robot, that could walk in real world.
 
 ## Task to reach the goal
