@@ -7,6 +7,6 @@
         <param name="use_gui" value="True"/>
     </node>-->
         
-    <node name="test_servos" pkg="bd1_simple_moves" type="test_moves.py" output="screen"/>
+    <node name="basic_moves" pkg="bd1_simple_moves" type="basic_moves.py" output="screen"/>
     
 </launch>

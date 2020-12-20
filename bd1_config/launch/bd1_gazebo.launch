@@ -15,7 +15,7 @@
     
     <node name="controller_spawner" pkg="controller_manager" type="spawner" 
         respawn="false" output="screen" 
-        args="right_leg_servo_states_controller left_leg_servo_states_controller neck_servo_state_controller head_servo_state_controller joint_state_controller" />
+        args="right_leg_servo_states_controller left_leg_servo_states_controller  head_servo_state_controller joint_state_controller" />
     
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
         <arg name="debug" value="false" />
