@@ -14,7 +14,7 @@ Make a real BD1 robot, that could walk in real world.
   - [ ] Teach robot to deploy from conseal state without falling first
   - [ ] Teach robot to walk forward on flat surface
   - [ ] Teach robot to walk with different directions
-  - [ ] Deploy some SLAM alghorithms to navigate in envnroments with obstacles
+  - [ ] Deploy some SLAM alghorithms to navigate in environments with obstacles
   - [ ] Deploy some planner
  
  **Do same for real robot**
