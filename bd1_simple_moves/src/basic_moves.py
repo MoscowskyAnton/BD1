@@ -6,14 +6,17 @@ from std_msgs.msg import Float64
 from bd1_simple_moves.srv import SetLegs
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from std_srvs.srv import Empty
+import numpy as np
 
-class TestServos(object):
+class BasicMoves(object):
     def __init__(self):
         rospy.init_node('test_servos')            
         
         self.left_leg_pub = rospy.Publisher("/left_leg_servo_states_controller/command", JointTrajectory, queue_size = 10)
         
         self.right_leg_pub = rospy.Publisher("/right_leg_servo_states_controller/command", JointTrajectory, queue_size = 10)
+        
+        self.head_pub = rospy.Publisher("/head_servo_state_controller/command", JointTrajectory, queue_size = 10)
         
         self.stop_time = None        
         
@@ -23,19 +26,49 @@ class TestServos(object):
         
         rospy.Service('~conseal', Empty, self.conseal_cb)
         
+        rospy.Service('~strech', Empty, self.strech_cb)
+        
+    
     def deploy_cb(self, req):
-        self.send_cmd(0, 0, 0, 0, 0, 0, 1)        
+        self.send_leg_cmd(0.5, 0.5, -1, -1, 0.5, 0.5, 1)    
+        self.send_head_cmd(-0.5, 0.5, 1)    
+        return []
+    
+    def strech_cb(self, req):
+        self.send_leg_cmd(0, 0, 0, 0, 0, 0, 1)    
+        self.send_head_cmd(0, 0, 1)    
         return []
     
     def conseal_cb(self, req):
-        self.send_cmd(1.5, 1.5, -3, -3, 1.5, 1.5, 1)        
+        self.send_leg_cmd(1.5, 1.5, -3, -3, 1.5, 1.5, 1)        
+        #self.send_head_cmd(-np.pi/2, np.pi/2, 1)
+        self.send_head_cmd(-1.5, 1.5, 1)    
         return []
+    
+    def send_head_cmd(self, neck, head, velocity):
+        
+        head_cmd = JointTrajectory()
+        head_cmd.header.stamp = rospy.Time.now()
+        
+        head_cmd.joint_names = ['neck_j', 'head_j']
+        p = JointTrajectoryPoint()
+        p.positions.append(neck)
+        p.positions.append(head)
+        
+        p.velocities.append(velocity)
+        p.velocities.append(velocity)        
+        
+        p.time_from_start = rospy.Duration(1.0);
+        head_cmd.points.append(p)        
+                
+                
+        self.head_pub.publish(head_cmd)
     
     def set_legs_cb(self, req):
-        self.send_cmd(req.up_l, req.up_r, req.mid_l, req.mid_r, req.feet_l, req.feet_r, req.speed)        
+        self.send_leg_cmd(req.up_l, req.up_r, req.mid_l, req.mid_r, req.feet_l, req.feet_r, req.speed)        
         return []
     
-    def send_cmd(self, up_l, up_r, mid_l, mid_r, feet_l, feet_r, velocity):
+    def send_leg_cmd(self, up_l, up_r, mid_l, mid_r, feet_l, feet_r, velocity):
 
         left_leg = JointTrajectory()
         left_leg.header.stamp = rospy.Time.now()
@@ -70,9 +103,7 @@ class TestServos(object):
         #print(right_leg)
         
         self.left_leg_pub.publish(left_leg)
-        self.right_leg_pub.publish(right_leg)
-        
-        return[]
+        self.right_leg_pub.publish(right_leg)        
     
     def run(self):
         rospy.spin()
@@ -80,6 +111,6 @@ class TestServos(object):
     
     
 if __name__ == '__main__' :
-    ts = TestServos()
-    ts.run()
+    bm = BasicMoves()
+    bm.run()
     
