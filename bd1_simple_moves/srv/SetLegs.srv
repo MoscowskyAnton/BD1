@@ -4,6 +4,7 @@ float64 mid_l
 float64 mid_r
 float64 feet_l
 float64 feet_r
+float64 duration
 ---
 
 

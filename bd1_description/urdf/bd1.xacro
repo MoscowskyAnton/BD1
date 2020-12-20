@@ -101,7 +101,7 @@
         <axis xyz="0 1 0"/>
     </joint>
     
-    <xacro:servtransmission joint="neck_j"/>
+    <xacro:servtransmission_v joint="neck_j"/>
     
     <!--
         HEAD

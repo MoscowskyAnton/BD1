@@ -43,6 +43,18 @@
         </transmission>
     </xacro:macro>
     
+    <xacro:macro name="servtransmission_v" params="joint">
+        <transmission name="${joint}_transm">
+            <type>transmission_interface/SimpleTransmission</type>
+            <joint name="${joint}">
+                <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+            </joint>
+            <actuator name="${joint}_motor">
+                <hardwareInterface>hardware_interface/VelocityActuatorInterface</hardwareInterface>
+            </actuator>
+        </transmission>
+    </xacro:macro>
+    
     <!-- 
     FULL LEG
     -->
@@ -89,7 +101,7 @@
             <axis xyz="0 1 0"/>
         </joint>
         
-        <xacro:servtransmission joint="up_leg_${side}_j"/>
+        <xacro:servtransmission_v joint="up_leg_${side}_j"/>
         
         <!--
         MID
@@ -128,11 +140,11 @@
             <child link="mid_leg_${side}_link"/>
             
             <origin xyz="0.15 ${y_mul*0.009} 0" rpy="0 0 0"/>
-            <limit effort="30" velocity="${servo_velocity*2}" lower="${-pi/2}" upper="${pi/2}"/>
+            <limit effort="30" velocity="${servo_velocity*2}" lower="${-pi}" upper="${pi}"/>
             <axis xyz="0 1 0"/>
         </joint>
         
-        <xacro:servtransmission joint="mid_leg_${side}_j"/>
+        <xacro:servtransmission_v joint="mid_leg_${side}_j"/>
         
         <!--
         FEET
@@ -184,7 +196,7 @@
             <!--<kp>10000000000</kp>-->
         </gazebo>
         
-        <xacro:servtransmission joint="feet_${side}_j"/>
+        <xacro:servtransmission_v joint="feet_${side}_j"/>
         
     </xacro:macro>
     

@@ -18,11 +18,20 @@ class TestServos(object):
         self.feet_r_pub = rospy.Publisher("/feet_right_state_controller/command",Float64, queue_size = 10)
         self.feet_l_pub = rospy.Publisher("/feet_left_state_controller/command",Float64, queue_size = 10)
         
-        #self.send_cmd(0.5, 0.5, -1., -1, 0.5, 0.5)
+        self.stop_time = None        
+        
         rospy.Service('~set_legs', SetLegs, self.set_legs_cb)
+        rospy.Timer(rospy.Duration(0.01), self.timer_cb)
     
+    def timer_cb(self, event):
+        if( self.stop_time is not None ):
+            if( self.stop_time < rospy.Time.now() ):
+                self.send_cmd(0, 0, 0, 0, 0 ,0)
+                self.stop_time = None
+                
     def set_legs_cb(self, req):
         self.send_cmd(req.up_l, req.up_r, req.mid_l, req.mid_r, req.feet_l, req.feet_r)
+        self.stop_time = rospy.Time.now() + rospy.Duration(req.duration)
         return []
     
     def send_cmd(self, up_l, up_r, mid_l, mid_r, feet_l, feet_r):
