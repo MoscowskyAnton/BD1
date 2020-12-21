@@ -23,6 +23,8 @@ class EnvIfaceStandUp(object):
         if self.target_z is None:
             rospy.logerr("[{}] target_z does not specified! Exit.".format(self.name))
             exit()
+            
+        self.episode_end = False
         
         # action interfaces for servos commands
         self.right_leg_client = actionlib.SimpleActionClient('right_leg_servo_states_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
@@ -39,8 +41,7 @@ class EnvIfaceStandUp(object):
         rospy.loginfo("[{}] waiting for head_servo_states_controller action...".format(self.name))
         self.head_client.wait_for_server()
         rospy.loginfo("[{}] head_servo_states_controller action loaded".format(self.name))                
-        
-        
+                
         # gazebo
         rospy.wait_for_service('gazebo/set_model_state')
         self.set_model_state_srv = rospy.ServiceProxy('gazebo/set_model_state', SetModelState)
@@ -89,6 +90,8 @@ class EnvIfaceStandUp(object):
         ms.model_name = "bd1"
         ms.pose.position.z = 0.5
         self.set_model_state_srv(ms)
+        
+        self.episode_end = False
         
         return []        
     
@@ -162,23 +165,19 @@ class EnvIfaceStandUp(object):
         
         # MODEL STATE
         model_state = self.get_model_state_srv("bd1","")
-        #rospy.logerr(model_state)
         res.state.pose_x = model_state.pose.position.x
         res.state.pose_y = model_state.pose.position.y
         res.state.pose_z = model_state.pose.position.z
-        
-        
-        res.revard = -np.power(self.target_z - res.state.pose_z, 2)
-        
+                                
         rpy = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])                
         res.state.rot_r = rpy[0]
         res.state.rot_p = rpy[1]
         res.state.rot_y = rpy[2]
-                
-        # SERVOS POSITIONS
-        #rospy.logerr(self.right_leg_state)
-        #rospy.logerr(self.left_leg_state)
-        #rospy.logerr(self.head_state)
+        
+        # REWARD
+        res.reward = -np.power(self.target_z - res.state.pose_z, 2)
+        
+        # SERVOS POSITIONS        
         # right
         res.state.up_p_r = self.right_leg_state.positions[0]
         res.state.mid_p_r = self.right_leg_state.positions[1]
@@ -198,7 +197,14 @@ class EnvIfaceStandUp(object):
         res.state.neck_v = self.head_state.velocities[0] 
         res.state.head_p = self.head_state.positions[1]
         res.state.head_v = self.head_state.velocities[1] 
-                        
+                     
+        # SIMPLE ROBOT FALL DETECTOR
+        if np.absolute(res.state.rot_p) > 1.4:
+            self.episode_end = True
+        if np.absolute(res.state.rot_r) > 1.4:
+            self.episode_end = True
+            
+        res.episode_end = self.episode_end
         return res
                 
     def run(self):
