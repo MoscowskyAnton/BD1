@@ -3,10 +3,10 @@ ROS-based BD-1 droid from [Star Wars: The Fallen Order](https://en.wikipedia.org
 
 ![BD1 Gazebo](doc/images/bd1_gazebo.png)
 
-## Goal of project
+# Goal of project
 Make a real BD1 robot, that could walk in the real world envinroment.
 
-## Task to reach the goal
+# Task to reach the goal
  **Achive goal in simulator first**
   - [x] Make an Gazebo controllabe model
   - [x] Attach some RL-framework
@@ -20,8 +20,8 @@ Make a real BD1 robot, that could walk in the real world envinroment.
  **Do same for real robot**
   - [ ] Develop and construct real model 
 
-## How to install
-0. Ofcource you need installed ROS Noetic (need for python3)
+# How to install
+0. Of cource you need installed ROS Noetic (need for python3)
 1. Install additional ROS packages
 ```bash
 sudo apt install ros-noetic-joint-trajectory-controller
@@ -32,3 +32,6 @@ pip3 install tensorflow==2.2.0
 pip3 install tensorlayer
 ```
 Version 2.2.0 is newest version that throws no errors for me.
+
+# Repository structure
+ - 
