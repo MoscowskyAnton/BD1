@@ -140,7 +140,7 @@
             <child link="mid_leg_${side}_link"/>
             
             <origin xyz="0.15 ${y_mul*0.009} 0" rpy="0 0 0"/>
-            <limit effort="30" velocity="${servo_velocity*2}" lower="${-pi}" upper="0"/>
+            <limit effort="30" velocity="${servo_velocity}" lower="${-pi}" upper="0"/>
             <axis xyz="0 1 0"/>
         </joint>
         
@@ -193,7 +193,7 @@
             <mu1>2</mu1>
             <mu2>5</mu2>
             <!--<dampingFactor>0.05</dampingFactor>-->
-            <kp>50000</kp>
+            <kp>20000</kp>
             <kd>1</kd>
         </gazebo>
         

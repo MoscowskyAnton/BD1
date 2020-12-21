@@ -16,4 +16,11 @@ float64 neck_p
 float64 neck_v
 float64 head_p
 float64 head_v
----
+
+float64 pose_x
+float64 pose_y
+float64 pose_z
+float64 rot_r
+float64 rot_p
+float64 rot_y
+

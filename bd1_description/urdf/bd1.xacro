@@ -30,7 +30,7 @@
     <xacro:property name="head_shift_y" value="0.0"/>
     <xacro:property name="head_shift_z" value="0.07"/>       
     
-    <xacro:property name="servo_velocity" value="1"/>
+    <xacro:property name="servo_velocity" value="2"/>
     
     <!--
         BASE

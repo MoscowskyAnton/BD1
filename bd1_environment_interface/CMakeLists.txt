@@ -47,16 +47,16 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  State.msg
+)
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
   SetAction.srv
+  GetStateAndReward.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -203,3 +203,9 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+if ("$ENV{ROS_DISTRO}" STREQUAL "noetic")
+catkin_install_python(PROGRAMS
+    src/bd1_environment_interface/env_iface_standup.py
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+endif()

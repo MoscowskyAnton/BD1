@@ -12,7 +12,6 @@ head_servo_state_controller:
     neck_j: {p: 100.0, i: 1, d: 1, i_clamp: 1}
     head_j: {p: 100.0, i: 1, d: 1, i_clamp: 1}
 
-
 right_leg_servo_states_controller:
   type: "velocity_controllers/JointTrajectoryController"
   joints:
