@@ -22,7 +22,7 @@ Make a real BD1 robot, that could walk in the real world envinroment.
 
 # How to install
 0. Of cource you need installed ROS Noetic (need for python3)
-1. Install additional ROS packages
+1. Install additional ROS packages (list is not full, because hasn't been tested on virgin mashine yet)
 ```bash
 sudo apt install ros-noetic-joint-trajectory-controller
 ```
