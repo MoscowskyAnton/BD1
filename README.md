@@ -20,3 +20,10 @@ Make a real BD1 robot, that could walk in real world.
  **Do same for real robot**
   - [ ] Develop and construct real model 
   
+  ## Getting started
+  Install additional ros packgaes
+  ```
+  sudo apt install ros-noetic-joint-trajectory-controller
+  sudo apt install ros-noetic-tf-conversions
+  ```
+  
