@@ -8,10 +8,13 @@ from gazebo_msgs.msg import ModelState
 import actionlib
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal, JointTrajectoryControllerState
 from trajectory_msgs.msg import JointTrajectoryPoint
-from bd1_environment_interface.srv import SetAction, GetStateAndReward, GetStateAndRewardResponse
+from bd1_environment_interface.srv import SetAction, SetVectAction, GetStateAndReward, GetStateAndRewardResponse
 from bd1_environment_interface.msg import State
 from tf.transformations import euler_from_quaternion
 import numpy as np
+
+def unnorm(x, x_min, x_max):
+    return x_min + x * (x_max-x_min)
 
 class EnvIfaceStandUp(object):
     def __init__(self):
@@ -23,6 +26,20 @@ class EnvIfaceStandUp(object):
         if self.target_z is None:
             rospy.logerr("[{}] target_z does not specified! Exit.".format(self.name))
             exit()
+            
+            
+        ## 
+        # TODO to params, or better read somehow from urdf or whatever
+        self.max_vel_servo = 2
+        self.max_feet_p = np.pi/2
+        self.min_feet_p = np.pi/2
+        self.max_mid_p = 0
+        self.min_mid_p = -np.pi
+        self.max_up_p = np.pi/2
+        self.min_up_p = -np.pi/2        
+        self.max_head_p = np.pi/2
+        self.min_head_p = -np.pi/2
+        ##
             
         self.episode_end = False
         
@@ -55,7 +72,8 @@ class EnvIfaceStandUp(object):
         rospy.Service("~get_state_and_reward", GetStateAndReward, self.get_state_and_reward_cb)
         
         rospy.Service("~set_action", SetAction, self.set_action_cb)
-                
+        
+        rospy.Service("~set_vect_action", SetVectAction, self.set_vect_action_cb)                
         
         # states
         self.right_leg_state = JointTrajectoryPoint()
@@ -158,6 +176,36 @@ class EnvIfaceStandUp(object):
                                    req.up_v_l, req.mid_v_l, req.feet_v_l))        
             
         self.head_client.send_goal(self.head_cmd_vel(req.neck_p, req.head_p, req.neck_v, req.head_v))
+        return []
+                    
+    def set_vect_action_cb(self, req):
+        # unvector & unnormilize it
+        va = req.vector_action
+        up_p_r = unnorm(va[0], self.min_up_p, self.max_up_p)
+        up_v_r = unnorm(va[1], -self.max_vel_servo, self.max_vel_servo)
+        mid_p_r = unnorm(va[2], self.min_mid_p, self.max_mid_p)
+        mid_v_r = unnorm(va[3], -self.max_vel_servo, self.max_vel_servo)
+        feet_p_r = unnorm(va[4], self.min_feet_p, self.max_feet_p)
+        feet_v_r = unnorm(va[5], -self.max_vel_servo, self.max_vel_servo)
+        up_p_l = unnorm(va[6], self.min_up_p, self.max_up_p)
+        up_v_l = unnorm(va[7], -self.max_vel_servo, self.max_vel_servo)
+        mid_p_l = unnorm(va[8], self.min_mid_p, self.max_mid_p)
+        mid_v_l = unnorm(va[9], -self.max_vel_servo, self.max_vel_servo)
+        feet_p_l = unnorm(va[10], self.min_feet_p, self.max_feet_p)
+        feet_v_l = unnorm(va[11], -self.max_vel_servo, self.max_vel_servo)
+        neck_p = unnorm(va[12], self.min_head_p, self.max_head_p)
+        neck_v = unnorm(va[13], -self.max_vel_servo, self.max_vel_servo)
+        head_p = unnorm(va[14], self.min_head_p, self.max_head_p)
+        head_v = unnorm(va[15], -self.max_vel_servo, self.max_vel_servo)        
+        # send
+        self.right_leg_client.send_goal(
+            self.right_leg_cmd_vel(up_p_r, mid_p_r, feet_p_r,
+                                   up_v_r, mid_v_r, feet_v_r))        
+        self.left_leg_client.send_goal(
+            self.left_leg_cmd_vel(up_p_l, mid_p_l, feet_p_l,
+                                   up_v_l, mid_v_l, feet_v_l))        
+            
+        self.head_client.send_goal(self.head_cmd_vel(neck_p, head_p, neck_v, head_v))
         return []
         
     def get_state_and_reward_cb(self, req):

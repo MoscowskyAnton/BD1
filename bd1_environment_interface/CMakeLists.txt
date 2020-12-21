@@ -56,6 +56,7 @@ add_message_files(
 add_service_files(
   FILES
   SetAction.srv
+  SetVectAction.srv
   GetStateAndReward.srv
 )
 
