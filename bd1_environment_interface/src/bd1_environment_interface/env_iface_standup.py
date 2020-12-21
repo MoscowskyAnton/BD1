@@ -13,8 +13,10 @@ from bd1_environment_interface.msg import State
 from tf.transformations import euler_from_quaternion
 import numpy as np
 
+# un norm from [-1; 1]
 def unnorm(x, x_min, x_max):
-    return x_min + x * (x_max-x_min)
+    #return x_min + x * (x_max-x_min)
+    return ((x+1)/2)*(x_max-x_min)  + x_min
 
 class EnvIfaceStandUp(object):
     def __init__(self):

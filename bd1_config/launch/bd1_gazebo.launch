@@ -34,9 +34,9 @@
         <param name="target_z" value="0.34"/>
     </node>
     
-    <node name="standup_train" pkg="bd1_train" type="standup_train.py" output="screen">
+    <!--<node name="standup_train" pkg="bd1_train" type="standup_train.py" output="screen">
         <param name="episode_duration_sec" value="0.2"/>
-    </node>
+    </node>-->
     
 </launch>
     

@@ -10,13 +10,7 @@ import tensorlayer as tl
 import numpy as np
 from tensorflow.keras.activations import sigmoid
 
-# based on https://github.com/tensorlayer/tensorlayer/blob/master/examples/reinforcement_learning/tutorial_DQN.py
-
-def get_model(inputs_shape, output_shape):
-    ni = tl.layers.Input(inputs_shape, name='observation')
-    nn = tl.layers.Dense(output_shape, act=lambda x : sigmoid(x), W_init=tf.random_uniform_initializer(0, 0.01), b_init=None, name='q_a_s')(ni)
-    return tl.models.Model(inputs=ni, outputs=nn, name="Q-Network")
-
+from ddpg import DDPG
 
 class StandUpTrain(object):        
     
@@ -26,24 +20,30 @@ class StandUpTrain(object):
         
         # HYPERPARAMETERS
         self.episode_duration = rospy.Duration(rospy.get_param("~episode_duration_sec", 0.2))
-        self.alg_name = "DQN"
-        self.lambd = rospy.get_param("~lambda_decay_factor", 0.99)
-        self.e = rospy.get_param("~e_greedy_extrapolation", 0.1)
+                
         self.num_episodes = rospy.get_param("~num_episodes", 10000)
-        self.max_steps = rospy.get_param("~max_steps", 10000)
-        self.learning_rate = rospy.get_param("~learning_rate", 0.1)
+        self.max_steps = rospy.get_param("~max_steps", 10000)        
         
-        rospy.loginfo("[{}] initializing DQN...".format(self.name))
-        # DQN
-        self.qnetwork = get_model([None, 22], 16)
-        self.qnetwork.train()
-        self.train_weights = self.qnetwork.trainable_weights
-        self.optimizer = tf.optimizers.SGD(learning_rate = self.learning_rate)
         self.step = 0
         self.episode = 0
         self.state = None
+        self.all_episode_reward = []
+        self.episode_reward = 0
         
-        rospy.logwarn("[{}] DQN inited!".format(self.name))
+        self.hyper_parameters = {}
+        self.hyper_parameters['LR_A'] = rospy.get_param('~actor_learning_rate', 0.001)
+        self.hyper_parameters['LR_C'] = rospy.get_param('~critic_learning_rate', 0.002)
+        self.hyper_parameters['GAMMA'] = rospy.get_param('~gamma_reward_discount', 0.9)
+        self.hyper_parameters['TAU'] = rospy.get_param('~tau_soft_replacement', 0.01)
+        self.hyper_parameters['MEMORY_CAPACITY'] = rospy.get_param('~memcap_replase_buffer_size', 10000)
+        self.hyper_parameters['VAR'] = rospy.get_param('~var_control_extrapolation', 2)
+        self.hyper_parameters['BATCH_SIZE'] = rospy.get_param('~batch_size', 32)
+                        
+        rospy.loginfo("[{}] initializing DDPG...".format(self.name))
+                
+        self.agent = DDPG(16, 22, 1, hyper_parameters)                
+        
+        rospy.logwarn("[{}] DDPG inited!".format(self.name))
         
         # services init
         rospy.wait_for_service('environment_interface_standup/reset')
@@ -77,49 +77,83 @@ class StandUpTrain(object):
         return state                
     
     def train_cb(self, event):        
-        
+                        
         if self.episode == 0 and self.step == 0:
             rospy.logwarn("[{}] Initial reset of environment...".format(self.name))
             self.reset_srv()
             init_sar = self.get_state_and_reward_srv()
             self.state = self.vectorize_state(init_state.state)
+            self.episode_reward = 0
+            
+        rospy.loginfo("[{}] Episode: {}/{}, Step: {}/{}, Episode reward: {:.4f}".format(self.name, self.episode, self.num_episodes, self.step, self.max_steps, self.episode_reward))
+            
+        self.step+=1
+            
+        action = self.agent.get_action(self.state)
         
-        if self.episode >= self.num_episodes:
-            # finish training
-            pass        
-                
-        self.step+=1            
+        self.set_action_srv(action.tolist()) # TODO check 
         
-        rospy.loginfo("[{}] Episode: {}\{}, Step: {}\{}, Reward: {}".format(self.name, self.episode, self.num_episodes, self.step, self.max_steps, init_sar.reward))
-
-                
-        # shot throw net 
-        allQ = self.qnetwork(np.asarray([state], dtype=np.float32)).numpy()
-        #rospy.loginfo(allQ)
-        choosen_action = allQ[0].tolist() 
+        new_sar = self.get_state_and_reward_srv()
+        state_ = self.vectorize_state(new_sar.state)
+        reward = new_sar.reward
+        done = new_sar.episode_end
         
-        # exploration
-        if np.random.rand(1) < self.e:
-            self.set_action_srv(np.random.uniform(size=(16)).tolist())
-        else:
-            #send chosen action
-            self.set_action_srv(choosen_action)
-         
-        updated_sar = self.get_state_and_reward_srv()
-        updated_state = vectorize_state(updated_sar.state)
-        updated_Q = self.qnetwork(np.asarray([updated_state], dtype=np.float32)).numpy()
+        self.agent.store_transition(self.state, action, reward, state_)
         
-        targetQ = allQ
-        #targetQ 
+        if self.agent.pointer > self.hyper_parameters['MEMORY_CAPACITY'] :
+            self.agent.learn() # NOTE if it long operation maybe pause simulation?
         
-        # reload episode
-        if( first_sar.episode_end or self.step >= self.max_steps ):
-            rospy.logwarn("[{}] Starting new episode!".format(self.name))
-            # start new episode!
+        self.state = state_
+        self.episode_reward += reward
+        
+        # start new episode!
+        if( done or self.step >= self.max_steps ):                        
+            rospy.logwarn("[{}] Starting new episode!".format(self.name))            
+            if self.episode == 0:
+                self.all_episode_reward.append(self.episode_reward)
+            else:
+                self.all_episode_reward.append(self.all_episode_reward[-1] * 0.9 + self.episode_reward * 0.1)
             self.reset_srv()
             self.episode+=1
             self.step = 0
-            return
+            self.episode_reward = 0
+                            
+        #if self.episode >= self.num_episodes:
+            ## finish training
+            #pass        
+                
+        #self.step+=1            
+        
+        #rospy.loginfo("[{}] Episode: {}\{}, Step: {}\{}, Reward: {}".format(self.name, self.episode, self.num_episodes, self.step, self.max_steps, init_sar.reward))
+
+                
+        ## shot throw net 
+        #allQ = self.qnetwork(np.asarray([state], dtype=np.float32)).numpy()
+        ##rospy.loginfo(allQ)
+        #choosen_action = allQ[0].tolist() 
+        
+        ## exploration
+        #if np.random.rand(1) < self.e:
+            #self.set_action_srv(np.random.uniform(size=(16)).tolist())
+        #else:
+            ##send chosen action
+            #self.set_action_srv(choosen_action)
+         
+        #updated_sar = self.get_state_and_reward_srv()
+        #updated_state = vectorize_state(updated_sar.state)
+        #updated_Q = self.qnetwork(np.asarray([updated_state], dtype=np.float32)).numpy()
+        
+        #targetQ = allQ
+        ##targetQ 
+        
+        ## reload episode
+        #if( first_sar.episode_end or self.step >= self.max_steps ):
+            #rospy.logwarn("[{}] Starting new episode!".format(self.name))
+            ## start new episode!
+            #self.reset_srv()
+            #self.episode+=1
+            #self.step = 0
+            #return
         #a = np.argmax(allQ, 1)
         
     def run(self):

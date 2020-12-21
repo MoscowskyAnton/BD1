@@ -11,12 +11,11 @@
     <xacro:property name="body_shift_x" value="-0.015"/>
     <xacro:property name="body_shift_y" value="0.0"/>
     <xacro:property name="body_shift_z" value="0.005"/>
-    
-    <xacro:property name="neck_aprox_x" value="0.1"/>
-    <xacro:property name="neck_aprox_y" value="0.1"/>
+        
+    <xacro:property name="neck_mass" value="0.1"/>    
+    <xacro:property name="neck_aprox_x" value="0.02"/>
+    <xacro:property name="neck_aprox_y" value="0.03"/>
     <xacro:property name="neck_aprox_z" value="0.1"/>
-    <xacro:property name="neck_mass" value="0.01"/>
-    
     <xacro:property name="neck_shift_x" value="0.03"/>
     <xacro:property name="neck_shift_y" value="0.0"/>
     <xacro:property name="neck_shift_z" value="0.04"/>
@@ -84,6 +83,12 @@
     -->
     
     <link name="neck_link">
+        <visual>
+            <geometry>
+                <mesh filename="file://$(find bd1_description)/mesh/neck_m.dae"/>     
+            </geometry>
+        </visual>
+        
         <inertial>
             <mass value="${neck_mass}"/>            
             <inertia
@@ -91,6 +96,7 @@
                 iyy="${0.08*neck_mass*(neck_aprox_x*neck_aprox_x+neck_aprox_z*neck_aprox_z)}" iyz="0"
                 izz="${0.08*neck_mass*(neck_aprox_x*neck_aprox_x+neck_aprox_y*neck_aprox_y)}"
             />
+            <origin xyz="0 0 ${head_shift_z/2}" rpy=" 0 0 0"/>
 
         </inertial>        
     </link>
