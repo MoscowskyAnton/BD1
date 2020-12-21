@@ -6,7 +6,7 @@ ROS-based BD-1 droid from [Star Wars: The Fallen Order](https://en.wikipedia.org
 # Goal of project
 Make a real BD1 robot, that could walk in the real world envinroment.
 
-# Task to reach the goal
+# Tasks to reach the goal
  **Achive goal in simulator first**
   - [x] Make an Gazebo controllabe model
   - [x] Attach some RL-framework
