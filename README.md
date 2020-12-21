@@ -19,10 +19,11 @@ Make a real BD1 robot, that could walk in real world.
  
  **Do same for real robot**
   - [ ] Develop and construct real model 
-  
-  ## Getting started
-  Install additional ros packgaes
-  ```
-  sudo apt install ros-noetic-joint-trajectory-controller
-  ```
-  Install [tensorlayer](https://github.com/tensorlayer/tensorlayer)
+
+## Getting started
+Install additional ros packgaes
+```
+sudo apt install ros-noetic-joint-trajectory-controller
+```
+Install [tensorlayer](https://github.com/tensorlayer/tensorlayer)
+I used tensorflow 2.2.0
