@@ -7,7 +7,7 @@ from std_srvs.srv import Empty
 
 import tensorflow as tf
 import tensorlayer as tl
-
+import numpy as np
 # DQN 
 # example is https://github.com/tensorlayer/tensorlayer/blob/master/examples/reinforcement_learning/tutorial_DQN.py
  
@@ -46,27 +46,72 @@ class StandUpTrain(object):
         self.qnetwork.train()
         self.train_weights = self.qnetwork.trainable_weights
         self.optimizer = tf.optimizers.SGD(learning_rate = self.learning_rate)
+        self.step = 0
+        self.episode = 0
         
+        rospy.logwarn("[{}] DQN inited!".format(self.name))
         
         # services init
         rospy.wait_for_service('environment_interface_standup/reset')
-        self.set_model_state_srv = rospy.ServiceProxy('environment_interface_standup/reset', Empty)
+        self.reset_srv = rospy.ServiceProxy('environment_interface_standup/reset', Empty)
         rospy.loginfo("[{}] reset service ready!".format(self.name))
                 
         rospy.wait_for_service('environment_interface_standup/get_state_and_reward')
-        self.set_model_state_srv = rospy.ServiceProxy('environment_interface_standup/get_state_and_reward', GetStateAndReward)
+        self.get_state_and_reward_srv = rospy.ServiceProxy('environment_interface_standup/get_state_and_reward', GetStateAndReward)
         rospy.loginfo("[{}] state and reward service ready!".format(self.name))
         
         rospy.wait_for_service('environment_interface_standup/set_action')
-        self.set_model_state_srv = rospy.ServiceProxy('environment_interface_standup/set_action', SetAction)
+        self.set_action_srv = rospy.ServiceProxy('environment_interface_standup/set_action', SetAction)
         rospy.loginfo("[{}] set action service ready!".format(self.name))
         
         rospy.Timer(self.episode_duration, self.train_cb)
         
     def train_cb(self, event):
         #rospy.logwarn("Tik-tok")
-        pass
         
+        if self.episode == 0 and self.step == 0:
+            rospy.logwarn("[{}] Initial reset of environment...".format(self.name))
+            self.reset_srv()
+        
+        if self.episode >= self.num_episodes:
+            # finish training
+            pass        
+        
+        # get state and reward
+        sar_full = self.get_state_and_reward_srv()
+        #print(sar_full)
+        self.step+=1
+        
+        # reload episode
+        if( sar_full.episode_end or self.step >= self.max_steps ):
+            rospy.logwarn("[{}] Starting new episode!".format(self.name))
+            # start new episode!
+            self.reset_srv()
+            self.episode+=1
+            self.step = 0
+            return
+        
+        rospy.loginfo("[{}] Episode: {}\{}, Step: {}\{}, Reward: {}".format(self.name, self.episode, self.num_episodes, self.step, self.max_steps, sar_full.reward))
+        
+        # vectorize state
+        sar = sar_full.state
+        #print(sar)
+        state = [sar.up_p_r, sar.up_v_r,
+                 sar.mid_p_r, sar.mid_v_r,
+                 sar.feet_p_r, sar.feet_v_r,
+                 sar.up_p_l, sar.up_v_l,
+                 sar.mid_p_l, sar.mid_v_l,
+                 sar.feet_p_l, sar.feet_v_l,
+                 sar.neck_p, sar.neck_v,
+                 sar.head_p, sar.head_v,
+                 sar.pose_x, sar.pose_y, sar.pose_z,
+                 sar.rot_r, sar.rot_p, sar.rot_y]
+                
+        
+        # choose an action by greedily
+        allQ = self.qnetwork(np.asarray([state], dtype=np.float32)).numpy()
+        #rospy.loginfo(allQ)
+        #a = np.argmax(allQ, 1)
         
     def run(self):
         rospy.spin()
