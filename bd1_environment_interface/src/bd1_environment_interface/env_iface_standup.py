@@ -236,6 +236,8 @@ class EnvIfaceStandUp(object):
         self.left_leg_client.send_goal(
             self.left_leg_cmd_pose(up_p_l, mid_p_l, feet_p_l))        
             
+        # NOTE wait for result?
+            
         #self.head_client.send_goal(self.head_cmd_pose(neck_p, head_p))
         return []
         

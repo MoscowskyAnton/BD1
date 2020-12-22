@@ -152,12 +152,12 @@ class DDPG(object):
         self.memory[index, :] = transition
         self.pointer += 1
 
-    def save(self):
+    def save(self, path):
         """
         save trained weights
         :return: None
         """
-        path = os.path.join('model', '_'.join(['DDPG', 'BD1_standup']))
+        #path = os.path.join('model', '_'.join(['DDPG', 'BD1_standup']))
         if not os.path.exists(path):
             os.makedirs(path)
         tl.files.save_weights_to_hdf5(os.path.join(path, 'actor.hdf5'), self.actor)
@@ -165,12 +165,12 @@ class DDPG(object):
         tl.files.save_weights_to_hdf5(os.path.join(path, 'critic.hdf5'), self.critic)
         tl.files.save_weights_to_hdf5(os.path.join(path, 'critic_target.hdf5'), self.critic_target)
 
-    def load(self):
+    def load(self, path):
         """
         load trained weights
         :return: None
         """
-        path = os.path.join('model', '_'.join(['DDPHG', 'BD1_standup']))
+        #path = os.path.join('model', '_'.join(['DDPHG', 'BD1_standup']))
         tl.files.load_hdf5_to_weights_in_order(os.path.join(path, 'actor.hdf5'), self.actor)
         tl.files.load_hdf5_to_weights_in_order(os.path.join(path, 'actor_target.hdf5'), self.actor_target)
         tl.files.load_hdf5_to_weights_in_order(os.path.join(path, 'critic.hdf5'), self.critic)
