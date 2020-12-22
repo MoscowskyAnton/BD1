@@ -24,11 +24,19 @@ class EnvIfaceStandUp(object):
         self.name = "environment_interface_standup"
         rospy.init_node(self.name)
         
+        self.target_x = rospy.get_param("~target_x", None)
+        self.target_y = rospy.get_param("~target_y", None)
         self.target_z = rospy.get_param("~target_z", None)
+        
+        if self.target_x is None:
+            rospy.logerr("[{}] target_x does not specified! Exit.".format(self.name))
+            exit()
+        if self.target_y is None:
+            rospy.logerr("[{}] target_y does not specified! Exit.".format(self.name))
+            exit()            
         if self.target_z is None:
             rospy.logerr("[{}] target_z does not specified! Exit.".format(self.name))
-            exit()
-            
+            exit()            
             
         ## 
         # TODO to params, or better read somehow from urdf or whatever
@@ -110,7 +118,7 @@ class EnvIfaceStandUp(object):
         ms.model_name = "bd1"
         ms.pose.position.z = 0.15
         self.set_model_state_srv(ms)
-        
+        rospy.sleep(0.5)
         self.episode_end = False
         
         return []        
@@ -225,7 +233,7 @@ class EnvIfaceStandUp(object):
         res.state.rot_y = rpy[2]
         
         # REWARD
-        res.reward = -np.power(self.target_z - res.state.pose_z, 2)
+        res.reward = -( np.power(self.target_x - res.state.pose_x, 2) + np.power(self.target_y - res.state.pose_y, 2) + np.power(self.target_z - res.state.pose_z, 2) )
         
         # SERVOS POSITIONS        
         # right
@@ -249,10 +257,14 @@ class EnvIfaceStandUp(object):
         res.state.head_v = self.head_state.velocities[1] 
                      
         # SIMPLE ROBOT FALL DETECTOR
-        if np.absolute(res.state.rot_p) > 1.4:
+        
+        if self.target_z < 0.1:
             self.episode_end = True
-        if np.absolute(res.state.rot_r) > 1.4:
-            self.episode_end = True
+        if self.target_z > 0.15:
+            if np.absolute(res.state.rot_p) > 1.4:
+                self.episode_end = True
+            if np.absolute(res.state.rot_r) > 1.4:
+                self.episode_end = True
             
         res.episode_end = self.episode_end
         return res
