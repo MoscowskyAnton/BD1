@@ -42,7 +42,7 @@ class EnvIfaceStandUp(object):
         # TODO to params, or better read somehow from urdf or whatever
         self.max_vel_servo = 2
         self.max_feet_p = np.pi/2
-        self.min_feet_p = np.pi/2
+        self.min_feet_p = -np.pi/2
         self.max_mid_p = 0
         self.min_mid_p = -np.pi
         self.max_up_p = np.pi/2
@@ -191,31 +191,39 @@ class EnvIfaceStandUp(object):
     def set_vect_action_cb(self, req):
         # unvector & unnormilize it
         va = req.vector_action
+        #up_p_r = unnorm(va[0], self.min_up_p, self.max_up_p)
+        #up_v_r = unnorm(va[1], -self.max_vel_servo, self.max_vel_servo)
+        #mid_p_r = unnorm(va[2], self.min_mid_p, self.max_mid_p)
+        #mid_v_r = unnorm(va[3], -self.max_vel_servo, self.max_vel_servo)
+        #feet_p_r = unnorm(va[4], self.min_feet_p, self.max_feet_p)
+        #feet_v_r = unnorm(va[5], -self.max_vel_servo, self.max_vel_servo)
+        #up_p_l = unnorm(va[6], self.min_up_p, self.max_up_p)
+        #up_v_l = unnorm(va[7], -self.max_vel_servo, self.max_vel_servo)
+        #mid_p_l = unnorm(va[8], self.min_mid_p, self.max_mid_p)
+        #mid_v_l = unnorm(va[9], -self.max_vel_servo, self.max_vel_servo)
+        #feet_p_l = unnorm(va[10], self.min_feet_p, self.max_feet_p)
+        #feet_v_l = unnorm(va[11], -self.max_vel_servo, self.max_vel_servo)
+        #neck_p = unnorm(va[12], self.min_head_p, self.max_head_p)
+        #neck_v = unnorm(va[13], -self.max_vel_servo, self.max_vel_servo)
+        #head_p = unnorm(va[14], self.min_head_p, self.max_head_p)
+        #head_v = unnorm(va[15], -self.max_vel_servo, self.max_vel_servo)        
+        
         up_p_r = unnorm(va[0], self.min_up_p, self.max_up_p)
-        up_v_r = unnorm(va[1], -self.max_vel_servo, self.max_vel_servo)
-        mid_p_r = unnorm(va[2], self.min_mid_p, self.max_mid_p)
-        mid_v_r = unnorm(va[3], -self.max_vel_servo, self.max_vel_servo)
-        feet_p_r = unnorm(va[4], self.min_feet_p, self.max_feet_p)
-        feet_v_r = unnorm(va[5], -self.max_vel_servo, self.max_vel_servo)
-        up_p_l = unnorm(va[6], self.min_up_p, self.max_up_p)
-        up_v_l = unnorm(va[7], -self.max_vel_servo, self.max_vel_servo)
-        mid_p_l = unnorm(va[8], self.min_mid_p, self.max_mid_p)
-        mid_v_l = unnorm(va[9], -self.max_vel_servo, self.max_vel_servo)
-        feet_p_l = unnorm(va[10], self.min_feet_p, self.max_feet_p)
-        feet_v_l = unnorm(va[11], -self.max_vel_servo, self.max_vel_servo)
-        neck_p = unnorm(va[12], self.min_head_p, self.max_head_p)
-        neck_v = unnorm(va[13], -self.max_vel_servo, self.max_vel_servo)
-        head_p = unnorm(va[14], self.min_head_p, self.max_head_p)
-        head_v = unnorm(va[15], -self.max_vel_servo, self.max_vel_servo)        
+        mid_p_r = unnorm(va[1], self.min_mid_p, self.max_mid_p)        
+        feet_p_r = unnorm(va[2], self.min_feet_p, self.max_feet_p)
+        up_p_l = unnorm(va[3], self.min_up_p, self.max_up_p)
+        mid_p_l = unnorm(va[4], self.min_mid_p, self.max_mid_p)
+        feet_p_l = unnorm(va[5], self.min_feet_p, self.max_feet_p)
+        neck_p = unnorm(va[6], self.min_head_p, self.max_head_p)
+        head_p = unnorm(va[7], self.min_head_p, self.max_head_p)
+        
         # send
         self.right_leg_client.send_goal(
-            self.right_leg_cmd_vel(up_p_r, mid_p_r, feet_p_r,
-                                   up_v_r, mid_v_r, feet_v_r))        
+            self.right_leg_cmd_pose(up_p_r, mid_p_r, feet_p_r))        
         self.left_leg_client.send_goal(
-            self.left_leg_cmd_vel(up_p_l, mid_p_l, feet_p_l,
-                                   up_v_l, mid_v_l, feet_v_l))        
+            self.left_leg_cmd_pose(up_p_l, mid_p_l, feet_p_l))        
             
-        self.head_client.send_goal(self.head_cmd_vel(neck_p, head_p, neck_v, head_v))
+        self.head_client.send_goal(self.head_cmd_pose(neck_p, head_p))
         return []
         
     def get_state_and_reward_cb(self, req):
@@ -240,21 +248,21 @@ class EnvIfaceStandUp(object):
         res.state.up_p_r = self.right_leg_state.positions[0]
         res.state.mid_p_r = self.right_leg_state.positions[1]
         res.state.feet_p_r = self.right_leg_state.positions[2]
-        res.state.up_v_r = self.right_leg_state.velocities[0]
-        res.state.mid_v_r = self.right_leg_state.velocities[1]
-        res.state.feet_v_r = self.right_leg_state.velocities[2]
+        #res.state.up_v_r = self.right_leg_state.velocities[0]
+        #res.state.mid_v_r = self.right_leg_state.velocities[1]
+        #res.state.feet_v_r = self.right_leg_state.velocities[2]
         # left
         res.state.up_p_l = self.left_leg_state.positions[0]
         res.state.mid_p_l = self.left_leg_state.positions[1]
         res.state.feet_p_l = self.left_leg_state.positions[2]
-        res.state.up_v_l = self.left_leg_state.velocities[0]
-        res.state.mid_v_l = self.left_leg_state.velocities[1]
-        res.state.feet_v_l = self.left_leg_state.velocities[2]
+        #res.state.up_v_l = self.left_leg_state.velocities[0]
+        #res.state.mid_v_l = self.left_leg_state.velocities[1]
+        #res.state.feet_v_l = self.left_leg_state.velocities[2]
         # head
         res.state.neck_p = self.head_state.positions[0]
-        res.state.neck_v = self.head_state.velocities[0] 
+        #res.state.neck_v = self.head_state.velocities[0] 
         res.state.head_p = self.head_state.positions[1]
-        res.state.head_v = self.head_state.velocities[1] 
+        #res.state.head_v = self.head_state.velocities[1] 
                      
         # SIMPLE ROBOT FALL DETECTOR
         

@@ -41,7 +41,7 @@ class StandUpTrain(object):
                         
         rospy.loginfo("[{}] initializing DDPG...".format(self.name))
                 
-        self.agent = DDPG(16, 22, 1, self.hyper_parameters)                
+        self.agent = DDPG(8, 14, 1, self.hyper_parameters)                
         
         rospy.logwarn("[{}] DDPG inited!".format(self.name))
         
@@ -64,14 +64,24 @@ class StandUpTrain(object):
         rospy.Timer(self.episode_duration, self.train_cb)
         
     def vectorize_state(self, sar):
-        state = [sar.up_p_r, sar.up_v_r,
-                 sar.mid_p_r, sar.mid_v_r,
-                 sar.feet_p_r, sar.feet_v_r,
-                 sar.up_p_l, sar.up_v_l,
-                 sar.mid_p_l, sar.mid_v_l,
-                 sar.feet_p_l, sar.feet_v_l,
-                 sar.neck_p, sar.neck_v,
-                 sar.head_p, sar.head_v,
+        #state = [sar.up_p_r, sar.up_v_r,
+                 #sar.mid_p_r, sar.mid_v_r,
+                 #sar.feet_p_r, sar.feet_v_r,
+                 #sar.up_p_l, sar.up_v_l,
+                 #sar.mid_p_l, sar.mid_v_l,
+                 #sar.feet_p_l, sar.feet_v_l,
+                 #sar.neck_p, sar.neck_v,
+                 #sar.head_p, sar.head_v,
+                 #sar.pose_x, sar.pose_y, sar.pose_z,
+                 #sar.rot_r, sar.rot_p, sar.rot_y]
+        state = [sar.up_p_r,
+                 sar.mid_p_r,
+                 sar.feet_p_r,
+                 sar.up_p_l,
+                 sar.mid_p_l,
+                 sar.feet_p_l,
+                 sar.neck_p,
+                 sar.head_p,
                  sar.pose_x, sar.pose_y, sar.pose_z,
                  sar.rot_r, sar.rot_p, sar.rot_y]
         return np.array(state)                
@@ -119,43 +129,6 @@ class StandUpTrain(object):
             self.step = 0
             self.episode_reward = 0
                             
-        #if self.episode >= self.num_episodes:
-            ## finish training
-            #pass        
-                
-        #self.step+=1            
-        
-        #rospy.loginfo("[{}] Episode: {}\{}, Step: {}\{}, Reward: {}".format(self.name, self.episode, self.num_episodes, self.step, self.max_steps, init_sar.reward))
-
-                
-        ## shot throw net 
-        #allQ = self.qnetwork(np.asarray([state], dtype=np.float32)).numpy()
-        ##rospy.loginfo(allQ)
-        #choosen_action = allQ[0].tolist() 
-        
-        ## exploration
-        #if np.random.rand(1) < self.e:
-            #self.set_action_srv(np.random.uniform(size=(16)).tolist())
-        #else:
-            ##send chosen action
-            #self.set_action_srv(choosen_action)
-         
-        #updated_sar = self.get_state_and_reward_srv()
-        #updated_state = vectorize_state(updated_sar.state)
-        #updated_Q = self.qnetwork(np.asarray([updated_state], dtype=np.float32)).numpy()
-        
-        #targetQ = allQ
-        ##targetQ 
-        
-        ## reload episode
-        #if( first_sar.episode_end or self.step >= self.max_steps ):
-            #rospy.logwarn("[{}] Starting new episode!".format(self.name))
-            ## start new episode!
-            #self.reset_srv()
-            #self.episode+=1
-            #self.step = 0
-            #return
-        #a = np.argmax(allQ, 1)
         
     def run(self):
         rospy.spin()
