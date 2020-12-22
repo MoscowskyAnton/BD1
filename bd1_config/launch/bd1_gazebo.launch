@@ -38,6 +38,7 @@
     
     <node name="standup_train" pkg="bd1_train" type="standup_train.py" output="screen">
         <param name="episode_duration_sec" value="0.05"/>
+        <param name="memcap_replase_buffer_size" value="500"/>
     </node>
     
 </launch>
