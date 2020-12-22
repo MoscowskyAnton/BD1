@@ -2,13 +2,36 @@
 <robot>
 
 
-  <gazebo>
-    <!--<gazebo reference="body_link">
-        <material>Gazebo/Blue</material>
-    </gazebo>-->
+<!--  <gazebo reference="body_link">    
+    <sensor type="contact" name="body_contact_sensor">
+        <update_rate>100.0</update_rate>
+        <always_on>1</always_on>
+        <contact>
+            <collision>body_link_collision</collision>
+            <topic>/body_collision</topic>
+        </contact>
+        <plugin name="gazebo_ros_bumper_controller" filename="libgazebo_ros_bumper.so">
+            <alwaysOn>true</alwaysOn>
+            <updateRate>1000.0</updateRate>
+            <bumperTopicName>/robot_bumper</bumperTopicName>
+            <frameName>world</frameName>
+        </plugin>
+    </sensor>
+  </gazebo>-->
   
+  <gazebo reference="body_link">
+    <contact>
+       <collision>body_link_collision__collision</collision>
+    </contact>
+    
+    <plugin name="body_link_gazebo_ros_bumper_controller" filename="libcontact.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>100</updateRate>
+        <bumperTopicName>body_link_bumper</bumperTopicName>
+        <frameName>world</frameName>
+    </plugin>
   </gazebo>
-  
+    
   <gazebo>
       <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
           <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>

@@ -3,6 +3,7 @@
 
 import rospy
 from std_srvs.srv import Empty
+from std_msgs.msg import Bool
 from gazebo_msgs.srv import SetModelState, GetModelState
 from gazebo_msgs.msg import ModelState
 import actionlib
@@ -94,7 +95,14 @@ class EnvIfaceStandUp(object):
         rospy.Subscriber("left_leg_servo_states_controller/state", JointTrajectoryControllerState, self.left_leg_state_cb)
         rospy.Subscriber("/head_servo_state_controller/state", JointTrajectoryControllerState, self.head_state_cb)
         
+        self.last_fall = False
+        rospy.Subscriber("fall_detector_contacts/fall", Bool, self.fall_cb)
+        
+        
         rospy.logwarn("[{}] ready!".format(self.name))
+        
+    def fall_cb(self, msg):
+        self.last_fall = msg.data
         
     def right_leg_state_cb(self, msg):
         self.right_leg_state = msg.actual
@@ -119,7 +127,7 @@ class EnvIfaceStandUp(object):
         ms.pose.position.z = 0.15
         self.set_model_state_srv(ms)
         rospy.sleep(0.5)
-        self.episode_end = False
+        #self.episode_end = False
         
         return []        
     
@@ -211,9 +219,14 @@ class EnvIfaceStandUp(object):
         up_p_r = unnorm(va[0], self.min_up_p, self.max_up_p)
         mid_p_r = unnorm(va[1], self.min_mid_p, self.max_mid_p)        
         feet_p_r = unnorm(va[2], self.min_feet_p, self.max_feet_p)
-        up_p_l = unnorm(va[3], self.min_up_p, self.max_up_p)
-        mid_p_l = unnorm(va[4], self.min_mid_p, self.max_mid_p)
-        feet_p_l = unnorm(va[5], self.min_feet_p, self.max_feet_p)
+        #up_p_l = unnorm(va[3], self.min_up_p, self.max_up_p)
+        #mid_p_l = unnorm(va[4], self.min_mid_p, self.max_mid_p)
+        #feet_p_l = unnorm(va[5], self.min_feet_p, self.max_feet_p)
+        up_p_l = up_p_r
+        mid_p_l = mid_p_r
+        feet_p_l = feet_p_r
+        rospy.logerr("feet {}".format(feet_p_l))
+        
         neck_p = unnorm(va[6], self.min_head_p, self.max_head_p)
         head_p = unnorm(va[7], self.min_head_p, self.max_head_p)
         
@@ -223,7 +236,7 @@ class EnvIfaceStandUp(object):
         self.left_leg_client.send_goal(
             self.left_leg_cmd_pose(up_p_l, mid_p_l, feet_p_l))        
             
-        self.head_client.send_goal(self.head_cmd_pose(neck_p, head_p))
+        #self.head_client.send_goal(self.head_cmd_pose(neck_p, head_p))
         return []
         
     def get_state_and_reward_cb(self, req):
@@ -260,21 +273,23 @@ class EnvIfaceStandUp(object):
         #res.state.feet_v_l = self.left_leg_state.velocities[2]
         # head
         res.state.neck_p = self.head_state.positions[0]
+        
         #res.state.neck_v = self.head_state.velocities[0] 
         res.state.head_p = self.head_state.positions[1]
         #res.state.head_v = self.head_state.velocities[1] 
                      
         # SIMPLE ROBOT FALL DETECTOR
         
-        if self.target_z < 0.1:
-            self.episode_end = True
-        if self.target_z > 0.15:
-            if np.absolute(res.state.rot_p) > 1.4:
-                self.episode_end = True
-            if np.absolute(res.state.rot_r) > 1.4:
-                self.episode_end = True
+        
+        #if self.target_z < 0.1:
+            #self.episode_end = True
+        #if self.target_z > 0.15:
+            #if np.absolute(res.state.rot_p) > 1.4:
+                #self.episode_end = True
+            #if np.absolute(res.state.rot_r) > 1.4:
+                #self.episode_end = True
             
-        res.episode_end = self.episode_end
+        res.episode_end = self.last_fall
         return res
                 
     def run(self):

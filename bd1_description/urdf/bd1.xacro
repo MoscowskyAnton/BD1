@@ -49,7 +49,7 @@
             </material>
         </visual>
         
-        <collision>
+        <collision name="body_link_collision">
             <origin xyz="${body_shift_x} ${body_shift_y} ${body_shift_z}" rpy=" 0 0 0"/>
             <geometry>                                
                 <box size="${body_aprox_x} ${body_aprox_y} ${body_aprox_z}"/>

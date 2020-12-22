@@ -39,7 +39,11 @@
     <node name="standup_train" pkg="bd1_train" type="standup_train.py" output="screen">
         <param name="episode_duration_sec" value="0.05"/>
         <param name="memcap_replase_buffer_size" value="500"/>
+        <param name="var_control_extrapolation" value="4"/>
+        
     </node>
+    
+    <node name="fall_detector_contacts" pkg="bd1_fall_detector" type="fall_detector_contacts" output="screen"/>
     
 </launch>
     

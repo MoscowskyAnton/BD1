@@ -112,7 +112,7 @@ class StandUpTrain(object):
         
         if self.agent.pointer > self.hyper_parameters['MEMORY_CAPACITY'] :
             self.agent.learn() # NOTE if it long operation maybe pause simulation?
-            rospy.logerr("[{}] Learn!".format(self.name))
+            ##rospy.logerr("[{}] Learn!".format(self.name))
         
         self.state = state_
         self.episode_reward += reward
