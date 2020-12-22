@@ -108,7 +108,7 @@ class EnvIfaceStandUp(object):
         # replace robot 
         ms = ModelState()
         ms.model_name = "bd1"
-        ms.pose.position.z = 0.5
+        ms.pose.position.z = 0.15
         self.set_model_state_srv(ms)
         
         self.episode_end = False

@@ -10,7 +10,7 @@ import tensorlayer as tl
 import numpy as np
 from tensorflow.keras.activations import sigmoid
 
-from ddpg import DDPG
+from bd1_train.ddpg import DDPG
 
 class StandUpTrain(object):        
     
@@ -41,7 +41,7 @@ class StandUpTrain(object):
                         
         rospy.loginfo("[{}] initializing DDPG...".format(self.name))
                 
-        self.agent = DDPG(16, 22, 1, hyper_parameters)                
+        self.agent = DDPG(16, 22, 1, self.hyper_parameters)                
         
         rospy.logwarn("[{}] DDPG inited!".format(self.name))
         
@@ -74,7 +74,7 @@ class StandUpTrain(object):
                  sar.head_p, sar.head_v,
                  sar.pose_x, sar.pose_y, sar.pose_z,
                  sar.rot_r, sar.rot_p, sar.rot_y]
-        return state                
+        return np.array(state)                
     
     def train_cb(self, event):        
                         
@@ -82,7 +82,7 @@ class StandUpTrain(object):
             rospy.logwarn("[{}] Initial reset of environment...".format(self.name))
             self.reset_srv()
             init_sar = self.get_state_and_reward_srv()
-            self.state = self.vectorize_state(init_state.state)
+            self.state = self.vectorize_state(init_sar.state)
             self.episode_reward = 0
             
         rospy.loginfo("[{}] Episode: {}/{}, Step: {}/{}, Episode reward: {:.4f}".format(self.name, self.episode, self.num_episodes, self.step, self.max_steps, self.episode_reward))
