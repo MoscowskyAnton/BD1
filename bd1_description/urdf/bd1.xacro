@@ -27,9 +27,16 @@
     <xacro:property name="head_mass" value="0.5"/>    
     <xacro:property name="head_shift_x" value="0.04"/>
     <xacro:property name="head_shift_y" value="0.0"/>
-    <xacro:property name="head_shift_z" value="0.07"/>       
+    <xacro:property name="head_shift_z" value="0.07"/>
+    <xacro:property name="neck_i_mul" value="10"/>       
+    
     
     <xacro:property name="servo_velocity" value="2"/>
+    <xacro:property name="servo_friction" value="0.3"/>
+    <xacro:property name="servo_effort" value="30"/>
+    
+    
+    <selfCollide>true</selfCollide>
     <!--
         BASE
     -->         
@@ -89,9 +96,9 @@
         <inertial>
             <mass value="${neck_mass}"/>            
             <inertia
-                ixx="${0.08*neck_mass*(neck_aprox_y*neck_aprox_y+neck_aprox_z*neck_aprox_z)}" ixy="0" ixz="0"
-                iyy="${0.08*neck_mass*(neck_aprox_x*neck_aprox_x+neck_aprox_z*neck_aprox_z)}" iyz="0"
-                izz="${0.08*neck_mass*(neck_aprox_x*neck_aprox_x+neck_aprox_y*neck_aprox_y)}"
+                ixx="${neck_i_mul*0.08*neck_mass*(neck_aprox_y*neck_aprox_y+neck_aprox_z*neck_aprox_z)}" ixy="0" ixz="0"
+                iyy="${neck_i_mul*0.08*neck_mass*(neck_aprox_x*neck_aprox_x+neck_aprox_z*neck_aprox_z)}" iyz="0"
+                izz="${neck_i_mul*0.08*neck_mass*(neck_aprox_x*neck_aprox_x+neck_aprox_y*neck_aprox_y)}"
             />
             <origin xyz="0 0 ${head_shift_z/2}" rpy=" 0 0 0"/>
 
@@ -103,8 +110,9 @@
         <child link="neck_link"/>
         
         <origin xyz="${neck_shift_x} ${neck_shift_y} ${neck_shift_z}" rpy="0 0 0"/>
-        <limit effort="30" velocity="${servo_velocity}" lower="${-pi/2}" upper="${pi/2}"/>
+        <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="-1.5" upper="1.5"/>
         <axis xyz="0 1 0"/>
+        <dynamics damping="${servo_friction}"/>
     </joint>
     
     <xacro:servtransmission_v joint="neck_j"/>
@@ -146,8 +154,9 @@
         <child link="head_link"/>
         
         <origin xyz="0 0 ${neck_len}" rpy="0 0 0"/>
-        <limit effort="30" velocity="${servo_velocity}" lower="${-pi/2}" upper="${pi/2}"/>
+        <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="-1.5" upper="1.5"/>
         <axis xyz="0 1 0"/>
+        <dynamics damping="${servo_friction}"/>
     </joint>
     
     <xacro:servtransmission_v joint="head_j"/>
@@ -155,8 +164,8 @@
     <!--
         LEGS
     -->
-    <xacro:bd1_leg side="r" y_mul="-1" servo_velocity="${servo_velocity}"/>
-    <xacro:bd1_leg side="l" y_mul="1" servo_velocity="${servo_velocity}"/>
+    <xacro:bd1_leg side="r" y_mul="-1" servo_velocity="${servo_velocity}" servo_effort="${servo_effort}"/>
+    <xacro:bd1_leg side="l" y_mul="1" servo_velocity="${servo_velocity}" servo_effort="${servo_effort}"/>
     
     
     

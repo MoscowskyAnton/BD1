@@ -2,20 +2,21 @@
     <arg name="robot" default="bd1"/>
     <arg name="paused" default="false"/>
     
-    <rosparam file="$(find bd1_description)/config/bd1_control_gazebo.yaml" command="load" subst_value="true"/>    
     
-    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find bd1_description)/urdf/bd1.xacro'"/>                        
+    <!-- VEL or TRAJ-->
+    <arg name="servo_control" default="VEL"/>
+        
+    <rosparam if="$(eval servo_control == 'TRAJ')" file="$(find bd1_description)/config/bd1_control_traj_gazebo.yaml" command="load" subst_value="true"/>            
+    
+    <rosparam if="$(eval servo_control == 'VEL')" file="$(find bd1_description)/config/bd1_control_vel_gazebo.yaml" command="load" subst_value="true"/>            
     
     <include file="$(find bd1_config)/launch/bd1_software.launch">
-        <arg name="robot" value="$(arg robot)"/>        
+        <arg name="robot" value="$(arg robot)"/>     
+        <arg name="servo_control" value="$(arg servo_control)"/>
     </include>            
     
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" 
-    args="-param robot_description -urdf -z 1 -x 0 -y 0 -Y 0 -model $(arg robot)" />
-    
-    <node name="controller_spawner" pkg="controller_manager" type="spawner" 
-        respawn="false" output="screen" 
-        args="right_leg_servo_states_controller left_leg_servo_states_controller  head_servo_state_controller joint_state_controller" />
+    args="-param robot_description -urdf -z 0.5 -x 0 -y 0 -Y 0 -model $(arg robot)" />        
     
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
         <arg name="debug" value="false" />
@@ -23,12 +24,7 @@
         <arg name="paused" value="$(arg paused)"/>
         <arg name="use_sim_time" value="true"/>
         <arg name="headless" value="false"/>
-    </include>                
-    
-    <!--<node name="rqt_gui" pkg="rqt_gui" type="rqt_gui"/>-->
-    <node name="rqt_service_caller" pkg="rqt_service_caller" type="rqt_service_caller"/>
-    
-    <!--<node name="bd1_rviz_gazebo" pkg="rviz" type="rviz" args="-d $(find bd1_config)/rviz/default.rviz"/>-->
+    </include>                        
     
     <node name="environment_interface_standup" pkg="bd1_environment_interface" type="env_iface_standup.py" output="screen">
         <param name="target_x" value="0.0"/>
@@ -36,14 +32,14 @@
         <param name="target_z" value="0.34"/>
     </node>
     
-    <node name="standup_train" pkg="bd1_train" type="standup_train.py" output="screen">
+    <!--<node name="standup_train" pkg="bd1_train" type="standup_train.py" output="screen">
         <param name="episode_duration_sec" value="0.05"/>
         <param name="memcap_replase_buffer_size" value="500"/>
         <param name="var_control_extrapolation" value="4"/>
         
-    </node>
+    </node>-->
     
-    <node name="fall_detector_contacts" pkg="bd1_fall_detector" type="fall_detector_contacts" output="screen"/>
+    <!--<node name="bd1_fall_detector" pkg="fall_detector" type="fall_detector_contacts" output="screen"/>-->
     
 </launch>
     

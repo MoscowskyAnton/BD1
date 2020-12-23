@@ -1,0 +1,45 @@
+joint_state_controller:
+  type: 'joint_state_controller/JointStateController'
+  publish_rate: 10  
+
+head_servo_velocity_controller:
+    type: "velocity_controllers/JointVelocityController"
+    joint: head_j
+    pid: {p: 100.0, i: 1, d: 1}
+
+neck_servo_velocity_controller:
+    type: "velocity_controllers/JointVelocityController"
+    joint: neck_j
+    pid: {p: 100.0, i: 1, d: 1}
+    
+leg_up_r_servo_velocity_controller:
+    type: "velocity_controllers/JointVelocityController"
+    joint: up_leg_r_j
+    pid: {p: 100.0, i: 1, d: 1}
+    
+leg_mid_r_servo_velocity_controller:
+    type: "velocity_controllers/JointVelocityController"
+    joint: mid_leg_r_j
+    pid: {p: 100.0, i: 1, d: 1}
+    
+feet_r_servo_velocity_controller:
+    type: "velocity_controllers/JointVelocityController"
+    joint: feet_r_j
+    pid: {p: 100.0, i: 1, d: 1}
+    
+leg_up_l_servo_velocity_controller:
+    type: "velocity_controllers/JointVelocityController"
+    joint: up_leg_l_j
+    pid: {p: 100.0, i: 1, d: 1}
+    
+leg_mid_l_servo_velocity_controller:
+    type: "velocity_controllers/JointVelocityController"
+    joint: mid_leg_l_j
+    pid: {p: 100.0, i: 1, d: 1}
+    
+feet_l_servo_velocity_controller:
+    type: "velocity_controllers/JointVelocityController"
+    joint: feet_l_j
+    pid: {p: 100.0, i: 1, d: 1}
+
+

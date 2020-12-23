@@ -42,14 +42,14 @@ class EnvIfaceStandUp(object):
         ## 
         # TODO to params, or better read somehow from urdf or whatever
         self.max_vel_servo = 2
-        self.max_feet_p = np.pi/2
+        self.max_feet_p = 1.5#np.pi/2
         self.min_feet_p = -np.pi/2
         self.max_mid_p = 0
-        self.min_mid_p = -np.pi
-        self.max_up_p = np.pi/2
+        self.min_mid_p = 3#-np.pi
+        self.max_up_p = 1.5#np.pi/2
         self.min_up_p = -np.pi/2        
-        self.max_head_p = np.pi/2
-        self.min_head_p = -np.pi/2
+        self.max_head_p = 1.5#np.pi/2
+        self.min_head_p = -1.5#-np.pi/2
         ##
             
         self.episode_end = False
@@ -96,9 +96,8 @@ class EnvIfaceStandUp(object):
         rospy.Subscriber("/head_servo_state_controller/state", JointTrajectoryControllerState, self.head_state_cb)
         
         self.last_fall = False
-        rospy.Subscriber("fall_detector_contacts/fall", Bool, self.fall_cb)
-        
-        
+        rospy.Subscriber("fall_detector/fall", Bool, self.fall_cb)
+                
         rospy.logwarn("[{}] ready!".format(self.name))
         
     def fall_cb(self, msg):

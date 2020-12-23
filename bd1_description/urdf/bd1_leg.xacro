@@ -58,7 +58,7 @@
     <!-- 
     FULL LEG
     -->
-    <xacro:macro name="bd1_leg" params="side y_mul servo_velocity">
+    <xacro:macro name="bd1_leg" params="side y_mul servo_velocity servo_effort">
         
         <!--
         UP
@@ -97,7 +97,7 @@
             <child link="up_leg_${side}_link"/>
             
             <origin xyz="0 ${y_mul*legs_baseline/2} 0" rpy="0 ${pi/2} 0"/>
-            <limit effort="30" velocity="${servo_velocity}" lower="${-pi/2}" upper="${pi/2}"/>
+            <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="${-pi/2}" upper="1.5"/>
             <axis xyz="0 1 0"/>
         </joint>
         
@@ -140,7 +140,7 @@
             <child link="mid_leg_${side}_link"/>
             
             <origin xyz="0.15 ${y_mul*0.009} 0" rpy="0 0 0"/>
-            <limit effort="30" velocity="${servo_velocity}" lower="${-pi}" upper="0"/>
+            <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="-3" upper="0"/>
             <axis xyz="0 1 0"/>
         </joint>
         
@@ -184,7 +184,7 @@
             <child link="feet_${side}_link"/>
             
             <origin xyz="0.15 ${-y_mul*0.0045} 0" rpy="0 ${-pi/2} 0"/>
-            <limit effort="30" velocity="${servo_velocity}" lower="${-pi/2}" upper="${pi/2}"/>
+            <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="${-pi/2}" upper="1.5"/>
             <axis xyz="0 1 0"/>
         </joint>
         
