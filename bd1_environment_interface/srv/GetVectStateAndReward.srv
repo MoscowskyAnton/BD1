@@ -1,0 +1,7 @@
+---
+# state is: 
+# bd1_x bd1_y bd1_z bd1_R bd1_P bd1_Y 
+# neckP headP up_rP, mid_rP, feet_rP, up_lP, mid_lP, feet_lP
+float64[14] state
+float64 reward
+bool episode_end

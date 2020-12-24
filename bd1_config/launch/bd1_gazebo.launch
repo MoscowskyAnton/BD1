@@ -32,14 +32,16 @@
         <param name="target_z" value="0.34"/>
     </node>
     
-    <!--<node name="standup_train" pkg="bd1_train" type="standup_train.py" output="screen">
+    <node name="standup_train" pkg="bd1_train" type="standup_train.py" output="screen">
         <param name="episode_duration_sec" value="0.05"/>
         <param name="memcap_replase_buffer_size" value="500"/>
-        <param name="var_control_extrapolation" value="4"/>
+        <param name="var_control_extrapolation" value="2"/>
         
-    </node>-->
+        <param name="save_path" value="$(find bd1_train)/models"/>
+        
+    </node>
     
-    <!--<node name="bd1_fall_detector" pkg="fall_detector" type="fall_detector_contacts" output="screen"/>-->
+    <node name="fall_detector" pkg="bd1_fall_detector" type="fall_detector_contacts" output="screen"/>
     
 </launch>
     

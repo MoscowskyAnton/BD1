@@ -14,7 +14,7 @@
     
     <xacro:property name="mid_leg_aprox_x" value="0.22"/>
     <xacro:property name="mid_leg_aprox_y" value="0.02"/>
-    <xacro:property name="mid_leg_aprox_z" value="0.08"/>
+    <xacro:property name="mid_leg_aprox_z" value="0.06"/>
     <xacro:property name="mid_leg_mass" value="0.25"/>
     <xacro:property name="mid_shift_x" value="0.07"/>
     <xacro:property name="mid_shift_y" value="0.01"/>

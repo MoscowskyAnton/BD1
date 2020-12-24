@@ -58,6 +58,7 @@ add_service_files(
   SetAction.srv
   SetVectAction.srv
   GetStateAndReward.srv
+  GetVectStateAndReward.srv
 )
 
 ## Generate actions in the 'action' folder

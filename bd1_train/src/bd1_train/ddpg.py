@@ -4,6 +4,7 @@
 import numpy as np
 import tensorflow as tf
 import tensorlayer as tl
+import os
 
 # taken from 
 # https://github.com/tensorlayer/tensorlayer/blob/master/examples/reinforcement_learning/tutorial_DDPG.py
