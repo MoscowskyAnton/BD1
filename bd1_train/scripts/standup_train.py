@@ -46,13 +46,15 @@ class StandUpTrain(object):
         self.max_episode_reward = -100
         self.all_max_episode_reward = []
         self.all_episode_mean_reward = []
+        self.all_steps_reward  = []
         self.episode_reward = 0
         self.action = None
         self.train_test_mode = 'train'
         self.switch_mode = False
         self.continue_training = False
                 
-        self.agent = DDPG(8, 14, 1, self.hyper_parameters)                
+        #self.agent = DDPG(8, 14, 1, self.hyper_parameters)
+        self.agent = DDPG(3, 9, 1, self.hyper_parameters)                
         
         rospy.logwarn("[{}] DDPG inited!".format(self.name))
         
@@ -63,6 +65,7 @@ class StandUpTrain(object):
         
         self.update_plot = False
         self.reloading = False        
+        self.cmap = plt.get_cmap("tab10")
         
         # services init
         rospy.wait_for_service('environment_interface_standup/reset')
@@ -124,10 +127,14 @@ class StandUpTrain(object):
                  #sar.pose_x, sar.pose_y, sar.pose_z,
                  #sar.rot_r, sar.rot_p, sar.rot_y]        
         #print(sar)
-        return np.array(sar)                
+        return np.array(sar[:6]+sar[8:11])           
     
     def start_new_episode(self):
-        rospy.logwarn("[{}] Starting new episode!".format(self.name))            
+        rospy.logwarn("[{}] Starting new episode!".format(self.name))          
+        
+        if( self.agent.pointer < self.hyper_parameters['MEMORY_CAPACITY']):
+            rospy.loginfo("[{}] {}\{} for learning.".format(self.name,self.agent.pointer, self.hyper_parameters['MEMORY_CAPACITY']))
+        
         if self.episode == 0:
             self.all_episode_reward.append(self.episode_reward)            
         else:            
@@ -141,11 +148,14 @@ class StandUpTrain(object):
         init_sar = self.get_state_and_reward_srv()
         self.state = self.vectorize_state(init_sar.state)
         self.action = self.agent.get_action(self.state)
-        self.set_action_srv(self.action.tolist()) 
+        self.set_action_srv(self.action.tolist() + [0]*5) 
         self.all_max_episode_reward.append(self.max_episode_reward)
         self.max_episode_reward = -100
+        self.prev_all_step_reward = self.all_steps_reward
+        self.all_steps_reward = []
         self.update_plot = True
         self.reloading = False
+        
         
     
     def train_cb(self, event):    
@@ -164,7 +174,7 @@ class StandUpTrain(object):
                 self.state = self.vectorize_state(init_sar.state)
                 self.episode_reward = 0
                 self.action = self.agent.get_action(self.state)
-                self.set_action_srv(self.action.tolist()) 
+                self.set_action_srv(self.action.tolist() + [0]*5) 
                 self.step+=1
                 return # maybe
                 
@@ -176,12 +186,17 @@ class StandUpTrain(object):
             state_ = self.vectorize_state(new_sar.state)
             reward = new_sar.reward
             done = new_sar.episode_end        
+            if done:
+                reward -= 0.01
+            self.all_steps_reward.append(reward)
             self.agent.store_transition(self.state, self.action, reward, state_) # we store here PREVIOUS action
+            
+            #print("{} -> {}".format(self.state, state_))
             
             self.state = state_
             
             self.action = self.agent.get_action(self.state)        
-            self.set_action_srv(self.action.tolist()) 
+            self.set_action_srv(self.action.tolist() + [0]*5) 
                                             
             if self.agent.pointer > self.hyper_parameters['MEMORY_CAPACITY'] :    
                 self.pause_srv()
@@ -204,7 +219,7 @@ class StandUpTrain(object):
                     #self.all_episode_reward.append(self.episode_reward)
                     self.episode_reward = 0
                     self.action = self.agent.get_action(self.state, greedy = True).numpy()
-                    self.set_action_srv(self.action.tolist()) 
+                    self.set_action_srv(self.action.tolist() + [0]*5) 
                     
                     return
                 self.reloading = True
@@ -215,6 +230,7 @@ class StandUpTrain(object):
             if self.switch_mode:
                 self.train_test_mode = "train"
                 rospy.logwarn("[{}] Switch mode to TRAIN".format(self.name))            
+                self.switch_mode = False
                 self.start_new_episode()
                 return
             
@@ -224,7 +240,7 @@ class StandUpTrain(object):
             self.state = self.vectorize_state(sar.state)
             self.episode_reward += sar.reward
             self.action = self.agent.get_action(self.state, greedy = True).numpy()
-            self.set_action_srv(self.action.tolist()) 
+            self.set_action_srv(self.action.tolist() + [0]*5) 
             
             rospy.loginfo("[{}] [Test] Step {}/{}, Episode reward: {:.4f}".format(self.name, self.step, self.max_steps, self.episode_reward))
             
@@ -236,7 +252,7 @@ class StandUpTrain(object):
                 init_sar = self.get_state_and_reward_srv()
                 self.state = self.vectorize_state(init_sar.state)
                 self.action = self.agent.get_action(self.state)
-                self.set_action_srv(self.action.tolist()) 
+                self.set_action_srv(self.action.tolist() + [0]*5) 
                                                     
                             
         
@@ -244,12 +260,15 @@ class StandUpTrain(object):
         #rospy.spin()
         while(not rospy.is_shutdown()):         
             if self.update_plot:            
-                plt.cla()
-                plt.plot(self.all_episode_reward, '.', label="sum reward")
-                plt.plot(self.all_max_episode_reward, '.', label="max_reward")
-                plt.plot(self.all_episode_mean_reward, '.', label="mean_reward")
+                #plt.cla()
+                #plt.plot(self.all_episode_reward, '.', label="sum reward")
+                xticks = [self.episode + x * (1/(len(self.prev_all_step_reward)+1) ) for x in range(len(self.prev_all_step_reward))]
+                plt.plot(xticks, self.prev_all_step_reward, '-', color = self.cmap(0), label="steps_reward")
+                plt.plot(self.episode, self.all_episode_reward[-1], '.', color = self.cmap(1), label="steps_reward")
+                #plt.plot(self.all_max_episode_reward, '.', label="max_reward")
+                #plt.plot(self.all_episode_mean_reward, '.', label="mean_reward")
                 plt.title('Episode Reward')
-                plt.legend()
+                #plt.legend()
                 plt.pause(0.1)
                 self.update_plot = False
     

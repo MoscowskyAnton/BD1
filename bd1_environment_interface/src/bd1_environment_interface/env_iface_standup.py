@@ -187,6 +187,10 @@ class EnvIfaceStandUp(object):
             self.send_vel_cmd_right_leg(self.max_vel_servo, -self.max_vel_servo, self.max_vel_servo)
             self.send_vel_cmd_head(-self.max_vel_servo, self.max_vel_servo)
             rospy.sleep(2) # TODO place for improovment
+                
+            self.send_vel_cmd_left_leg(0, 0, 0)
+            self.send_vel_cmd_right_leg(0, 0, 0)
+            self.send_vel_cmd_head(0, 0)
             
         # replace robot 
         ms = ModelState()
@@ -194,6 +198,8 @@ class EnvIfaceStandUp(object):
         ms.pose.position.z = 0.15
         self.set_model_state_srv(ms)
         rospy.sleep(0.5)        
+        
+        
         
         return []        
     
@@ -354,8 +360,11 @@ class EnvIfaceStandUp(object):
             
             
         # REWARD
+        #res.reward = - np.power(self.target_z - model_state.pose.position.z, 2) 
+        
         #res.reward = -( np.power(self.target_x - model_state.pose.position.x, 2) + np.power(self.target_y - model_state.pose.position.y, 2) + np.power(self.target_z - model_state.pose.position.z, 2) )
-        res.reward = - np.power(self.target_z - model_state.pose.position.z, 2) 
+        #res.reward = -( np.power(self.target_z - model_state.pose.position.z, 2) + np.absolute(np.sin(rpy[1])) )
+        res.reward = model_state.pose.position.z**2
             
         res.episode_end = self.falls.in_(True)
         
