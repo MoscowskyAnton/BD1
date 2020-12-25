@@ -26,8 +26,8 @@ class CircleBuffer(object):
             self.storage.append(x)
         else:
             self.storage[self.pos] = x
-            self.pos =+1
-            if x >= self.max_el:
+            self.pos+=1
+            if self.pos >= self.max_el:
                 self.pos = 0
                 
     def in_(self, x):
@@ -62,7 +62,7 @@ class EnvIfaceStandUp(object):
             
         ## 
         # TODO to params, or better read somehow from urdf or whatever
-        self.max_vel_servo = 2
+        self.max_vel_servo = 1
         self.max_feet_p = 1.5#np.pi/2
         self.min_feet_p = -np.pi/2
         self.max_mid_p = 0
@@ -134,6 +134,9 @@ class EnvIfaceStandUp(object):
         rospy.wait_for_service('gazebo/get_model_state')
         self.get_model_state_srv = rospy.ServiceProxy('gazebo/get_model_state', GetModelState)
         
+        rospy.wait_for_service('gazebo/reset_world')
+        self.reset_world_srv = rospy.ServiceProxy('gazebo/reset_world', Empty)
+        
         # Interface
         rospy.Service("~reset", Empty, self.reset_cb)
         
@@ -163,8 +166,9 @@ class EnvIfaceStandUp(object):
     def head_state_cb(self, msg):
         self.head_state = msg.actual
         
-    def reset_cb(self, req):    
-        # conceal legs
+    def reset_cb(self, req):
+        #self.reset_world_srv()
+        # conceal legs        
         if self.servo_control == 'TRAJ':            
             self.right_leg_client.send_goal(self.right_leg_cmd_pose(1.5,-3,1.5))
             self.left_leg_client.send_goal(self.left_leg_cmd_pose(1.5,-3,1.5))

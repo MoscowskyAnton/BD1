@@ -80,6 +80,13 @@ class StandUpTrain(object):
         self.set_action_srv = rospy.ServiceProxy('environment_interface_standup/set_vect_action', SetVectAction)
         rospy.loginfo("[{}] set vect action service ready!".format(self.name))
         
+        
+        rospy.wait_for_service('gazebo/pause_physics')
+        self.pause_srv = rospy.ServiceProxy('gazebo/pause_physics', Empty)
+        
+        rospy.wait_for_service('gazebo/unpause_physics')
+        self.unpause_srv = rospy.ServiceProxy('gazebo/unpause_physics', Empty)
+        
         rospy.Service("~change_train_test_mode", Empty, self.change_mode_cb)
         rospy.Service("~save_agent", SaveAgent, self.save_agent_cb)                
         
@@ -176,8 +183,10 @@ class StandUpTrain(object):
             self.action = self.agent.get_action(self.state)        
             self.set_action_srv(self.action.tolist()) 
                                             
-            if self.agent.pointer > self.hyper_parameters['MEMORY_CAPACITY'] :                
+            if self.agent.pointer > self.hyper_parameters['MEMORY_CAPACITY'] :    
+                self.pause_srv()
                 self.agent.learn() # NOTE if it long operation maybe pause simulation?            
+                self.unpause_srv()
                     
             if reward > self.max_episode_reward:
                 self.max_episode_reward = reward

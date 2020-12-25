@@ -1,1 +1,2 @@
 *.pyc
+/bd1_train/models*

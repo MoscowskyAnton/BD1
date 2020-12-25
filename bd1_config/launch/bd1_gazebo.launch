@@ -16,7 +16,7 @@
     </include>            
     
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" 
-    args="-param robot_description -urdf -z 0.5 -x 0 -y 0 -Y 0 -model $(arg robot)" />        
+    args="-param robot_description -urdf -z 0.2 -x 0 -y 0 -Y 0 -model $(arg robot)" />        
     
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
         <arg name="debug" value="false" />
@@ -34,8 +34,8 @@
     
     <node name="standup_train" pkg="bd1_train" type="standup_train.py" output="screen">
         <param name="episode_duration_sec" value="0.05"/>
-        <param name="memcap_replase_buffer_size" value="500"/>
-        <param name="var_control_extrapolation" value="2"/>
+        <param name="memcap_replase_buffer_size" value="1000"/>
+        <param name="var_control_extrapolation" value="0.2"/>
         
         <param name="save_path" value="$(find bd1_train)/models"/>
         
