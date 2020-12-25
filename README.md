@@ -25,6 +25,7 @@ Make a real BD1 robot, that could walk in the real world envinroment.
 1. Install additional ROS packages (list is not full, because hasn't been tested on virgin mashine yet)
 ```bash
 sudo apt install ros-noetic-joint-trajectory-controller
+sudo apt install ros-noetic-velocity-controllers
 ```
 2. Install [tensorlayer](https://github.com/tensorlayer/tensorlayer)
 ```bash
