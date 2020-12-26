@@ -29,8 +29,16 @@ sudo apt install ros-noetic-velocity-controllers
 ```
 2. Install [tensorlayer](https://github.com/tensorlayer/tensorlayer)
 ```bash
+pip3 install tensorflow-gpu==2.0.0-rc1
+```
+**or** if you has no GPU
+```bash
 pip3 install tensorflow==2.2.0
+```
+then
+```bash
 pip3 install tensorlayer
+pip3 install tensorflow_probability==0.10.1 # for TD3 usage
 ```
 Version 2.2.0 is newest version that throws no errors for me.
 
