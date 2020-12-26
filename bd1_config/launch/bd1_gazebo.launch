@@ -16,7 +16,7 @@
     </include>            
     
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" 
-    args="-param robot_description -urdf -z 0.2 -x 0 -y 0 -Y 0 -model $(arg robot)" />        
+    args="-param robot_description -urdf -z 0.1 -x 0 -y 0 -Y 0 -model $(arg robot)" />        
     
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
         <arg name="debug" value="false" />
@@ -26,7 +26,21 @@
         <arg name="headless" value="false"/>
     </include>                        
     
-    <node name="environment_interface_standup" pkg="bd1_environment_interface" type="env_iface_standup.py" output="screen">
+    <node name="simple_standup_interface" pkg="bd1_gazebo_env_interface" type="simple_standup_gazebo_environment_inteface.py" output="screen">
+
+    </node>
+    
+    <node name="standup_train" pkg="bd1_train" type="standup_train_ppo.py" output="screen">
+        <param name="episode_duration_sec" value="0.1"/>                        
+        
+        <param name="save_path" value="$(find bd1_train)/models/PPO/simple_standup/default"/>  
+        <!--<param name="load_path" value="$(find bd1_train)/models/PPO/simple_standup/default/fully_trained"/>-->
+        <!--<param name="num_episodes" value="0"/>   -->
+        <param name="num_episodes" value="1000"/>   
+                        
+    </node>
+    
+    <!--<node name="environment_interface_standup" pkg="bd1_environment_interface" type="env_iface_standup.py" output="screen">
         <param name="target_x" value="0.0"/>
         <param name="target_y" value="0.0"/>
         <param name="target_z" value="0.34"/>
@@ -34,15 +48,19 @@
     
     <node name="standup_train" pkg="bd1_train" type="standup_train.py" output="screen">
         <param name="episode_duration_sec" value="0.05"/>
-        <param name="memcap_replase_buffer_size" value="1000"/>
-        <param name="var_control_extrapolation" value="0.2"/>
-        <param name="save_path" value="$(find bd1_train)/models"/>
+        <param name="memcap_replase_buffer_size" value="10000"/>
+        <param name="var_control_extrapolation" value="1"/>                
+        <param name="batch_size" value="512"/>
+        <param name="max_steps" value="150"/>
         
-        <param name="max_steps" value="100"/>
+        <param name="save_path" value="$(find bd1_train)/models"/>        
+        <param name="load_pathNO" value="$(find bd1_train)/models/1000"/>
+        <param name="episode_backup_num" value="250"/>
         
-    </node>
+    </node>-->
     
     <node name="fall_detector" pkg="bd1_fall_detector" type="fall_detector_contacts" output="screen"/>
     
 </launch>
     
+

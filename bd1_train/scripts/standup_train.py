@@ -54,10 +54,11 @@ class StandUpTrain(object):
         self.continue_training = False
                 
         #self.agent = DDPG(8, 14, 1, self.hyper_parameters)
-        self.agent = DDPG(3, 9, 1, self.hyper_parameters)                
+        self.agent = DDPG(3, 12, 1, self.hyper_parameters)                
         
         rospy.logwarn("[{}] DDPG inited!".format(self.name))
         
+        self.backup_num = rospy.get_param('~episode_backup_num', 500)
         self.save_path = rospy.get_param('~save_path', "/tmp")
         self.load_path = rospy.get_param('~load_path', None)
         if self.load_path is not None:
@@ -127,20 +128,33 @@ class StandUpTrain(object):
                  #sar.pose_x, sar.pose_y, sar.pose_z,
                  #sar.rot_r, sar.rot_p, sar.rot_y]        
         #print(sar)
-        return np.array(sar[:6]+sar[8:11])           
+        #return np.array(sar[:6]+sar[8:11])
+        return np.array(sar[:12])           
     
     def start_new_episode(self):
         rospy.logwarn("[{}] Starting new episode!".format(self.name))          
         
-        if( self.agent.pointer < self.hyper_parameters['MEMORY_CAPACITY']):
+        if( self.agent.pointer <= self.hyper_parameters['MEMORY_CAPACITY']):
             rospy.loginfo("[{}] {}\{} for learning.".format(self.name,self.agent.pointer, self.hyper_parameters['MEMORY_CAPACITY']))
+        else:             
+            self.agent.learn()         
         
         if self.episode == 0:
             self.all_episode_reward.append(self.episode_reward)            
         else:            
             self.all_episode_reward.append(self.all_episode_reward[-1] * 0.9 + self.episode_reward * 0.1)
-        self.all_episode_mean_reward.append(self.episode_reward/self.step)
+        #self.all_episode_mean_reward.append(self.episode_reward/self.step)
         self.episode+=1
+        
+        if self.episode >= self.num_episodes:
+            self.save_agent("fully_trained")
+            rospy.logwarn("[{}] Training is complete!".format(self.name)) 
+            self.train_test_mode = "test"
+        else:
+            if self.episode % self.backup_num == 0:
+                self.save_agent("backup{}".format(self.episode))
+                rospy.logwarn("[{}] Backup on {} episodes saved!".format(self.name, self.episode)) 
+        
         self.reset_srv()        
         
         self.step = 0
@@ -158,9 +172,7 @@ class StandUpTrain(object):
         
         
     
-    def train_cb(self, event):    
-        if self.episode >= self.num_episodes:
-            self.save_agent("fully_trained")
+    def train_cb(self, event):            
         
         if self.reloading:
             return
@@ -186,11 +198,11 @@ class StandUpTrain(object):
             state_ = self.vectorize_state(new_sar.state)
             reward = new_sar.reward
             done = new_sar.episode_end        
-            if done:
-                reward -= 0.01
+            #if done:
+                #reward -= 0.01
             self.all_steps_reward.append(reward)
             self.agent.store_transition(self.state, self.action, reward, state_) # we store here PREVIOUS action
-            
+            #print(self.state, self.action, reward, state_)
             #print("{} -> {}".format(self.state, state_))
             
             self.state = state_
@@ -198,10 +210,10 @@ class StandUpTrain(object):
             self.action = self.agent.get_action(self.state)        
             self.set_action_srv(self.action.tolist() + [0]*5) 
                                             
-            if self.agent.pointer > self.hyper_parameters['MEMORY_CAPACITY'] :    
-                self.pause_srv()
-                self.agent.learn() # NOTE if it long operation maybe pause simulation?            
-                self.unpause_srv()
+            #if self.agent.pointer > self.hyper_parameters['MEMORY_CAPACITY'] :    
+                #self.pause_srv()
+                #self.agent.learn() # NOTE if it long operation maybe pause simulation?            
+                #self.unpause_srv()
                     
             if reward > self.max_episode_reward:
                 self.max_episode_reward = reward
@@ -271,6 +283,8 @@ class StandUpTrain(object):
                 #plt.legend()
                 plt.pause(0.1)
                 self.update_plot = False
+                if self.episode % self.backup_num == 0:
+                    plt.savefig(self.save_path+"/backup{}/rewards.png".format(self.episode))
     
 if __name__ == '__main__' :
     sut = StandUpTrain()

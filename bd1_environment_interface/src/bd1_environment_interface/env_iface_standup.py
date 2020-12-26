@@ -14,6 +14,7 @@ from bd1_environment_interface.msg import State
 from tf.transformations import euler_from_quaternion
 import numpy as np
 import tf2_ros
+from sensor_msgs.msg import JointState
 
 class CircleBuffer(object):
     def __init__(self, max_el):
@@ -121,10 +122,12 @@ class EnvIfaceStandUp(object):
             self.feet_l_pub = rospy.Publisher('feet_l_servo_velocity_controller/command', Float64, queue_size = 1)
             
             # robot state            
-            self.parent_link = "base_link"
-            self.links = ['neck_link', 'head_link', 'up_leg_r_link', 'mid_leg_r_link', 'feet_r_link', 'up_leg_l_link', 'mid_leg_l_link', 'feet_l_link']
-            self.tfBuffer = tf2_ros.Buffer()
-            self.tfListener = tf2_ros.TransformListener(self.tfBuffer)
+            #self.parent_link = "base_link"
+            #self.links = ['neck_link', 'head_link', 'up_leg_r_link', 'mid_leg_r_link', 'feet_r_link', 'up_leg_l_link', 'mid_leg_l_link', 'feet_l_link']
+            #self.tfBuffer = tf2_ros.Buffer()
+            #self.tfListener = tf2_ros.TransformListener(self.tfBuffer)
+            self.last_joint_states = None
+            rospy.Subscriber("joint_states", JointState, self.joint_states_cb)
             
                 
         # gazebo
@@ -153,6 +156,9 @@ class EnvIfaceStandUp(object):
                 
         rospy.logwarn("[{}] ready!".format(self.name))
         
+    def joint_states_cb(self, msg):
+        self.last_joint_states = msg
+        
     def fall_cb(self, msg):
         #self.last_fall = msg.data
         self.falls.append(msg.data)
@@ -180,17 +186,17 @@ class EnvIfaceStandUp(object):
         if self.servo_control == 'VEL':
             ms = ModelState()
             ms.model_name = "bd1"
-            ms.pose.position.z = 20
+            ms.pose.position.z = 30
             self.set_model_state_srv(ms)
             
             self.send_vel_cmd_left_leg(self.max_vel_servo, -self.max_vel_servo, self.max_vel_servo)
             self.send_vel_cmd_right_leg(self.max_vel_servo, -self.max_vel_servo, self.max_vel_servo)
             self.send_vel_cmd_head(-self.max_vel_servo, self.max_vel_servo)
-            rospy.sleep(2) # TODO place for improovment
+            rospy.sleep(2.5) # TODO place for improovment
                 
-            self.send_vel_cmd_left_leg(0, 0, 0)
-            self.send_vel_cmd_right_leg(0, 0, 0)
-            self.send_vel_cmd_head(0, 0)
+            #self.send_vel_cmd_left_leg(0, 0, 0)
+            #self.send_vel_cmd_right_leg(0, 0, 0)
+            #self.send_vel_cmd_head(0, 0)
             
         # replace robot 
         ms = ModelState()
@@ -354,9 +360,12 @@ class EnvIfaceStandUp(object):
         res.state[5] = rpy[2]
         
         # SERVOS positions
-        for i, link in enumerate(self.links):
-            trans = self.tfBuffer.lookup_transform(self.parent_link, link, rospy.Time())
-            res.state[6+i] = euler_from_quaternion([trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w])[1]                
+        #for i, link in enumerate(self.links):
+            #trans = self.tfBuffer.lookup_transform(self.parent_link, link, rospy.Time())
+            #res.state[6+i] = euler_from_quaternion([trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w])[1]                
+        pos_vel = [self.last_joint_states.position[0], self.last_joint_states.position[3],self.last_joint_states.position[6],self.last_joint_states.velocity[0], self.last_joint_states.velocity[3],self.last_joint_states.velocity[6]]    
+        
+        res.state[6:12] = pos_vel
             
             
         # REWARD

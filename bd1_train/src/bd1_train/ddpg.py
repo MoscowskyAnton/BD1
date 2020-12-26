@@ -129,11 +129,11 @@ class DDPG(object):
         critic_grads = tape.gradient(td_error, self.critic.trainable_weights)
         self.critic_opt.apply_gradients(zip(critic_grads, self.critic.trainable_weights))
 
-        with tf.GradientTape() as tape: #NOTE https://towardsdatascience.com/deep-deterministic-policy-gradient-ddpg-theory-and-implementation-747a3010e82f says taht TF recommends use different tapes for different networks
+        with tf.GradientTape() as tape2: #NOTE https://towardsdatascience.com/deep-deterministic-policy-gradient-ddpg-theory-and-implementation-747a3010e82f says taht TF recommends use different tapes for different networks
             a = self.actor(states)
             q = self.critic([states, a])
             actor_loss = -tf.reduce_mean(q)  # maximize the q
-        actor_grads = tape.gradient(actor_loss, self.actor.trainable_weights)
+        actor_grads = tape2.gradient(actor_loss, self.actor.trainable_weights)
         self.actor_opt.apply_gradients(zip(actor_grads, self.actor.trainable_weights))
         self.ema_update()
 

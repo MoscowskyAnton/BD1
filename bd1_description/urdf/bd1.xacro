@@ -109,8 +109,8 @@
         <parent link="body_link"/>
         <child link="neck_link"/>
         
-        <origin xyz="${neck_shift_x} ${neck_shift_y} ${neck_shift_z}" rpy="0 0 0"/>
-        <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="-1.5" upper="1.5"/>
+        <origin xyz="${neck_shift_x} ${neck_shift_y} ${neck_shift_z}" rpy="0 -1.5 0"/>
+        <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="0" upper="${pi}"/>
         <axis xyz="0 1 0"/>
         <dynamics damping="${servo_friction}"/>
     </joint>
@@ -153,8 +153,8 @@
         <parent link="neck_link"/>
         <child link="head_link"/>
         
-        <origin xyz="0 0 ${neck_len}" rpy="0 0 0"/>
-        <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="-1.5" upper="1.5"/>
+        <origin xyz="0 0 ${neck_len}" rpy="0 1.5 0"/>
+        <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="0" upper="${pi}"/>
         <axis xyz="0 1 0"/>
         <dynamics damping="${servo_friction}"/>
     </joint>

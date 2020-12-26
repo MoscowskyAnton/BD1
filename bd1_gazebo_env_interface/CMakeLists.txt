@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(bd1_train)
+project(bd1_gazebo_env_interface)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -20,7 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-catkin_python_setup()
+# catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -56,7 +56,8 @@ catkin_python_setup()
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  SaveAgent.srv  
+  Step.srv
+  Reset.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -103,7 +104,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES bd1_train
+#  LIBRARIES bd1_gazebo_env_interface
 #  CATKIN_DEPENDS rospy std_msgs
 #  DEPENDS system_lib
 )
@@ -121,7 +122,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/bd1_train.cpp
+#   src/${PROJECT_NAME}/bd1_gazebo_env_interface.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -132,7 +133,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/bd1_train_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/bd1_gazebo_env_interface_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -196,7 +197,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_bd1_train.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_bd1_gazebo_env_interface.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
@@ -206,7 +207,6 @@ include_directories(
 
 if ("$ENV{ROS_DISTRO}" STREQUAL "noetic")
 catkin_install_python(PROGRAMS
-    scripts/standup_train.py
-    scripts/standup_train_ppo.py
+    src/simple_standup_gazebo_environment_inteface.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 endif()
