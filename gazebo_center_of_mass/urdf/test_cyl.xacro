@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="test_cyl" >
+    <xacro:property name="body_aprox_x" value="0.2"/>
+    <xacro:property name="body_aprox_y" value="0.2"/>
+    <xacro:property name="body_aprox_z" value="0.2"/>
+    <xacro:property name="body_mass" value="1"/>
+    <xacro:property name="body_shift_x" value="0.05"/>
+    <xacro:property name="body_shift_y" value="0.05"/>
+    <xacro:property name="body_shift_z" value="0.05"/>
+
+    
+    <link name="body_link">
+        <visual>
+            <origin xyz="${body_shift_x} ${body_shift_y} ${body_shift_z}" rpy=" 0 0 0"/>
+            <geometry>
+                <box size="${body_aprox_x} ${body_aprox_y} ${body_aprox_z}"/>
+            </geometry>
+            <material name="white">
+                <color rgba="1 1 1 1"/>
+            </material>
+        </visual>
+        
+        <collision name="body_link_collision">
+            <origin xyz="${body_shift_x} ${body_shift_y} ${body_shift_z}" rpy=" 0 0 0"/>
+            <geometry>                                
+                <box size="${body_aprox_x} ${body_aprox_y} ${body_aprox_z}"/>
+            </geometry>
+        </collision>
+        
+        <inertial>
+            <origin xyz="${body_shift_x} ${body_shift_y} ${body_shift_z}" rpy="0 0 0"/>
+            <mass value="${body_mass}"/>            
+            <inertia
+                ixx="${0.08*body_mass*(body_aprox_y*body_aprox_y+body_aprox_z*body_aprox_z)}" ixy="0" ixz="0"
+                iyy="${0.08*body_mass*(body_aprox_x*body_aprox_x+body_aprox_z*body_aprox_z)}" iyz="0"
+                izz="${0.08*body_mass*(body_aprox_x*body_aprox_x+body_aprox_y*body_aprox_y)}"
+            />
+
+        </inertial>
+    </link>
+</robot>
