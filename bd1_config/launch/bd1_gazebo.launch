@@ -33,20 +33,23 @@
     <node name="standup_train" pkg="bd1_train" type="standup_train_ppo.py" output="screen"  required="True">
         <param name="episode_duration_sec" value="0.1"/>
         
-        <param name="state_dim" value="19"/>                        
+        <param name="state_dim" value="19"/> 
+        <!--<param name="state_dim" value="12"/>-->
         
-        <param name="save_path" value="$(find bd1_train)/models/PPO/simple_standup/penalty_0.1dur_300steps"/> 
-        <!--<param name="load_path" value="$(find bd1_train)/models/PPO/simple_standup/default_but_penalty/fully_trained"/>-->
-        <!--<param name="mode" value="test"/>-->           
+        <param name="save_path" value="$(find bd1_train)/models/PPO/simple_standup/penalty_pos_angle_vel_reward"/> 
+        <!--<param name="load_path" value="$(find bd1_train)/models/PPO/simple_standup/penalty_0.1dur_300steps/fully_trained"/>-->
+        <!--<param name="mode" value="test"/>  -->         
         <param name="sub_method" value="penalty"/>   
-        <param name="num_episodes" value="2000"/>   
+        <param name="num_episodes" value="20"/>   
         <param name="backup_saves" value="250"/>
-        <param name="test_episodes" value="100"/>
+        <param name="test_episodes" value="20"/>
         <param name="max_steps" value="300"/>
         <param name="step_duration_sec" value="0.1"/>   
-        
-        
-                        
+                                        
+    </node>
+    
+    <node name="gazebo_center_of_mass" pkg="gazebo_center_of_mass" type="gazebo_center_of_mass.py" output="screen">
+        <param name="robot_name" value="bd1" />
     </node>
     
     <!--<node name="environment_interface_standup" pkg="bd1_environment_interface" type="env_iface_standup.py" output="screen">

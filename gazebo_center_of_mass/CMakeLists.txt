@@ -203,3 +203,9 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+if ("$ENV{ROS_DISTRO}" STREQUAL "noetic")
+catkin_install_python(PROGRAMS
+    src/gazebo_center_of_mass.py
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+endif()

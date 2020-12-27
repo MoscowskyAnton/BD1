@@ -53,6 +53,7 @@ class UniversalGazeboEnvironmentInterface(object):
         self.last_episode_fall = []
         rospy.Subscriber("fall_detector/fall", Bool, self.fall_cb)
         
+        rospy.sleep(2) # KOSTYL
         # service servers
         rospy.Service("~reset", Reset, self.reset_cb)
         rospy.Service("~step", Step, self.step_cb)
@@ -150,12 +151,12 @@ class UniversalGazeboEnvironmentInterface(object):
     # DATA COLLECTING
     #
     def joint_states_cb(self, msg):
-        self.last_joint_states = msg
+        self.last_joint_states = msg        
         
     def fall_cb(self, msg):
         self.last_episode_fall.append(msg.data)
         
-    def run(self):
+    def run(self):        
         rospy.spin()
         
 if __name__ == '__main__' :
