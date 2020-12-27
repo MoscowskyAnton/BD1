@@ -1,0 +1,41 @@
+flowchart TB      
+    classDef done fill:#fff,stroke-width:2,stroke:#000    
+    classDef wip fill:#f55,color:#fff,stroke-width:0
+    classDef task fill:#888,color:#111,stroke-width:0
+    classDef entry fill:#000,color:#fff,stroke-width:0
+    subgraph legend [LEGEND]
+    A(TASK):::task
+    A --> B(WIP):::wip
+    B --> C(DONE):::done
+    end
+    ENTRY((START HERE)):::entry --> SA    
+    subgraph sim [SIMULATION PART]
+    SA(Gazebo cotrollable model of droid):::done        
+    SA --> SAa(Deploy Fall Detector):::done
+    SA --> SAb(Obtain rodot's center mass):::task
+    SA --> SC(Provide gym-like environment interface):::done
+    SC --> SB(Attach some RL alghoritms):::wip   
+    SAa --> SB
+    SB --> SB1(Teach robot do basic movements):::wip 
+    SB1 --> SD(Stanup and balance):::wip
+    SD --> SD1(Synchronized legs and static head):::wip
+    SD --> SD2(Synchronized legs and free head):::task
+    SD --> SD3(Independed legs):::task
+    SB1 --> SE(Walk):::task
+    SF(Control node with learned actions switch):::task
+    SB1 ----> SF
+    SF --> SG(Deploy path planner):::task
+    SG --> ENDSIM((SIM DONE)):::entry
+    end
+    ENDSIM --> RA
+    subgraph real [REAL PART]
+    RA(Construct real droid):::task
+    RA --> RB(Make Gazebo model corresponding to real):::task
+    RB --> SA
+    end  
+    
+    
+    
+    
+
+            
