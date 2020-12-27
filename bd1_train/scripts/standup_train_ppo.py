@@ -8,26 +8,34 @@ from bd1_train.ppo import PPO
 from bd1_train.srv import SaveAgent, SaveAgentResponse
 from bd1_gazebo_env_interface.srv import Step, Reset
 import matplotlib.pyplot as plt
+import yaml
 
 class StandUpTrain(object):        
     
     def __init__(self):
         
         rospy.init_node('ppo_train_standup')
-        self.name = rospy.get_name()
-        # HYPERPARAMETERS
-        self.step_duration = rospy.get_param("~step_duration_sec", 0.2)
-                
-        self.num_episodes = rospy.get_param("~num_episodes", 1000)
-        self.max_steps = rospy.get_param("~max_steps", 200)                        
+        self.name = rospy.get_name()        
         
+        self.action_dim = rospy.get_param("~action_dim", 3)                
+        self.action_range = rospy.get_param("~action_range", 1)
+        self.state_dim = rospy.get_param("~state_dim", 12) 
+        self.sub_method = rospy.get_param("~sub_method", 'clip') 
+        if self.sub_method != 'clip' or self.sub_method != 'penalty':        
+            self.sub_method = 'clip'
+        
+        self.step_duration = rospy.get_param("~step_duration_sec", 0.2)                
+        self.num_episodes = rospy.get_param("~num_episodes", 1000)
+        self.test_episodes = rospy.get_param("~test_episodes", 10)
+        self.max_steps = rospy.get_param("~max_steps", 200)
+        
+        self.backup_saves = rospy.get_param("~backup_saves", 250)                        
+        # HYPERPARAMETERS
         self.hyper_parameters = {}
         self.hyper_parameters['LR_A'] = rospy.get_param('~actor_learning_rate', 0.0001)
         self.hyper_parameters['LR_C'] = rospy.get_param('~critic_learning_rate', 0.0002)
         self.hyper_parameters['GAMMA'] = rospy.get_param('~gamma_reward_discount', 0.9)
-        #self.hyper_parameters['TAU'] = rospy.get_param('~tau_soft_replacement', 0.01)
-        #self.hyper_parameters['MEMORY_CAPACITY'] = rospy.get_param('~memcap_replase_buffer_size', 10000)
-        #self.hyper_parameters['VAR'] = rospy.get_param('~var_control_extrapolation', 2)
+        
         self.hyper_parameters['BATCH_SIZE'] = rospy.get_param('~batch_size', 32)
         self.hyper_parameters['ACTOR_UPDATE_STEPS'] = rospy.get_param('~actor_update_steps', 10)
         self.hyper_parameters['CRITIC_UPDATE_STEPS'] = rospy.get_param('~critic_update_steps', 10)
@@ -38,8 +46,9 @@ class StandUpTrain(object):
                         
         rospy.loginfo("[{}] initializing PPO...".format(self.name))
                             
-        self.agent = PPO(12, 3, 1, self.hyper_parameters, 'penalty')
-        self.mode = 'train'
+        self.agent = PPO(self.state_dim, self.action_dim, self.action_range, self.hyper_parameters, self.sub_method)
+        self.mode = rospy.get_param("~mode",'train')
+        self.plot_reward = True
         
         rospy.logwarn("[{}] PPO inited!".format(self.name))
         
@@ -61,8 +70,12 @@ class StandUpTrain(object):
         rospy.loginfo("[{}] step service ready!".format(self.name))
                         
         rospy.Service("~change_train_test_mode", Empty, self.change_mode_cb)
-        rospy.Service("~save_agent", SaveAgent, self.save_agent_cb)                
+        rospy.Service("~save_agent", SaveAgent, self.save_agent_cb)
+        rospy.Service("~on_off_reward_plot", Empty, self.on_off_reward_plot_cb)                
                 
+    def on_off_reward_plot_cb(self, req):
+        self.plot_reward = not self.plot_reward
+        return []
         
     def save_agent_cb(self, req):         
         return SaveAgentResponse(self.save_agent(req.name))
@@ -77,43 +90,85 @@ class StandUpTrain(object):
         self.mode = 'test'
         return []                                                                        
                             
+    def export_params(self, name):
+        params = {}
+        params["method"] = "PPO"
+        params["step_duration_sec"] = self.step_duration
+        
+        params["num_episodes"] = self.num_episodes
+        params["max_steps"] = self.max_steps
+        params["sub_method"] = self.sub_method
+        params["action_dim"] = self.action_dim
+        params["action_range"] = self.action_range
+        params["state_dim"] = self.state_dim
+                        
+        # hyper
+        params["actor_learning_rate"] = self.hyper_parameters['LR_A']
+        params["critic_learning_rate"] = self.hyper_parameters['LR_C']
+        params["gamma_reward_discount"] = self.hyper_parameters['GAMMA']
+        params["batch_size"] = self.hyper_parameters['BATCH_SIZE']
+        params["actor_update_steps"] = self.hyper_parameters['ACTOR_UPDATE_STEPS']
+        params["critic_update_steps"] = self.hyper_parameters['CRITIC_UPDATE_STEPS']
+        params["ppo_penalty_param1"] = self.hyper_parameters['KL_TARGET']
+        params["ppo_penalty_param2"] = self.hyper_parameters['LAM']
+        params["ppo_clip_param"] = self.hyper_parameters['EPSILON']
+        #
+        #params["reward_type"] = "Zt - |Zt - Zr|, Zt = 0.26"
+        params["reward_type"] = "-[(0.26-Zr)^2 + 0.1(Pitch_r)^2 + 0.01(Vx^2 + Vy^2 + Vz^2)]"
+        
+        params["pretrained model"] = self.load_path
+        
+        with open(self.save_path + "/"+name+"/config.yaml", 'w') as file:
+            documents = yaml.dump(params, file)
+        
+    def save_all(self, name):
+        self.save_agent(name)
+        self.export_params(name)
+        plt.savefig(self.save_path+"/"+name+"/rewards.png")
         
     def run(self):        
-        #while(not rospy.is_shutdown()):       
-        all_episode_reward = []
-        for episode in range(self.num_episodes):
-            state = np.array(self.env_reset_srv().state)
-            episode_reward = 0
-            for step in range(self.max_steps):
-                action = self.agent.get_action(state)
-                srd = self.env_step_srv(self.step_duration, action.tolist())
-                state_ = np.array(srd.state)
-                self.agent.store_transition(state, action, srd.reward)
-                state = state_
-                episode_reward += srd.reward
+        if self.mode == 'train':
+            all_episode_reward = []
+            true_all_episode_reward = []
+            for episode in range(self.num_episodes):
+                state = np.array(self.env_reset_srv().state)
+                episode_reward = 0
+                for step in range(self.max_steps):
+                    action = self.agent.get_action(state)
+                    srd = self.env_step_srv(self.step_duration, action.tolist())
+                    state_ = np.array(srd.state)
+                    self.agent.store_transition(state, action, srd.reward)
+                    state = state_
+                    episode_reward += srd.reward
+                    
+                    if len(self.agent.state_buffer) > self.hyper_parameters["BATCH_SIZE"]:
+                        self.agent.finish_path(state_, srd.done)
+                        self.agent.update()
+                    if srd.done:
+                        break
+                self.agent.finish_path(state_, srd.done)
+                rospy.loginfo("[{}] Training | Episode: {}/{} | Episode Reward: {:.4f}".format(self.name, episode+1, self.num_episodes, episode_reward))                        
                 
-                if len(self.agent.state_buffer) > self.hyper_parameters["BATCH_SIZE"]:
-                    self.agent.finish_path(state_, srd.done)
-                    self.agent.update()
-                if srd.done:
-                    break
-            self.agent.finish_path(state_, srd.done)
-            rospy.loginfo("[{}] Training | Episode: {}/{} | Episode Reward: {:.4f}".format(self.name, episode+1, self.num_episodes, episode_reward))                        
-            
-            if episode == 0:
-                all_episode_reward.append(episode_reward)
-            else:
-                all_episode_reward.append(all_episode_reward[-1] * 0.9 + episode_reward * 0.1)
+                if episode == 0:
+                    all_episode_reward.append(episode_reward)
+                else:
+                    all_episode_reward.append(all_episode_reward[-1] * 0.9 + episode_reward * 0.1)
+                true_all_episode_reward.append(episode_reward)
                 
-            plt.cla()
-            plt.plot(all_episode_reward, '-', color = self.cmap(0), label="episode_rewards")
-            plt.title("Rewards per episode (with discount)")
-            plt.pause(0.001)
-        self.save_agent("fully_trained")
-        plt.savefig(self.save_path+"/fully_trained/rewards.png")
-            
-        epi_num = 1
-        while(not rospy.is_shutdown()):
+                plt.cla()                
+                plt.plot(all_episode_reward, '-', color = self.cmap(0), label="episode reward discounted")                
+                plt.legend()
+                plt.title("Reward per episode")
+                if self.plot_reward:                    
+                    plt.pause(0.001)
+                    
+                if episode != 0 and episode % self.backup_saves == 0:
+                    name = "backup-{}".format(episode)
+                    self.save_all(name)                            
+            self.save_all("fully_trained")                
+            rospy.logwarn("[{}] Training is complete!".format(self.name))
+                    
+        for episode in range(self.test_episodes):
             state = np.array(self.env_reset_srv().state)
             episode_reward = 0
             for step in range(self.max_steps):
@@ -122,8 +177,7 @@ class StandUpTrain(object):
                 episode_reward += srd.reward
                 if srd.done:
                     break
-            rospy.loginfo("[{}] Teting | Episode: {}/inf | Episode Reward: {:.4f}".format(self.name, epi_num,  episode_reward))
-            epi_num+=1
+            rospy.loginfo("[{}] Teting | Episode: {}/{} | Episode Reward: {:.4f}".format(self.name, episode, self.test_episodes,  episode_reward))            
             
                     
     

@@ -22,7 +22,7 @@
         <arg name="debug" value="false" />
         <arg name="gui" value="true" />
         <arg name="paused" value="$(arg paused)"/>
-        <arg name="use_sim_time" value="true"/>
+        <arg name="use_sim_time" value="false"/>
         <arg name="headless" value="false"/>
     </include>                        
     
@@ -30,13 +30,22 @@
 
     </node>
     
-    <node name="standup_train" pkg="bd1_train" type="standup_train_ppo.py" output="screen">
-        <param name="episode_duration_sec" value="0.1"/>                        
+    <node name="standup_train" pkg="bd1_train" type="standup_train_ppo.py" output="screen"  required="True">
+        <param name="episode_duration_sec" value="0.1"/>
         
-        <param name="save_path" value="$(find bd1_train)/models/PPO/simple_standup/default"/>  
-        <!--<param name="load_path" value="$(find bd1_train)/models/PPO/simple_standup/default/fully_trained"/>-->
-        <!--<param name="num_episodes" value="0"/>   -->
-        <param name="num_episodes" value="1000"/>   
+        <param name="state_dim" value="19"/>                        
+        
+        <param name="save_path" value="$(find bd1_train)/models/PPO/simple_standup/penalty_0.1dur_300steps"/> 
+        <!--<param name="load_path" value="$(find bd1_train)/models/PPO/simple_standup/default_but_penalty/fully_trained"/>-->
+        <!--<param name="mode" value="test"/>-->           
+        <param name="sub_method" value="penalty"/>   
+        <param name="num_episodes" value="2000"/>   
+        <param name="backup_saves" value="250"/>
+        <param name="test_episodes" value="100"/>
+        <param name="max_steps" value="300"/>
+        <param name="step_duration_sec" value="0.1"/>   
+        
+        
                         
     </node>
     

@@ -96,27 +96,50 @@ class UniversalGazeboEnvironmentInterface(object):
         return True in self.last_episode_fall
     
     def get_reward(self, state):
-        return -(0.3 - state[2])**2        
+        #return 0.26 - np.absolute(state[2]-0.26)
+        P = euler_from_quaternion(state[3:7])[2]
+        return -((0.26 - state[2])**2 + 0.1*(P)**2 + 0.01*(state[7]**2 + state[8]**2 + state[9]**2))
     
     def get_state(self):
         
         state = []
         
-        # Model State        
+        # Model State                
         model_state = self.get_model_state_srv("bd1","")
+        ## position as if
         state.append(model_state.pose.position.x)
         state.append(model_state.pose.position.y)
         state.append(model_state.pose.position.z)
         
-        rpy = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])                
-        state += rpy
+        ## normilized angles
+        #rpy = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])                
+        #state += rpy
+        state.append(model_state.pose.orientation.x)
+        state.append(model_state.pose.orientation.y)
+        state.append(model_state.pose.orientation.z)
+        state.append(model_state.pose.orientation.w)
+        #state.append(np.sin(rpy[0]))
+        #state.append(np.cos(rpy[0]))
+        #state.append(np.sin(rpy[1]))
+        #state.append(np.cos(rpy[1]))
+        #state.append(np.sin(rpy[2]))
+        #state.append(np.cos(rpy[2]))
         
-        # Joints Positions
-        state.append( self.last_joint_states.position[0] )
-        state.append( self.last_joint_states.position[3] )
-        state.append( self.last_joint_states.position[6] )
+        ## linear velocities as if
+        state.append(model_state.twist.linear.x)
+        state.append(model_state.twist.linear.y)
+        state.append(model_state.twist.linear.z)
         
-        # Joint Velocities
+        
+        # Joints Positions normalized
+        state.append( np.sin(self.last_joint_states.position[0] ))
+        state.append( np.cos(self.last_joint_states.position[0] ))
+        state.append( np.sin(self.last_joint_states.position[3] ))
+        state.append( np.cos(self.last_joint_states.position[3] ))
+        state.append( np.sin(self.last_joint_states.position[6] ))
+        state.append( np.cos(self.last_joint_states.position[6] ))
+        
+        # Joint Velocities as if
         state.append( self.last_joint_states.velocity[0] )
         state.append( self.last_joint_states.velocity[3] )
         state.append( self.last_joint_states.velocity[6] )        
