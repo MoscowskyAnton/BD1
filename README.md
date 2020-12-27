@@ -27,7 +27,7 @@ pip3 install tensorflow==2.2.0
 then
 ```bash
 pip3 install tensorlayer
-pip3 install tensorflow_probability==0.10.1 # for TD3 usage
+pip3 install tensorflow_probability==0.10.1 # tested this version for GPU tf
 ```
 Version 2.2.0 is newest version that throws no errors for me.
 
