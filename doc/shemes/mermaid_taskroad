@@ -1,0 +1,51 @@
+flowchart TB      
+    classDef done fill:#fff,stroke-width:2,stroke:#000    
+    classDef wip fill:#f55,color:#fff,stroke-width:0
+    classDef task fill:#888,color:#111,stroke-width:0
+    classDef entry fill:#000,color:#fff,stroke-width:0
+    subgraph legend [LEGEND]
+    A(TASK):::task
+    A --> B(WIP):::wip
+    B --> C(DONE):::done
+    end
+    ENTRY((START HERE)):::entry --> SA    
+    subgraph sim [SIMULATION PART]
+    SA(Gazebo cotrollable model of droid):::done        
+    SA --> SAa(Deploy Gazebo Fall Detector):::done
+    SA --> SAb(Obtain rodot's center mass):::task
+    SA --> SC(Provide gym-like environment interface):::done
+    SC --> SB(Attach some RL alghoritms):::wip   
+    SAa --> SB
+    SB --> SB1(Teach robot do basic movements):::wip 
+    SB1 --> SD(Standup from conseal and balance):::wip
+    SD --> SD1(Synchronized legs and static head):::wip
+    SD --> SD2(Synchronized legs and free head):::task
+    SD --> SD3(Independed legs):::task
+    SB1 --> SE(Walk):::task
+    SE --> SE1(Straigt):::task
+    SE --> SE2(Rotate on a place):::task
+    SB1 --> SI(From fallen to conseal):::task
+    SF(Control node with learned actions switch):::task
+    SB1 ----> SF
+    SF --> SG(Deploy path planner with emulated localization):::task
+    SG-->SK(Add stereo cam obstacles detector):::task
+    SK --> SN(Deploy stereo SLAM):::task
+    SN --> ENDSIM((SIM PART DONE)):::entry
+    end
+    ENDSIM --> RA
+    subgraph real [REAL PART]
+    RA(Construct real droid):::task
+    RA --> RB(Update Gazebo model with correspondance to real):::task
+    %%RB -.-> SA
+    RB --> RD(Reteach all learnable parts on updated Gazebo model):::task 
+    RB --> RE(Train on model fall detector by IMU):::task
+    RF(Transmit learning from model on real droid):::task
+    RD --> RF
+    RE --> RF
+    end  
+    
+    
+    
+    
+
+            
