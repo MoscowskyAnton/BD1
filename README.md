@@ -20,6 +20,13 @@ Make a real BD1 robot, that could walk in the real world envinroment.
  **Do same for real robot**
   - [ ] Develop and construct real model 
 
+# Tasks roadmap
+graph TD;
+    A-->B;
+    A-->C;
+    B-->D;
+    C-->D;
+
 # How to install
 0. Of cource you need installed ROS Noetic (need for python3)
 1. Install additional ROS packages (list is not full, because hasn't been tested on virgin mashine yet)
