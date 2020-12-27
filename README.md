@@ -22,8 +22,49 @@ Make a real BD1 robot, that could walk in the real world envinroment.
 
 # Tasks roadmap
 ```mermaid
-graph TD
-    Start --> Stop
+classDiagram
+
+class YARP5_SDK{
+ <<abstract>>
+ init(name)
+}
+class YARP5_sensor{
+ <<abstract>>
+ dict sensors
+ read()
+ init()
+}
+
+class YARP5_sensor_topic{
+ read() list/None
+}
+
+class YARP5_sensor_service{
+ read(goal) answer
+}
+
+class YARP5_current_zone{
+ read() list/None
+}
+
+class YARP5_action{
+ <<abstract>>
+ dict actions
+ init()
+}
+
+YARP5_SDK --|> YARP5_sensor
+YARP5_SDK --|> YARP5_action
+YARP5_sensor --|> YARP5_sensor_topic
+YARP5_sensor --|> YARP5_sensor_service
+YARP5_sensor_service --|> YARP5_current_zone
+YARP5_sensor_topic --|> YARP5_sensor_rangefinders
+YARP5_sensor_topic --|> YARP5_sensor_robot_pose
+YARP5_sensor_topic --|> YARP5_sensor_robot_odom
+YARP5_sensor_topic --|> YARP5_sensor_bumper
+YARP5_sensor_topic --|> YARP5_sensor_local_comm
+YARP5_sensor_topic --|> YARP5_sensor_food
+YARP5_sensor_topic --|> YARP5_sensor_orients
 ```
 
 # How to install
