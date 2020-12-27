@@ -21,51 +21,7 @@ Make a real BD1 robot, that could walk in the real world envinroment.
   - [ ] Develop and construct real model 
 
 # Tasks roadmap
-```mermaid
-classDiagram
-
-class YARP5_SDK{
- <<abstract>>
- init(name)
-}
-class YARP5_sensor{
- <<abstract>>
- dict sensors
- read()
- init()
-}
-
-class YARP5_sensor_topic{
- read() list/None
-}
-
-class YARP5_sensor_service{
- read(goal) answer
-}
-
-class YARP5_current_zone{
- read() list/None
-}
-
-class YARP5_action{
- <<abstract>>
- dict actions
- init()
-}
-
-YARP5_SDK --|> YARP5_sensor
-YARP5_SDK --|> YARP5_action
-YARP5_sensor --|> YARP5_sensor_topic
-YARP5_sensor --|> YARP5_sensor_service
-YARP5_sensor_service --|> YARP5_current_zone
-YARP5_sensor_topic --|> YARP5_sensor_rangefinders
-YARP5_sensor_topic --|> YARP5_sensor_robot_pose
-YARP5_sensor_topic --|> YARP5_sensor_robot_odom
-YARP5_sensor_topic --|> YARP5_sensor_bumper
-YARP5_sensor_topic --|> YARP5_sensor_local_comm
-YARP5_sensor_topic --|> YARP5_sensor_food
-YARP5_sensor_topic --|> YARP5_sensor_orients
-```
+[![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVERcbiAgICBBW1NpbXVsYXRpb24gbW9kZWxdIC0tPiBCKEdvIHNob3BwaW5nKVxuICAgIEIgLS0-IEN7TGV0IG1lIHRoaW5rfVxuICAgIEMgLS0-fE9uZXwgRFtMYXB0b3BdXG4gICAgQyAtLT58VHdvfCBFW2lQaG9uZV1cbiAgICBDIC0tPnxUaHJlZXwgRltmYTpmYS1jYXIgQ2FyXVxuICAgICAgICAgICAgIiwibWVybWFpZCI6eyJ0aGVtZSI6ImRlZmF1bHQifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVERcbiAgICBBW1NpbXVsYXRpb24gbW9kZWxdIC0tPiBCKEdvIHNob3BwaW5nKVxuICAgIEIgLS0-IEN7TGV0IG1lIHRoaW5rfVxuICAgIEMgLS0-fE9uZXwgRFtMYXB0b3BdXG4gICAgQyAtLT58VHdvfCBFW2lQaG9uZV1cbiAgICBDIC0tPnxUaHJlZXwgRltmYTpmYS1jYXIgQ2FyXVxuICAgICAgICAgICAgIiwibWVybWFpZCI6eyJ0aGVtZSI6ImRlZmF1bHQifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0)
 
 # How to install
 0. Of cource you need installed ROS Noetic (need for python3)
