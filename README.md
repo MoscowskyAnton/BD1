@@ -21,11 +21,15 @@ Make a real BD1 robot, that could walk in the real world envinroment.
   - [ ] Develop and construct real model 
 
 # Tasks roadmap
-graph TD;
-    A-->B;
-    A-->C;
-    B-->D;
-    C-->D;
+<body>
+  Here is a mermaid diagram:
+  <div class="mermaid">
+    graph TD
+    A[Client] --> B[Load Balancer]
+    B --> C[Server01]
+    B --> D[Server02]
+  </div>
+</body>
 
 # How to install
 0. Of cource you need installed ROS Noetic (need for python3)
