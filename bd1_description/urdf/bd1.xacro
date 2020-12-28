@@ -33,7 +33,7 @@
     
     <xacro:property name="servo_velocity" value="2"/>
     <xacro:property name="servo_friction" value="0.3"/>
-    <xacro:property name="servo_effort" value="30"/>
+    <xacro:property name="servo_effort" value="60"/>
     
     
     <selfCollide>true</selfCollide>
@@ -154,7 +154,7 @@
         <child link="head_link"/>
         
         <origin xyz="0 0 ${neck_len}" rpy="0 1.5 0"/>
-        <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="0" upper="${pi}"/>
+        <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="${-pi}" upper="0"/>
         <axis xyz="0 1 0"/>
         <dynamics damping="${servo_friction}"/>
     </joint>

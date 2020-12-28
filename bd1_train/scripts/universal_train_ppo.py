@@ -6,7 +6,7 @@ from std_srvs.srv import Empty
 import numpy as np
 from bd1_train.ppo import PPO
 from bd1_train.srv import SaveAgent, SaveAgentResponse
-from bd1_gazebo_env_interface.srv import Step, Reset
+from bd1_gazebo_env_interface.srv import Step, Reset, Configure
 import matplotlib.pyplot as plt
 import yaml
 
@@ -14,12 +14,19 @@ class StandUpTrain(object):
     
     def __init__(self):
         
-        rospy.init_node('ppo_train_standup')
+        rospy.init_node('universal_train_ppo')
         self.name = rospy.get_name()        
         
-        self.action_dim = rospy.get_param("~action_dim", 3)                
-        self.action_range = rospy.get_param("~action_range", 1)
-        self.state_dim = rospy.get_param("~state_dim", 12) 
+        #self.action_dim = rospy.get_param("~action_dim", 3)                
+        #self.action_range = rospy.get_param("~action_range", 1)
+        #self.state_dim = rospy.get_param("~state_dim", 12) 
+        
+        # MUST HAVE PARAMS
+        self.env_interface_node_name = rospy.get_param("~env_interface_node_name", "")         
+        self.req_actions = rospy.get_param("~actions", [])
+        self.req_state = rospy.get_param("~state", [])   
+        self.reward_type = rospy.get_param("~reward", "")   
+        
         self.sub_method = rospy.get_param("~sub_method", 'clip') 
         if self.sub_method != 'clip' or self.sub_method != 'penalty':        
             self.sub_method = 'clip'
@@ -44,6 +51,17 @@ class StandUpTrain(object):
         self.hyper_parameters['LAM'] = rospy.get_param('~ppo_penalty_param2', 0.5)
         self.hyper_parameters['EPSILON'] = rospy.get_param('~ppo_clip_param', 0.2)
                         
+        rospy.wait_for_service(self.env_interface_node_name+'/configure')
+        self.env_config_srv = rospy.ServiceProxy(self.env_interface_node_name+'/configure', Configure)
+        
+        config = self.env_config_srv(self.req_state, self.req_actions, self.reward_type)        
+        if not config.configured:
+            rospy.logerr("[{}] ERROR! Configure environment interface failed! Exit.".format(self.name))
+            exit()
+        self.action_dim = config.actions_dim
+        self.action_range = 1#config.action_range
+        self.state_dim = config.state_dim
+        
         rospy.loginfo("[{}] initializing PPO...".format(self.name))
                             
         self.agent = PPO(self.state_dim, self.action_dim, self.action_range, self.hyper_parameters, self.sub_method)
@@ -61,12 +79,12 @@ class StandUpTrain(object):
         self.cmap = plt.get_cmap("tab10")
         
         # services init
-        rospy.wait_for_service('simple_standup_interface/reset')
-        self.env_reset_srv = rospy.ServiceProxy('simple_standup_interface/reset', Reset)
+        rospy.wait_for_service(self.env_interface_node_name+'/reset')
+        self.env_reset_srv = rospy.ServiceProxy(self.env_interface_node_name+'/reset', Reset)
         rospy.loginfo("[{}] reset service ready!".format(self.name))
         
-        rospy.wait_for_service('simple_standup_interface/step')
-        self.env_step_srv = rospy.ServiceProxy('simple_standup_interface/step', Step)
+        rospy.wait_for_service(self.env_interface_node_name+'/step')
+        self.env_step_srv = rospy.ServiceProxy(self.env_interface_node_name+'/step', Step)
         rospy.loginfo("[{}] step service ready!".format(self.name))
                         
         rospy.Service("~change_train_test_mode", Empty, self.change_mode_cb)
@@ -101,6 +119,11 @@ class StandUpTrain(object):
         params["action_dim"] = self.action_dim
         params["action_range"] = self.action_range
         params["state_dim"] = self.state_dim
+        
+        params["env_interface_node_name"] = self.env_interface_node_name
+        params["req_actions"] = self.req_actions
+        params["req_state"] = self.req_state
+        params["reward_type"] = self.reward_type
                         
         # hyper
         params["actor_learning_rate"] = self.hyper_parameters['LR_A']
@@ -111,10 +134,7 @@ class StandUpTrain(object):
         params["critic_update_steps"] = self.hyper_parameters['CRITIC_UPDATE_STEPS']
         params["ppo_penalty_param1"] = self.hyper_parameters['KL_TARGET']
         params["ppo_penalty_param2"] = self.hyper_parameters['LAM']
-        params["ppo_clip_param"] = self.hyper_parameters['EPSILON']
-        #
-        #params["reward_type"] = "Zt - |Zt - Zr|, Zt = 0.26"
-        params["reward_type"] = "-[(0.26-Zr)^2 + 0.1(Pitch_r)^2 + 0.01(Vx^2 + Vy^2 + Vz^2)]"
+        params["ppo_clip_param"] = self.hyper_parameters['EPSILON']        
         
         params["pretrained model"] = self.load_path
         
@@ -134,12 +154,13 @@ class StandUpTrain(object):
                 state = np.array(self.env_reset_srv().state)
                 episode_reward = 0
                 for step in range(self.max_steps):
+                    #print(state.shape, self.state_dim)
                     action = self.agent.get_action(state)
                     srd = self.env_step_srv(self.step_duration, action.tolist())
                     state_ = np.array(srd.state)
                     self.agent.store_transition(state, action, srd.reward)
                     state = state_
-                    episode_reward += srd.reward
+                    episode_reward += srd.reward                    
                     
                     if len(self.agent.state_buffer) > self.hyper_parameters["BATCH_SIZE"]:
                         self.agent.finish_path(state_, srd.done)
@@ -176,6 +197,7 @@ class StandUpTrain(object):
                 srd = self.env_step_srv(self.step_duration, action.tolist())
                 state = np.array(srd.state)
                 episode_reward += srd.reward
+                #print(srd.reward)
                 if srd.done:
                     break
             rospy.loginfo("[{}] Teting | Episode: {}/{} | Episode Reward: {:.4f}".format(self.name, episode, self.test_episodes,  episode_reward))            

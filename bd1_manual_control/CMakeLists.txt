@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(bd1_train)
+project(bd1_manual_control)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,9 +8,9 @@ project(bd1_train)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  dynamic_reconfigure
   rospy
   std_msgs
-  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -20,7 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-catkin_python_setup()
+# catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -54,10 +54,11 @@ catkin_python_setup()
 # )
 
 ## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  SaveAgent.srv  
-)
+# add_service_files(
+#   FILES
+#   Service1.srv
+#   Service2.srv
+# )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -67,10 +68,10 @@ add_service_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -87,10 +88,9 @@ generate_messages(
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+  cfg/ManualControl.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -103,8 +103,8 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES bd1_train
-#  CATKIN_DEPENDS rospy std_msgs
+#  LIBRARIES bd1_manual_control
+#  CATKIN_DEPENDS dynamic_reconfigure rospy std_msgs
 #  DEPENDS system_lib
 )
 
@@ -121,7 +121,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/bd1_train.cpp
+#   src/${PROJECT_NAME}/bd1_manual_control.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -132,7 +132,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/bd1_train_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/bd1_manual_control_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -196,18 +196,15 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_bd1_train.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_bd1_manual_control.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-
 if ("$ENV{ROS_DISTRO}" STREQUAL "noetic")
 catkin_install_python(PROGRAMS
-    scripts/standup_train.py
-    scripts/standup_train_ppo.py
-    scripts/universal_train_ppo.py
+    src/manual_control.py    
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 endif()

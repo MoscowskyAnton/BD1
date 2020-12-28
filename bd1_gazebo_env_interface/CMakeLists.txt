@@ -58,6 +58,7 @@ add_service_files(
   FILES
   Step.srv
   Reset.srv
+  Configure.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -208,5 +209,6 @@ include_directories(
 if ("$ENV{ROS_DISTRO}" STREQUAL "noetic")
 catkin_install_python(PROGRAMS
     src/simple_standup_gazebo_environment_inteface.py
+    src/universal_gazebo_environment_inteface.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 endif()

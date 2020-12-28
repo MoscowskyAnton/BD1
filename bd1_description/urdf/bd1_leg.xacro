@@ -193,7 +193,7 @@
             <mu1>2</mu1>
             <mu2>5</mu2>
             <!--<dampingFactor>0.05</dampingFactor>-->
-            <kp>20000</kp>
+            <kp>100000</kp>
             <kd>1</kd>
         </gazebo>
         
