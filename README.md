@@ -17,6 +17,8 @@ sudo apt install ros-noetic-joint-trajectory-controller
 sudo apt install ros-noetic-velocity-controllers
 ```
 2. Install [tensorlayer](https://github.com/tensorlayer/tensorlayer)
+
+For GPU support you need to install CUDA and cuDNN [https://medium.com/analytics-vidhya/installing-tensorflow-with-cuda-cudnn-gpu-support-on-ubuntu-20-04-f6f67745750a](here is guide).
 ```bash
 pip3 install tensorflow-gpu==2.0.0-rc1
 ```
