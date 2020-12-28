@@ -76,7 +76,7 @@ class PPO(object):
         a_gard = tape.gradient(loss, self.actor.trainable_weights)
         self.actor_opt.apply_gradients(zip(a_gard, self.actor.trainable_weights))
 
-        if self.method == 'kl_pen':
+        if self.method == 'penalty':
             return kl_mean
 
     def train_critic(self, reward, state):
@@ -106,7 +106,7 @@ class PPO(object):
         adv = r - self.critic(s)
 
         # update actor
-        if self.method == 'kl_pen':
+        if self.method == 'penalty':
             for _ in range(self.hyperparams["ACTOR_UPDATE_STEPS"]):
                 kl = self.train_actor(s, a, adv, pi)
             if kl < self.kl_target / 1.5:

@@ -42,13 +42,13 @@
         <param name="reward" value="stup_reward_z_pitch_vel_1"/>
         <param name="env_interface_node_name" value="standup_gazebo_env_interface"/>
                         
-        <!--<param name="save_path" value="$(find bd1_train)/models/PPO/simple_standup/clip_pos_angle_vel_reward"/>-->
-        <param name="load_path" value="$(find bd1_train)/models/PPO/simple_standup/clip_pos_angle_vel_reward/fully_trained"/>
+        <!--<param name="save_path" value="$(find bd1_train)/models/PPO/simple_standup/clip_pos_angle_vel_reward_continue"/>-->
+        <param name="load_path" value="$(find bd1_train)/models/PPO/simple_standup/clip_pos_angle_vel_reward_continue/fully_trained"/>
         <param name="mode" value="test"/>           
         <param name="sub_method" value="clip"/>   
         <param name="num_episodes" value="2000"/>   
         <param name="backup_saves" value="200"/>
-        <param name="test_episodes" value="1"/>
+        <param name="test_episodes" value="10"/>
         <param name="max_steps" value="300"/>
         <param name="step_duration_sec" value="0.1"/>   
                                         
