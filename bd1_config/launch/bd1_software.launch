@@ -4,7 +4,7 @@
     
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
     
-    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find bd1_description)/urdf/bd1.xacro'"/>                            
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find bd1_description)/urdf/bd1.xacro' servo_control:=$(arg servo_control)"/>                            
     
     <node if="$(eval servo_control == 'TRAJ')" name="controller_spawner" pkg="controller_manager" type="spawner" 
         respawn="false" output="screen" 
@@ -13,6 +13,10 @@
     <node if="$(eval servo_control == 'VEL')" name="controller_spawner" pkg="controller_manager" type="spawner" 
         respawn="false" output="screen" 
         args="head_servo_velocity_controller neck_servo_velocity_controller leg_up_r_servo_velocity_controller leg_mid_r_servo_velocity_controller feet_r_servo_velocity_controller leg_up_l_servo_velocity_controller leg_mid_l_servo_velocity_controller feet_l_servo_velocity_controller joint_state_controller" />
+    
+    <node if="$(eval servo_control == 'EFF')" name="controller_spawner" pkg="controller_manager" type="spawner" 
+        respawn="false" output="screen" 
+        args="head_servo_effort_controller neck_servo_effort_controller hip_r_servo_effort_controller knee_r_servo_effort_controller foot_r_servo_effort_controller hip_l_servo_effort_controller knee_l_servo_effort_controller foot_l_servo_effort_controller joint_state_controller" />
         
     <node if="$(eval servo_control == 'TRAJ')" name="basic_moves" pkg="bd1_simple_moves" type="basic_moves.py" output="screen"/>
     

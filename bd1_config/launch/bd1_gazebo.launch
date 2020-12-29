@@ -3,12 +3,14 @@
     <arg name="paused" default="false"/>
     
     
-    <!-- VEL or TRAJ-->
+    <!-- VEL or TRAJ or EFF-->
     <arg name="servo_control" default="VEL"/>
         
     <rosparam if="$(eval servo_control == 'TRAJ')" file="$(find bd1_description)/config/bd1_control_traj_gazebo.yaml" command="load" subst_value="true"/>            
     
-    <rosparam if="$(eval servo_control == 'VEL')" file="$(find bd1_description)/config/bd1_control_vel_gazebo.yaml" command="load" subst_value="true"/>            
+    <rosparam if="$(eval servo_control == 'VEL')" file="$(find bd1_description)/config/bd1_control_vel_gazebo.yaml" command="load" subst_value="true"/>
+    
+    <rosparam if="$(eval servo_control == 'EFF')" file="$(find bd1_description)/config/bd1_control_eff_gazebo.yaml" command="load" subst_value="true"/>            
     
     <include file="$(find bd1_config)/launch/bd1_software.launch">
         <arg name="robot" value="$(arg robot)"/>     
@@ -31,9 +33,13 @@
         <param name="max_servo_vel" value="2"/>
     </node>
     
-    <node name="manual_control" pkg="bd1_manual_control" type="manual_control.py"/>
+    <node if="$(eval servo_control == 'VEL')" name="manual_control" pkg="bd1_manual_control" type="manual_control_vel.py"/>
     
-    <node name="standup_train_ppo" pkg="bd1_train" type="universal_train_ppo.py" output="screen"  required="false">
+    <node if="$(eval servo_control == 'EFF')" name="manual_control" pkg="bd1_manual_control" type="manual_control_eff.py"/>
+    
+    <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure"/>
+    
+    <node if="$(eval servo_control == 'VEL')" name="standup_train_ppo" pkg="bd1_train" type="universal_train_ppo.py" output="screen"  required="false">
         
         <rosparam param="state">["base_pose", "base_rot_quat", "base_twist_lin", "left_leg_pos_norm", "left_leg_vel", "com_abs", "cop_abs"]</rosparam>
         <rosparam param="actions">["sync_legs_vel", "all_head_vel"]</rosparam>

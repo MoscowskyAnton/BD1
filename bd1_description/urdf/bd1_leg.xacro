@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-    
+            
     <xacro:property name="legs_baseline" value="0.12"/>
     
     <xacro:property name="up_leg_aprox_x" value="0.24"/>
@@ -28,32 +28,7 @@
     <xacro:property name="feet_shift_y" value="0.0"/>
     <xacro:property name="feet_shift_z" value="-0.065"/>
     
-    <!--
-    SERVO TRANS
-    -->
-    <xacro:macro name="servtransmission" params="joint">
-        <transmission name="${joint}_transm">
-            <type>transmission_interface/SimpleTransmission</type>
-            <joint name="${joint}">
-                <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-            </joint>
-            <actuator name="${joint}_motor">
-                <hardwareInterface>hardware_interface/PositionActuatorInterface</hardwareInterface>
-            </actuator>
-        </transmission>
-    </xacro:macro>
-    
-    <xacro:macro name="servtransmission_v" params="joint">
-        <transmission name="${joint}_transm">
-            <type>transmission_interface/SimpleTransmission</type>
-            <joint name="${joint}">
-                <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
-            </joint>
-            <actuator name="${joint}_motor">
-                <hardwareInterface>hardware_interface/VelocityActuatorInterface</hardwareInterface>
-            </actuator>
-        </transmission>
-    </xacro:macro>
+    <xacro:include filename="$(find bd1_description)/urdf/transmission_$(arg servo_control).xacro"/>
     
     <!-- 
     FULL LEG
@@ -101,7 +76,7 @@
             <axis xyz="0 1 0"/>
         </joint>
         
-        <xacro:servtransmission_v joint="up_leg_${side}_j"/>
+        <xacro:servtransmission joint="up_leg_${side}_j"/>
         
         <!--
         MID
@@ -144,7 +119,7 @@
             <axis xyz="0 1 0"/>
         </joint>
         
-        <xacro:servtransmission_v joint="mid_leg_${side}_j"/>
+        <xacro:servtransmission joint="mid_leg_${side}_j"/>
         
         <!--
         FEET
@@ -197,7 +172,7 @@
             <kd>1</kd>
         </gazebo>
         
-        <xacro:servtransmission_v joint="feet_${side}_j"/>
+        <xacro:servtransmission joint="feet_${side}_j"/>
         
     </xacro:macro>
     

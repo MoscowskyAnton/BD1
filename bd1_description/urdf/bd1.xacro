@@ -1,8 +1,11 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="BD1" >
     
+    <xacro:arg name="servo_control" default="VEL"/>
+    
     <xacro:include filename="$(find bd1_description)/urdf/bd1_leg.xacro"/>
     <xacro:include filename="$(find bd1_description)/urdf/bd1.gazebo"/>
+    <xacro:include filename="$(find bd1_description)/urdf/transmission_$(arg servo_control).xacro"/>
         
     <xacro:property name="body_aprox_x" value="0.18"/>
     <xacro:property name="body_aprox_y" value="0.12"/>
@@ -33,7 +36,7 @@
     
     <xacro:property name="servo_velocity" value="2"/>
     <xacro:property name="servo_friction" value="0.3"/>
-    <xacro:property name="servo_effort" value="60"/>
+    <xacro:property name="servo_effort" value="30"/>
     
     
     <selfCollide>true</selfCollide>
@@ -115,7 +118,7 @@
         <dynamics damping="${servo_friction}"/>
     </joint>
     
-    <xacro:servtransmission_v joint="neck_j"/>
+    <xacro:servtransmission joint="neck_j"/>
     
     <!--
         HEAD
@@ -159,7 +162,7 @@
         <dynamics damping="${servo_friction}"/>
     </joint>
     
-    <xacro:servtransmission_v joint="head_j"/>
+    <xacro:servtransmission joint="head_j"/>
     
     <!--
         LEGS

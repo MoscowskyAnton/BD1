@@ -3,12 +3,12 @@
 import rospy
 
 from dynamic_reconfigure.server import Server
-from bd1_manual_control.cfg import ManualControlConfig
+from bd1_manual_control.cfg import ManualControlVelConfig
 from std_msgs.msg import Float64
 
 class ManControl(object):
     def __init__(self):
-        rospy.init_node("manual_control")                
+        rospy.init_node("manual_control_vel")                
         
         # publishers
         self.head_pub = rospy.Publisher('head_servo_velocity_controller/command', Float64, queue_size = 1)
@@ -27,7 +27,7 @@ class ManControl(object):
         
         self.foot_l_pub = rospy.Publisher('feet_l_servo_velocity_controller/command', Float64, queue_size = 1)                
         
-        self.srv = Server(ManualControlConfig, self.callback)
+        self.srv = Server(ManualControlVelConfig, self.callback)
         
     def callback(self, config, level):
         

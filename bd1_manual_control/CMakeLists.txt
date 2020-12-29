@@ -89,7 +89,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
-  cfg/ManualControl.cfg
+  cfg/ManualControlVel.cfg
+  cfg/ManualControlEff.cfg
 )
 
 ###################################
@@ -205,6 +206,7 @@ include_directories(
 # catkin_add_nosetests(test)
 if ("$ENV{ROS_DISTRO}" STREQUAL "noetic")
 catkin_install_python(PROGRAMS
-    src/manual_control.py    
+    src/manual_control_vel.py
+    src/manual_control_eff.py    
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 endif()
