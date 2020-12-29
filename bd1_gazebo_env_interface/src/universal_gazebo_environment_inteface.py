@@ -22,7 +22,7 @@ class UniversalGazeboEnvironmentInterface(object):
         
         self.name = rospy.get_name()
         
-        self.max_velocity_lim = 1.0
+        self.max_velocity_lim = rospy.get_param("~max_servo_vel", 1.0)
         
         # service clients
         rospy.wait_for_service('gazebo/reset_simulation')
