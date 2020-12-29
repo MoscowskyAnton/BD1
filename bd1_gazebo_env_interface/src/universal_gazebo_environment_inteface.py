@@ -22,7 +22,14 @@ class UniversalGazeboEnvironmentInterface(object):
         
         self.name = rospy.get_name()
         
-        self.max_velocity_lim = rospy.get_param("~max_servo_vel", 1.0)
+        self.servo_control = rospy.get_param("~servo_control", "VEL")
+        
+        if self.servo_control == "VEL":
+            self.max_action_lim = rospy.get_param("~max_servo_vel", 1.0)
+        elif self.servo_control == "EFF":
+            self.max_action_lim = rospy.get_param("~max_servo_eff", 30)
+        else:
+            rospy.logerr("[{}] unsupported servo control type {}! Exit.".format(self.name, self.servo_control))
         
         # service clients
         rospy.wait_for_service('gazebo/reset_simulation')
@@ -32,21 +39,24 @@ class UniversalGazeboEnvironmentInterface(object):
         self.get_model_state_srv = rospy.ServiceProxy('gazebo/get_model_state', GetModelState)
         
         # publishers
-        self.head_pub = rospy.Publisher('head_servo_velocity_controller/command', Float64, queue_size = 1)
-            
-        self.neck_pub = rospy.Publisher('neck_servo_velocity_controller/command', Float64, queue_size = 1)
-        
-        self.up_r_pub = rospy.Publisher('leg_up_r_servo_velocity_controller/command', Float64, queue_size = 1)
-        
-        self.mid_r_pub = rospy.Publisher('leg_mid_r_servo_velocity_controller/command', Float64, queue_size = 1)
-        
-        self.feet_r_pub = rospy.Publisher('feet_r_servo_velocity_controller/command', Float64, queue_size = 1)
-        
-        self.up_l_pub = rospy.Publisher('leg_up_l_servo_velocity_controller/command', Float64, queue_size = 1)
-        
-        self.mid_l_pub = rospy.Publisher('leg_mid_l_servo_velocity_controller/command', Float64, queue_size = 1)
-        
-        self.feet_l_pub = rospy.Publisher('feet_l_servo_velocity_controller/command', Float64, queue_size = 1)
+        if self.servo_control == "VEL":
+            self.head_pub = rospy.Publisher('head_servo_velocity_controller/command', Float64, queue_size = 1)                
+            self.neck_pub = rospy.Publisher('neck_servo_velocity_controller/command', Float64, queue_size = 1)            
+            self.up_r_pub = rospy.Publisher('leg_up_r_servo_velocity_controller/command', Float64, queue_size = 1)            
+            self.mid_r_pub = rospy.Publisher('leg_mid_r_servo_velocity_controller/command', Float64, queue_size = 1)            
+            self.feet_r_pub = rospy.Publisher('feet_r_servo_velocity_controller/command', Float64, queue_size = 1)            
+            self.up_l_pub = rospy.Publisher('leg_up_l_servo_velocity_controller/command', Float64, queue_size = 1)            
+            self.mid_l_pub = rospy.Publisher('leg_mid_l_servo_velocity_controller/command', Float64, queue_size = 1)            
+            self.feet_l_pub = rospy.Publisher('feet_l_servo_velocity_controller/command', Float64, queue_size = 1)
+        elif self.servo_control == "EFF":
+            self.head_pub = rospy.Publisher('head_servo_effort_controller/command', Float64, queue_size = 1)                
+            self.neck_pub = rospy.Publisher('neck_servo_effort_controller/command', Float64, queue_size = 1)            
+            self.up_r_pub = rospy.Publisher('hip_r_servo_effort_controller/command', Float64, queue_size = 1)            
+            self.mid_r_pub = rospy.Publisher('knee_r_servo_effort_controller/command', Float64, queue_size = 1)            
+            self.feet_r_pub = rospy.Publisher('foot_r_servo_effort_controller/command', Float64, queue_size = 1)            
+            self.up_l_pub = rospy.Publisher('hip_l_servo_effort_controller/command', Float64, queue_size = 1)            
+            self.mid_l_pub = rospy.Publisher('knee_l_servo_effort_controller/command', Float64, queue_size = 1)            
+            self.feet_l_pub = rospy.Publisher('foot_l_servo_effort_controller/command', Float64, queue_size = 1)
         
         # subscribers and data containers
         self.last_joint_states = None
@@ -80,7 +90,8 @@ class UniversalGazeboEnvironmentInterface(object):
                             "all_head_vel":2,
                             "com_abs":3,
                             "cop_abs":3,
-                            "head_rot_quat":4}
+                            "head_rot_quat":4,
+                            "left_leg_all_quats":12}
         
         self.actions_types = {"sync_legs_vel":3,
                              "left_legs_vel":3,
@@ -134,25 +145,25 @@ class UniversalGazeboEnvironmentInterface(object):
                 self.requested_reward = self.reward_types[req.reward]
             else:
                 rospy.logerr("[{}] {} reward not found! Interface isn't configured, try again.".format(self.name, req.reward))                                
-                return ConfigureResponse(False, 0, 0)
+                return ConfigureResponse(False, 0, 0, "", 0)
             
             if self.state_dim == 0:
                 rospy.logerr("[{}] state vector is zero! Interface isn't configured, try again.".format(self.name, action_el))                                
-                return ConfigureResponse(False, 0, 0)
+                return ConfigureResponse(False, 0, 0, "", 0)
                 
             if self.actions_dim == 0:
                 rospy.logerr("[{}] action vector is zero! Interface isn't configured, try again.".format(self.name, action_el))                                
-                return ConfigureResponse(False, 0, 0)
+                return ConfigureResponse(False, 0, 0, "", 0)
                                 
             self.configured = True                        
             self.reset_srv = rospy.Service("~reset", Reset, self.reset_cb)
             self.step_srv = rospy.Service("~step", Step, self.step_cb)
             rospy.logwarn("[{}] configured!".format(self.name))
                     
-            return ConfigureResponse(True, self.state_dim, self.actions_dim)
+            return ConfigureResponse(True, self.state_dim, self.actions_dim, self.servo_control, self.max_action_lim)
         else:
             rospy.logwarn("[{}] interface already has been congigured.".format(self.name, action_el))                                
-            return ConfigureResponse(self.state_dim, self.actions_dim, self.max_velocity_lim)
+            return ConfigureResponse(True, self.state_dim, self.actions_dim, self.servo_control, self.max_action_lim)
                                 
     
     def step_cb(self, req):
@@ -171,8 +182,8 @@ class UniversalGazeboEnvironmentInterface(object):
     #
     # LOW INTERFACE FUNCTIONS
     #
-    def unrm(self, vel):
-        return unnorm(vel, -self.max_velocity_lim, self.max_velocity_lim)        
+    def unrm(self, val):        
+        return unnorm(val, -self.max_action_lim, self.max_action_lim)                
     
     def set_action(self, action):
         index = 0
@@ -363,6 +374,14 @@ class UniversalGazeboEnvironmentInterface(object):
                 state.append(quat.y)
                 state.append(quat.z)
                 state.append(quat.w)
+            elif state_el == "left_leg_all_quats":
+                for link in ["bd1::up_leg_l_link", "bd1::mid_leg_l_link","bd1::feet_l_link"]:
+                    ind = self.last_link_states.name.index(link)
+                    quat = self.last_link_states.pose[ind].orientation
+                    state.append(quat.x)
+                    state.append(quat.y)
+                    state.append(quat.z)
+                    state.append(quat.w)
                 
         
         if get_reward:            

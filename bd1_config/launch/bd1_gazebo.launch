@@ -24,13 +24,15 @@
         <arg name="debug" value="false" />
         <arg name="gui" value="true" />
         <arg name="paused" value="$(arg paused)"/>
-        <arg name="use_sim_time" value="false"/>
+        <arg name="use_sim_time" value="true"/>
         <arg name="headless" value="false"/>
     </include>                                
 
     
     <node name="standup_gazebo_env_interface" pkg="bd1_gazebo_env_interface" type="universal_gazebo_environment_inteface.py" output="screen">
+        <param name="servo_control" value="$(arg servo_control)"/>
         <param name="max_servo_vel" value="2"/>
+        <param name="max_servo_eff" value="30"/>
     </node>
     
     <node if="$(eval servo_control == 'VEL')" name="manual_control" pkg="bd1_manual_control" type="manual_control_vel.py"/>
@@ -39,10 +41,10 @@
     
     <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure"/>
     
-    <node if="$(eval servo_control == 'VEL')" name="standup_train_ppo" pkg="bd1_train" type="universal_train_ppo.py" output="screen"  required="false">
+    <node name="standup_train_ppo" pkg="bd1_train" type="universal_train_ppo.py" output="screen"  required="false">
         
-        <rosparam param="state">["base_pose", "base_rot_quat", "base_twist_lin", "left_leg_pos_norm", "left_leg_vel", "com_abs", "cop_abs"]</rosparam>
-        <rosparam param="actions">["sync_legs_vel", "all_head_vel"]</rosparam>
+        <rosparam param="state">["base_pose", "base_rot_quat", "base_twist_lin", "left_leg_all_quats", "com_abs", "cop_abs"]</rosparam>
+        <rosparam param="actions">["sync_legs_vel"]</rosparam>
         <param name="reward" value="stup_reward_z_body_pitch_com_cop_head_pitch_3"/>
         <param name="env_interface_node_name" value="standup_gazebo_env_interface"/>
                         
@@ -54,7 +56,7 @@
         <param name="backup_saves" value="200"/>
         <param name="test_episodes" value="30"/>
         <param name="max_steps" value="300"/>
-        <param name="step_duration_sec" value="0.1"/>
+        <param name="step_duration_sec" value="0.5"/>
         <param name="ppo_clip_param" value="0.3"/>
         <param name="actor_update_steps" value="20"/>   
         <param name="critic_update_steps" value="20"/>   

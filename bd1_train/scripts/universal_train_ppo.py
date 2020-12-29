@@ -64,6 +64,8 @@ class StandUpTrain(object):
         self.action_dim = config.actions_dim
         self.action_range = 1#config.action_range
         self.state_dim = config.state_dim
+        self.servo_control = config.servo_control
+        self.action_real_lim = config.action_real_lim
         
         rospy.loginfo("[{}] initializing PPO...".format(self.name))
                             
@@ -146,6 +148,9 @@ class StandUpTrain(object):
         params["actor_layer3_size"] = self.hyper_parameters['ACTOR_LAYER3_SIZE']        
         
         params["pretrained model"] = self.load_path                
+        
+        params["servo_control"] = self.servo_control
+        params["action_real_lim"] = self.action_real_lim
         
         with open(self.save_path + "/"+name+"/config.yaml", 'w') as file:
             documents = yaml.dump(params, file)
