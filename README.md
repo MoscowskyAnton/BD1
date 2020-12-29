@@ -15,7 +15,9 @@ Make a real BD1 robot, that could walk in the real world envinroment.
 ```bash
 sudo apt install ros-noetic-joint-trajectory-controller
 sudo apt install ros-noetic-velocity-controllers
+sudo apt install ros-noetic-effort-controllers
 ```
+
 2. Install [tensorlayer](https://github.com/tensorlayer/tensorlayer)
 
 For GPU support you need to install CUDA and cuDNN [here is guide](https://medium.com/analytics-vidhya/installing-tensorflow-with-cuda-cudnn-gpu-support-on-ubuntu-20-04-f6f67745750a).
