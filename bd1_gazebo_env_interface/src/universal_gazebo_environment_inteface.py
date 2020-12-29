@@ -106,7 +106,8 @@ class UniversalGazeboEnvironmentInterface(object):
                              "stup_reward_z_body_pitch_com_cop_head_pitch_1": self.stup_reward_z_body_pitch_com_cop_head_pitch_1,
                              "stup_reward_z_body_pitch_com_cop_head_pitch_2": self.stup_reward_z_body_pitch_com_cop_head_pitch_2,
                              "stup_reward_z_body_pitch_com_cop_head_pitch_3":
-                                 self.stup_reward_z_body_pitch_com_cop_head_pitch_3}
+                                 self.stup_reward_z_body_pitch_com_cop_head_pitch_3,
+                                 "just_fall": self.just_fall_reward}
         
         self.requested_state = []
         self.requested_actions = []
@@ -281,6 +282,10 @@ class UniversalGazeboEnvironmentInterface(object):
         headP = euler_from_quaternion([quat.x, quat.y, quat.z, quat.w])[1]                
         
         return 10*-z_part**2 - com_cop_part - 0.1 * bodyP**2 - 0.1 * headP**2 - int(self.check_done())
+    
+    def just_fall_reward(self, model_state):
+        return int(self.check_done())
+    
     
     def get_state(self, get_reward = False):
         

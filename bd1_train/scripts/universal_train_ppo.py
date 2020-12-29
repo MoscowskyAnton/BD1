@@ -211,7 +211,7 @@ class StandUpTrain(object):
                 srd = self.env_step_srv(self.step_duration, action.tolist())
                 state = np.array(srd.state)
                 episode_reward += srd.reward
-                #print(srd.reward)
+                print(srd.reward)
                 if srd.done:
                     break
             rospy.loginfo("[{}] Teting | Episode: {}/{} | Episode Reward: {:.4f}".format(self.name, episode, self.test_episodes,  episode_reward))            
