@@ -16,11 +16,7 @@ class StandUpTrain(object):
         
         rospy.init_node('universal_train_ppo')
         self.name = rospy.get_name()        
-        
-        #self.action_dim = rospy.get_param("~action_dim", 3)                
-        #self.action_range = rospy.get_param("~action_range", 1)
-        #self.state_dim = rospy.get_param("~state_dim", 12) 
-        
+                        
         # MUST HAVE PARAMS
         self.env_interface_node_name = rospy.get_param("~env_interface_node_name", "")         
         self.req_actions = rospy.get_param("~actions", [])
@@ -50,7 +46,14 @@ class StandUpTrain(object):
         self.hyper_parameters['KL_TARGET'] = rospy.get_param('~ppo_penalty_param1', 0.01)
         self.hyper_parameters['LAM'] = rospy.get_param('~ppo_penalty_param2', 0.5)
         self.hyper_parameters['EPSILON'] = rospy.get_param('~ppo_clip_param', 0.2)
-                        
+        
+        self.hyper_parameters['CRITIC_LAYER1_SIZE'] = rospy.get_param('~critic_layer1_size', 64)
+        self.hyper_parameters['CRITIC_LAYER2_SIZE'] = rospy.get_param('~critic_layer2_size', 64)
+        self.hyper_parameters['CRITIC_LAYER3_SIZE'] = rospy.get_param('~critic_layer3_size', 64)
+        self.hyper_parameters['ACTOR_LAYER1_SIZE'] = rospy.get_param('~actor_layer1_size', 64)
+        self.hyper_parameters['ACTOR_LAYER2_SIZE'] = rospy.get_param('~actor_layer2_size', 64)
+        self.hyper_parameters['ACTOR_LAYER3_SIZE'] = rospy.get_param('~actor_layer3_size', 64)
+        
         rospy.wait_for_service(self.env_interface_node_name+'/configure')
         self.env_config_srv = rospy.ServiceProxy(self.env_interface_node_name+'/configure', Configure)
         
@@ -135,8 +138,14 @@ class StandUpTrain(object):
         params["ppo_penalty_param1"] = self.hyper_parameters['KL_TARGET']
         params["ppo_penalty_param2"] = self.hyper_parameters['LAM']
         params["ppo_clip_param"] = self.hyper_parameters['EPSILON']        
+        params["critic_layer1_size"] = self.hyper_parameters['CRITIC_LAYER1_SIZE']
+        params["critic_layer2_size"] = self.hyper_parameters['CRITIC_LAYER2_SIZE']
+        params["critic_layer3_size"] = self.hyper_parameters['CRITIC_LAYER3_SIZE']
+        params["actor_layer1_size"] = self.hyper_parameters['ACTOR_LAYER1_SIZE']
+        params["actor_layer2_size"] = self.hyper_parameters['ACTOR_LAYER2_SIZE']
+        params["actor_layer3_size"] = self.hyper_parameters['ACTOR_LAYER3_SIZE']        
         
-        params["pretrained model"] = self.load_path
+        params["pretrained model"] = self.load_path                
         
         with open(self.save_path + "/"+name+"/config.yaml", 'w') as file:
             documents = yaml.dump(params, file)

@@ -11,7 +11,7 @@ from scipy.spatial.transform import Rotation
 
 import rospy
 
-from geometry_msgs.msg import Point32, Point
+from geometry_msgs.msg import PointStamped, Point
 from gazebo_msgs.msg import LinkStates
 from visualization_msgs.msg import MarkerArray,Marker
 
@@ -28,12 +28,17 @@ class CalcCenterOfMass(object):
         for nm, (mass, pos) in self.robot_links:
             loaded_descr_str += '\n{}, m={}: {}'.format(nm, mass, pos)
         rospy.loginfo(loaded_descr_str)
-        self.center_of_mass_pub = rospy.Publisher('center_of_mass', Point32, queue_size=1)
-        self.out_msg = Point32()
+        self.center_of_mass_pub = rospy.Publisher('center_of_mass', PointStamped, queue_size=1)
+        self.out_msg = PointStamped()
+        self.out_msg.header.frame_id = "map"
         if self.debug_output:
             self.prepare_debug_msg()
             self.debug_pub = rospy.Publisher('debug_center_of_mass', MarkerArray, queue_size=1)
 
+        self.center_of_pressure_pub = rospy.Publisher('center_of_pressure_raw', PointStamped, queue_size=1)
+        self.cop_msg = PointStamped()
+        self.cop_msg.header.frame_id = "map"
+        
         # timer
         self.lock = threading.Lock()  # mutex
         self.curr_pos = {}
@@ -61,10 +66,14 @@ class CalcCenterOfMass(object):
         self.lock.acquire()
         curr_pos = copy.copy(self.curr_pos)
         self.lock.release()
-        self.out_msg.x = 0
-        self.out_msg.y = 0
-        self.out_msg.z = 0
+        self.out_msg.point.x = 0
+        self.out_msg.point.y = 0
+        self.out_msg.point.z = 0
         sum_mass = 0
+        
+        self.cop_msg.point.x = 0
+        self.cop_msg.point.y = 0
+        self.cop_msg.point.z = 0
         # read data
         for ind, (k, v) in enumerate(self.robot_links):
             if k not in curr_pos.keys():
@@ -79,24 +88,35 @@ class CalcCenterOfMass(object):
                                        [v[1][1]],
                                        [v[1][2]]]))
             # shift position
-            self.out_msg.x += v[0] * (link_pose.position.x + pos[0][0])
-            self.out_msg.y += v[0] * (link_pose.position.y + pos[1][0])
-            self.out_msg.z += v[0] * (link_pose.position.z + pos[2][0])
+            self.out_msg.point.x += v[0] * (link_pose.position.x + pos[0][0])
+            self.out_msg.point.y += v[0] * (link_pose.position.y + pos[1][0])
+            self.out_msg.point.z += v[0] * (link_pose.position.z + pos[2][0])
             if self.debug_output:
                 self.debug_change_link_center(ind,
                                               link_pose.position.x + pos[0][0],
                                               link_pose.position.y + pos[1][0],
                                               link_pose.position.z + pos[2][0])
-            sum_mass += v[0]
+            sum_mass += v[0]            
+            if k == "bd1::feet_r_link" or k == "bd1::feet_l_link":
+                self.cop_msg.point.x += link_pose.position.x + pos[0][0]
+                self.cop_msg.point.y += link_pose.position.y + pos[1][0]
+                self.cop_msg.point.z += link_pose.position.z + pos[2][0]
+            
         if sum_mass < 1e-6:
             return # massive objects not found
-        self.out_msg.x /= sum_mass
-        self.out_msg.y /= sum_mass
-        self.out_msg.z /= sum_mass
+        self.out_msg.point.x /= sum_mass
+        self.out_msg.point.y /= sum_mass
+        self.out_msg.point.z /= sum_mass
         self.center_of_mass_pub.publish(self.out_msg)
+        
+        self.cop_msg.point.x /= 2
+        self.cop_msg.point.y /= 2
+        self.cop_msg.point.z /= 2
+        self.center_of_pressure_pub.publish(self.cop_msg)
         # debug output
         if self.debug_output:
-            self.debug_change_full_center(self.out_msg.x, self.out_msg.y, self.out_msg.z)
+            self.debug_change_full_center(self.out_msg.point.x, self.out_msg.point.y, self.out_msg.point.z)
+            self.debug_change_press_center(self.cop_msg.point.x, self.cop_msg.point.y, self.cop_msg.point.z)
             self.debug_pub.publish(self.debug_msg)
         #rospy.logerr(self.out_msg)
         
@@ -158,6 +178,28 @@ class CalcCenterOfMass(object):
         for i in range(len(self.robot_links)):
             marker_links.points.append(Point())
         self.debug_msg.markers.append(marker_links)
+        marker_center_p = Marker()
+        marker_center_p.header.frame_id = 'map'
+        marker_center_p.id = 2
+        marker_center_p.type = Marker.CUBE
+        marker_center_p.action = 0
+        marker_center_p.scale.x = 0.05
+        marker_center_p.scale.y = 0.05
+        marker_center_p.scale.z = 0.05
+        marker_center_p.color.r = 1
+        marker_center_p.color.g = 1
+        marker_center_p.color.b = 0
+        marker_center_p.color.a = 1
+        self.debug_msg.markers.append(marker_center_p)
+
+    def debug_change_press_center(self, x, y, z):
+        self.debug_msg.markers[2].pose.position.x = x
+        self.debug_msg.markers[2].pose.position.y = y
+        self.debug_msg.markers[2].pose.position.z = z
+        self.debug_msg.markers[2].pose.orientation.x = 0
+        self.debug_msg.markers[2].pose.orientation.y = 0
+        self.debug_msg.markers[2].pose.orientation.z = 0
+        self.debug_msg.markers[2].pose.orientation.w = 1
 
     def debug_change_full_center(self, x, y, z):
         self.debug_msg.markers[0].pose.position.x = x

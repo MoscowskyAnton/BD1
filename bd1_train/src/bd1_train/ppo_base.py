@@ -16,10 +16,8 @@ class PPO(object):
         # critic
         with tf.name_scope('critic'):
             inputs = tl.layers.Input([None, state_dim], tf.float32, 'state')
-            layer = tl.layers.Dense(self.hyperparams["CRITIC_LAYER1_SIZE"], tf.nn.relu)(inputs)
-            layer = tl.layers.Dense(self.hyperparams["CRITIC_LAYER2_SIZE"], tf.nn.relu)(layer)
-            layer = tl.layers.Dense(self.hyperparams["CRITIC_LAYER2_SIZE"], tf.nn.relu)(layer)
-            layer = tl.layers.Dense(self.hyperparams["CRITIC_LAYER3_SIZE"], tf.nn.relu)(layer)
+            layer = tl.layers.Dense(64, tf.nn.relu)(inputs)
+            layer = tl.layers.Dense(64, tf.nn.relu)(layer)
             v = tl.layers.Dense(1)(layer)
         self.critic = tl.models.Model(inputs, v)
         self.critic.train()
@@ -27,10 +25,8 @@ class PPO(object):
         # actor
         with tf.name_scope('actor'):
             inputs = tl.layers.Input([None, state_dim], tf.float32, 'state')
-            layer = tl.layers.Dense(self.hyperparams["ACTOR_LAYER1_SIZE"], tf.nn.relu)(inputs)
-            layer = tl.layers.Dense(self.hyperparams["ACTOR_LAYER2_SIZE"], tf.nn.relu)(layer)
-            layer = tl.layers.Dense(self.hyperparams["ACTOR_LAYER2_SIZE"], tf.nn.relu)(layer)
-            layer = tl.layers.Dense(self.hyperparams["ACTOR_LAYER3_SIZE"], tf.nn.relu)(layer)
+            layer = tl.layers.Dense(64, tf.nn.relu)(inputs)
+            layer = tl.layers.Dense(64, tf.nn.relu)(layer)
             a = tl.layers.Dense(action_dim, tf.nn.tanh)(layer)
             mean = tl.layers.Lambda(lambda x: x * action_bound, name='lambda')(a)
             logstd = tf.Variable(np.zeros(action_dim, dtype=np.float32))
@@ -80,7 +76,7 @@ class PPO(object):
         a_gard = tape.gradient(loss, self.actor.trainable_weights)
         self.actor_opt.apply_gradients(zip(a_gard, self.actor.trainable_weights))
 
-        if self.method == 'penalty':
+        if self.method == 'kl_pen':
             return kl_mean
 
     def train_critic(self, reward, state):
@@ -110,7 +106,7 @@ class PPO(object):
         adv = r - self.critic(s)
 
         # update actor
-        if self.method == 'penalty':
+        if self.method == 'kl_pen':
             for _ in range(self.hyperparams["ACTOR_UPDATE_STEPS"]):
                 kl = self.train_actor(s, a, adv, pi)
             if kl < self.kl_target / 1.5:

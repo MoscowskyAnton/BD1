@@ -24,76 +24,47 @@
         <arg name="paused" value="$(arg paused)"/>
         <arg name="use_sim_time" value="false"/>
         <arg name="headless" value="false"/>
-    </include>                        
+    </include>                                
+
     
-    <!--<node name="simple_standup_interface" pkg="bd1_gazebo_env_interface" type="simple_standup_gazebo_environment_inteface.py" output="screen">
-
-    </node>-->
     <node name="standup_gazebo_env_interface" pkg="bd1_gazebo_env_interface" type="universal_gazebo_environment_inteface.py" output="screen">
-
     </node>
     
     <node name="manual_control" pkg="bd1_manual_control" type="manual_control.py"/>
     
     <node name="standup_train_ppo" pkg="bd1_train" type="universal_train_ppo.py" output="screen"  required="false">
         
-        <rosparam param="state">["base_pose", "base_rot_quat", "base_twist_lin", "left_leg_pos_norm", "left_leg_vel"]</rosparam>
-        <rosparam param="actions">["sync_legs_vel"]</rosparam>
-        <param name="reward" value="stup_reward_z_pitch_vel_1"/>
+        <rosparam param="state">["base_pose", "base_rot_quat", "base_twist_lin", "left_leg_pos_norm", "left_leg_vel", "com_abs", "cop_abs"]</rosparam>
+        <rosparam param="actions">["sync_legs_vel", "all_head_vel"]</rosparam>
+        <param name="reward" value="stup_reward_z_body_pitch_com_cop_head_pitch_2"/>
         <param name="env_interface_node_name" value="standup_gazebo_env_interface"/>
                         
-        <!--<param name="save_path" value="$(find bd1_train)/models/PPO/simple_standup/clip_pos_angle_vel_reward_continue"/>-->
-        <param name="load_path" value="$(find bd1_train)/models/PPO/simple_standup/clip_pos_angle_vel_reward_continue/fully_trained"/>
-        <param name="mode" value="test"/>           
+        <param name="save_path" value="$(find bd1_train)/models/PPO/with_head/clip_more_expanded_nets"/>
+        <!--<param name="load_path" value="$(find bd1_train)/models/PPO/with_head/clip_expanded_nets_continue/backup-200"/>-->
+        <!--<param name="mode" value="test"/>           -->
         <param name="sub_method" value="clip"/>   
-        <param name="num_episodes" value="2000"/>   
+        <param name="num_episodes" value="10000"/>   
         <param name="backup_saves" value="200"/>
-        <param name="test_episodes" value="10"/>
+        <param name="test_episodes" value="30"/>
         <param name="max_steps" value="300"/>
-        <param name="step_duration_sec" value="0.1"/>   
+        <param name="step_duration_sec" value="0.1"/>
+        <param name="ppo_clip_param" value="0.2"/>
+        <param name="actor_update_steps" value="20"/>   
+        <param name="critic_update_steps" value="20"/>   
+        
+        <param name="critic_layer1_size" value="256"/>
+        <param name="critic_layer2_size" value="256"/>
+        <param name="critic_layer3_size" value="1024"/>   
+        <param name="actor_layer1_size" value="256"/>   
+        <param name="actor_layer2_size" value="256"/>
+        <param name="actor_layer3_size" value="1024"/>                           
                                         
     </node>
     
-    <!--<node name="standup_train" pkg="bd1_train" type="standup_train_ppo.py" output="screen"  required="True">
-        <param name="episode_duration_sec" value="0.1"/>
-        
-        <param name="state_dim" value="19"/>
-        <param name="state_dim" value="12"/>
-        
-        <param name="save_path" value="$(find bd1_train)/models/PPO/simple_standup/penalty_pos_angle_vel_reward"/>
-        <param name="load_path" value="$(find bd1_train)/models/PPO/simple_standup/default/fully_trained"/>
-        <param name="mode" value="test"/>           
-        <param name="sub_method" value="clip"/>   
-        <param name="num_episodes" value="2000"/>   
-        <param name="backup_saves" value="250"/>
-        <param name="test_episodes" value="20"/>
-        <param name="max_steps" value="300"/>
-        <param name="step_duration_sec" value="0.2"/>   
-                                        
-    </node>-->
-    
-    <!--<node name="gazebo_center_of_mass" pkg="gazebo_center_of_mass" type="gazebo_center_of_mass.py" output="screen">
+    <node name="gazebo_center_of_mass" pkg="gazebo_center_of_mass" type="gazebo_center_of_mass.py" output="screen">
         <param name="robot_name" value="bd1" />
-    </node>-->
-    
-    <!--<node name="environment_interface_standup" pkg="bd1_environment_interface" type="env_iface_standup.py" output="screen">
-        <param name="target_x" value="0.0"/>
-        <param name="target_y" value="0.0"/>
-        <param name="target_z" value="0.34"/>
     </node>
     
-    <node name="standup_train" pkg="bd1_train" type="standup_train.py" output="screen">
-        <param name="episode_duration_sec" value="0.05"/>
-        <param name="memcap_replase_buffer_size" value="10000"/>
-        <param name="var_control_extrapolation" value="1"/>                
-        <param name="batch_size" value="512"/>
-        <param name="max_steps" value="150"/>
-        
-        <param name="save_path" value="$(find bd1_train)/models"/>        
-        <param name="load_pathNO" value="$(find bd1_train)/models/1000"/>
-        <param name="episode_backup_num" value="250"/>
-        
-    </node>-->
     
     <node name="fall_detector" pkg="bd1_fall_detector" type="fall_detector_contacts" output="screen"/>
     

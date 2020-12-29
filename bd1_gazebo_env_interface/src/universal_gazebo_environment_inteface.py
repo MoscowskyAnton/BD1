@@ -9,6 +9,8 @@ from std_msgs.msg import Bool, Float64
 import numpy as np
 from bd1_gazebo_env_interface.srv import Step, Reset, StepResponse, ResetResponse, Configure, ConfigureResponse
 from tf.transformations import euler_from_quaternion
+from geometry_msgs.msg import PointStamped
+from gazebo_msgs.msg import LinkStates
 
 def unnorm(x, x_min, x_max):    
         return ((x+1)/2)*(x_max-x_min)  + x_min
@@ -53,6 +55,13 @@ class UniversalGazeboEnvironmentInterface(object):
         self.last_episode_fall = []
         rospy.Subscriber("fall_detector/fall", Bool, self.fall_cb)
         
+        self.last_mass_center = None
+        rospy.Subscriber("center_of_mass", PointStamped, self.com_cb)
+        self.last_press_center = None
+        rospy.Subscriber("center_of_pressure_raw", PointStamped, self.cop_cb)
+        self.last_link_states = None
+        rospy.Subscriber('/gazebo/link_states', LinkStates, self.link_states_cb)
+        
         rospy.sleep(2) # KOSTYL
         
         self.state_types = {"base_pose": 3,
@@ -68,7 +77,10 @@ class UniversalGazeboEnvironmentInterface(object):
                             "right_leg_vel":3,
                             "all_head_pos":2,
                             "all_head_pos_norm":4,
-                            "all_head_vel":2}
+                            "all_head_vel":2,
+                            "com_abs":3,
+                            "cop_abs":3,
+                            "head_rot_quat":4}
         
         self.actions_types = {"sync_legs_vel":3,
                              "left_legs_vel":3,
@@ -77,7 +89,13 @@ class UniversalGazeboEnvironmentInterface(object):
         
         self.reward_types = {"stup_reward_z_1": self.stup_reward_z_1,
                              "stup_reward_z_2": self.stup_reward_z_2,
-                             "stup_reward_z_pitch_vel_1": self.stup_reward_z_pitch_vel_1}
+                             "stup_reward_z_pitch_vel_1": self.stup_reward_z_pitch_vel_1,
+                             "stup_reward_z_com_cop_1": self.stup_reward_z_com_cop_1,
+                             "stup_reward_z_pitch_com_cop_1": self.stup_reward_z_pitch_com_cop_1,
+                             "stup_reward_z_body_pitch_com_cop_head_pitch_1": self.stup_reward_z_body_pitch_com_cop_head_pitch_1,
+                             "stup_reward_z_body_pitch_com_cop_head_pitch_2": self.stup_reward_z_body_pitch_com_cop_head_pitch_2,
+                             "stup_reward_z_body_pitch_com_cop_head_pitch_3":
+                                 self.stup_reward_z_body_pitch_com_cop_head_pitch_3}
         
         self.requested_state = []
         self.requested_actions = []
@@ -187,30 +205,12 @@ class UniversalGazeboEnvironmentInterface(object):
                 self.neck_pub.publish(self.unrm(action[index]))
                 index+=1
                 self.head_pub.publish(self.unrm(action[index]))
-                index+=1                                   
-                
-        #feet_v = unnorm(action[0], -self.max_velocity_lim, self.max_velocity_lim)        
-        #mid_v = unnorm(action[1], -self.max_velocity_lim, self.max_velocity_lim)
-        #up_v = unnorm(action[2], -self.max_velocity_lim, self.max_velocity_lim)
-        #self.pub_action(feet_v, mid_v, up_v)
-        
-    #def pub_action(self, feet_v, mid_v, up_v):
-        #self.feet_l_pub.publish(feet_v)
-        #self.feet_r_pub.publish(feet_v)
-        #self.mid_l_pub.publish(mid_v)
-        #self.mid_r_pub.publish(mid_v)
-        #self.up_l_pub.publish(up_v)
-        #self.up_r_pub.publish(up_v)        
+                index+=1                                                           
     
     def check_done(self):
-        return True in self.last_episode_fall
+        return True in self.last_episode_fall        
     
-    #def get_reward(self):
-        ##return 0.26 - np.absolute(state[2]-0.26)
-        ##P = euler_from_quaternion(state[3:7])[2]
-        ##return -((0.26 - state[2])**2 + 0.1*(P)**2 + 0.01*(state[7]**2 + state[8]**2 + state[9]**2))
-        #return self.requested_reward()
-    
+    # rewards
     def stup_reward_z_1(self, model_state):
         return 0
     
@@ -218,8 +218,58 @@ class UniversalGazeboEnvironmentInterface(object):
         return 0
     
     def stup_reward_z_pitch_vel_1(self, model_state):
-        P = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[2]
+        P = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
         return -((0.26 - model_state.pose.position.z)**2 + 0.1*(P)**2 + 0.01*(model_state.twist.linear.x**2 + model_state.twist.linear.y**2 + model_state.twist.linear.z**2))
+    
+    def stup_reward_z_com_cop_1(self, model_state):
+        z_part = (0.26 - model_state.pose.position.z)                
+        com_cop_part = (self.last_mass_center.x - self.last_press_center.x)**2 + (self.last_mass_center.y - self.last_press_center.y)**2
+        return -z_part**2 - com_cop_part
+        
+    def stup_reward_z_pitch_com_cop_1(self, model_state):
+        z_part = (0.26 - model_state.pose.position.z)                
+        com_cop_part = (self.last_mass_center.x - self.last_press_center.x)**2 + (self.last_mass_center.y - self.last_press_center.y)**2
+        P = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
+        return -z_part**2 - com_cop_part - 0.1 * P**2
+        
+    def stup_reward_z_body_pitch_com_cop_head_pitch_1(self, model_state):
+        z_part = (0.26 - model_state.pose.position.z)                
+        
+        com_cop_part = (self.last_mass_center.x - self.last_press_center.x)**2 + (self.last_mass_center.y - self.last_press_center.y)**2
+        
+        bodyP = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
+        
+        ind_head = self.last_link_states.name.index("bd1::head_link")
+        quat = self.last_link_states.pose[ind_head].orientation
+        headP = euler_from_quaternion([quat.x, quat.y, quat.z, quat.w])[1]
+        
+        return -z_part**2 - com_cop_part - 0.1 * bodyP**2 - 0.1 * headP**2
+    
+    def stup_reward_z_body_pitch_com_cop_head_pitch_2(self, model_state):
+        z_part = (0.26 - model_state.pose.position.z)                
+        
+        com_cop_part = (self.last_mass_center.x - self.last_press_center.x)**2 + (self.last_mass_center.y - self.last_press_center.y)**2
+        
+        bodyP = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
+        
+        ind_head = self.last_link_states.name.index("bd1::head_link")
+        quat = self.last_link_states.pose[ind_head].orientation
+        headP = euler_from_quaternion([quat.x, quat.y, quat.z, quat.w])[1]
+        
+        return -z_part**2 - 0.5 * com_cop_part - 0.1 * bodyP**2 - 0.1 * headP**2
+    
+    def stup_reward_z_body_pitch_com_cop_head_pitch_3(self, model_state):
+        z_part = (0.26 - model_state.pose.position.z)                
+        
+        com_cop_part = (self.last_mass_center.x - self.last_press_center.x)**2 + (self.last_mass_center.y - self.last_press_center.y)**2
+        
+        bodyP = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
+        
+        ind_head = self.last_link_states.name.index("bd1::head_link")
+        quat = self.last_link_states.pose[ind_head].orientation
+        headP = euler_from_quaternion([quat.x, quat.y, quat.z, quat.w])[1]                
+        
+        return 10*-z_part**2 - com_cop_part - 0.1 * bodyP**2 - 0.1 * headP**2 - int(self.check_done())
     
     def get_state(self, get_reward = False):
         
@@ -297,7 +347,23 @@ class UniversalGazeboEnvironmentInterface(object):
                 state.append( np.cos(self.last_joint_states.position[5] ))
             elif state_el == "all_head_vel":
                 state.append(self.last_joint_states.velocity[2])
-                state.append(self.last_joint_states.velocity[5])                        
+                state.append(self.last_joint_states.velocity[5])     
+            elif state_el == "com_abs":
+                state.append(self.last_mass_center.x)
+                state.append(self.last_mass_center.y)
+                state.append(self.last_mass_center.z)
+            elif state_el == "cop_abs":
+                state.append(self.last_press_center.x)
+                state.append(self.last_press_center.y)
+                state.append(self.last_press_center.z)
+            elif state_el == "head_rot_quat":
+                ind_head = self.last_link_states.name.index("bd1::head_link")
+                quat = self.last_link_states.pose[ind_head].orientation
+                state.append(quat.x)
+                state.append(quat.y)
+                state.append(quat.z)
+                state.append(quat.w)
+                
         
         if get_reward:            
             return state, self.requested_reward(model_state) 
@@ -312,6 +378,15 @@ class UniversalGazeboEnvironmentInterface(object):
         
     def fall_cb(self, msg):
         self.last_episode_fall.append(msg.data)
+        
+    def com_cb(self, msg):
+        self.last_mass_center = msg.point
+        
+    def cop_cb(self, msg):
+        self.last_press_center = msg.point
+        
+    def link_states_cb(self, msg):
+        self.last_link_states = msg
         
     def run(self):        
         rospy.spin()
