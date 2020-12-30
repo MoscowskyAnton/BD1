@@ -39,27 +39,31 @@
     
     <node if="$(eval servo_control == 'EFF')" name="manual_control" pkg="bd1_manual_control" type="manual_control_eff.py"/>
     
-    <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure"/>
+    <!--<node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure"/>-->
     
-    <node name="standup_train_ppo" pkg="bd1_train" type="universal_train_ppo.py" output="screen"  required="false">
+    <node name="standup_train_ppo" pkg="bd1_train" type="universal_train_ppo.py" output="screen"  required="true">
         
         <rosparam param="state">["base_pose", "base_rot_quat", "base_twist_lin", "left_leg_all_quats", "com_abs", "cop_abs"]</rosparam>
         <rosparam param="actions">["sync_legs_vel"]</rosparam>
-        <param name="reward" value="stup_reward_z_body_pitch_com_cop_head_pitch_3"/>
+        <param name="reward" value="just_z"/>
         <param name="env_interface_node_name" value="standup_gazebo_env_interface"/>
                         
-        <!--<param name="save_path" value="$(find bd1_train)/models/PPO/with_head/clip_more_expanded_nets"/>-->
-        <param name="load_path" value="$(find bd1_train)/models/PPO/with_head/clip_more_expanded_nets/backup-4400"/>
-        <param name="mode" value="test"/>           
+        <!--<param name="save_path" value="$(find bd1_train)/models/PPO/just_height/clip_minibatch_train_end_episode"/>-->
+        <param name="load_path" value="$(find bd1_train)/models/PPO/just_height/clip_minibatch_train_end_episode/fully_trained"/>
+        <param name="mode" value="test"/>
         <param name="sub_method" value="clip"/>   
-        <param name="num_episodes" value="10000"/>   
+        <param name="num_episodes" value="3000"/>   
         <param name="backup_saves" value="200"/>
-        <param name="test_episodes" value="30"/>
+        <param name="test_episodes" value="50"/>
         <param name="max_steps" value="300"/>
         <param name="step_duration_sec" value="0.1"/>
-        <param name="ppo_clip_param" value="0.3"/>
-        <param name="actor_update_steps" value="20"/>   
-        <param name="critic_update_steps" value="20"/>   
+        <param name="ppo_clip_param" value="0.2"/>
+        <param name="actor_update_steps" value="10"/>   
+        <param name="critic_update_steps" value="10"/>   
+        
+        <param name="batch_size" value="64"/>
+        <param name="minibatch_size" value="32"/>
+        <param name="gamma" value="0.95"/>
         
         <param name="critic_layer1_size" value="256"/>
         <param name="critic_layer2_size" value="256"/>

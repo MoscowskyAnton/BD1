@@ -4,7 +4,7 @@
 import rospy
 from std_srvs.srv import Empty
 import numpy as np
-from bd1_train.ppo import PPO
+from bd1_train.ppo_minibatch import PPO
 from bd1_train.srv import SaveAgent, SaveAgentResponse
 from bd1_gazebo_env_interface.srv import Step, Reset, Configure
 import matplotlib.pyplot as plt
@@ -31,13 +31,15 @@ class StandUpTrain(object):
         self.num_episodes = rospy.get_param("~num_episodes", 1000)
         self.test_episodes = rospy.get_param("~test_episodes", 10)
         self.max_steps = rospy.get_param("~max_steps", 200)
+        self.best_reward = [-1, float("-inf")]
+        self.backups_rewards = []
         
         self.backup_saves = rospy.get_param("~backup_saves", 250)                        
         # HYPERPARAMETERS
         self.hyper_parameters = {}
         self.hyper_parameters['LR_A'] = rospy.get_param('~actor_learning_rate', 0.0001)
         self.hyper_parameters['LR_C'] = rospy.get_param('~critic_learning_rate', 0.0002)
-        self.hyper_parameters['GAMMA'] = rospy.get_param('~gamma_reward_discount', 0.9)
+        self.hyper_parameters['GAMMA'] = rospy.get_param('~gamma', 0.9)
         
         self.hyper_parameters['BATCH_SIZE'] = rospy.get_param('~batch_size', 32)
         self.hyper_parameters['ACTOR_UPDATE_STEPS'] = rospy.get_param('~actor_update_steps', 10)
@@ -53,6 +55,8 @@ class StandUpTrain(object):
         self.hyper_parameters['ACTOR_LAYER1_SIZE'] = rospy.get_param('~actor_layer1_size', 64)
         self.hyper_parameters['ACTOR_LAYER2_SIZE'] = rospy.get_param('~actor_layer2_size', 64)
         self.hyper_parameters['ACTOR_LAYER3_SIZE'] = rospy.get_param('~actor_layer3_size', 64)
+        
+        self.hyper_parameters['MINIBATCH_SIZE'] = rospy.get_param('~minibatch_size', 32)
         
         rospy.wait_for_service(self.env_interface_node_name+'/configure')
         self.env_config_srv = rospy.ServiceProxy(self.env_interface_node_name+'/configure', Configure)
@@ -133,7 +137,7 @@ class StandUpTrain(object):
         # hyper
         params["actor_learning_rate"] = self.hyper_parameters['LR_A']
         params["critic_learning_rate"] = self.hyper_parameters['LR_C']
-        params["gamma_reward_discount"] = self.hyper_parameters['GAMMA']
+        params["gamma"] = self.hyper_parameters['GAMMA']
         params["batch_size"] = self.hyper_parameters['BATCH_SIZE']
         params["actor_update_steps"] = self.hyper_parameters['ACTOR_UPDATE_STEPS']
         params["critic_update_steps"] = self.hyper_parameters['CRITIC_UPDATE_STEPS']
@@ -174,14 +178,14 @@ class StandUpTrain(object):
                     state_ = np.array(srd.state)
                     self.agent.store_transition(state, action, srd.reward)
                     state = state_
-                    episode_reward += srd.reward                    
-                    
-                    if len(self.agent.state_buffer) > self.hyper_parameters["BATCH_SIZE"]:
-                        self.agent.finish_path(state_, srd.done)
-                        self.agent.update()
+                    episode_reward += srd.reward                                                                                    
+                        
                     if srd.done:
                         break
                 self.agent.finish_path(state_, srd.done)
+                if len(self.agent.state_buffer) > self.hyper_parameters["BATCH_SIZE"]:
+                    self.agent.update()
+                    
                 rospy.loginfo("[{}] Training | Episode: {}/{} | Episode Reward: {:.4f}".format(self.name, episode+1, self.num_episodes, episode_reward))                        
                 
                 if episode == 0:
@@ -190,9 +194,14 @@ class StandUpTrain(object):
                     all_episode_reward.append(all_episode_reward[-1] * 0.9 + episode_reward * 0.1)
                 true_all_episode_reward.append(episode_reward)
                 
-                plt.cla()                
-                plt.plot(all_episode_reward, '-', color = self.cmap(0), label="episode reward discounted")                
+                plt.cla()       
+                plt.plot(true_all_episode_reward, '-', color = self.cmap(0), label="episode reward", alpha = 0.3)                
+                plt.plot(all_episode_reward, '-', color = self.cmap(0), label="episode reward discounted")                     
+                plt.plot([(i+1)*self.backup_saves for i in range(len(self.backups_rewards))], self.backups_rewards, 'o', color = self.cmap(1), label="backup saves")  
+                if self.best_reward[0] != -1:
+                    plt.plot(self.best_reward[0], self.best_reward[1], 'o', color = self.cmap(2), label="best reward save")  
                 plt.legend()
+                plt.grid()
                 plt.title("Reward per episode")
                 if self.plot_reward:                    
                     plt.pause(0.001)
@@ -200,6 +209,12 @@ class StandUpTrain(object):
                 if episode != 0 and episode % self.backup_saves == 0:
                     name = "backup-{}".format(episode)
                     self.save_all(name)                            
+                    self.backups_rewards.append(episode_reward)                    
+                if len(self.agent.state_buffer) > self.hyper_parameters["BATCH_SIZE"] and self.best_reward[1] < episode_reward:
+                    self.best_reward[0] = episode
+                    self.best_reward[1] = episode_reward
+                    self.save_all("best_reward")
+                    
             self.save_all("fully_trained")                
             rospy.logwarn("[{}] Training is complete!".format(self.name))
                     
@@ -211,11 +226,12 @@ class StandUpTrain(object):
                 srd = self.env_step_srv(self.step_duration, action.tolist())
                 state = np.array(srd.state)
                 episode_reward += srd.reward
-                print(srd.reward)
+                #print(srd.reward)
                 if srd.done:
                     break
             rospy.loginfo("[{}] Teting | Episode: {}/{} | Episode Reward: {:.4f}".format(self.name, episode, self.test_episodes,  episode_reward))            
             
+        exit()
                     
     
 if __name__ == '__main__' :

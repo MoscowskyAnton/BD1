@@ -53,7 +53,8 @@ class PPO(object):
         self.reward_buffer, self.cumulative_reward_buffer = [], []
         self.action_bound = action_bound
 
-    def train_actor(self, state, action, adv, old_pi):
+    #def train_actor(self, state, action, adv, old_pi):
+    def train_actor(self):
         """
         Update policy network
         :param state: state batch
@@ -62,52 +63,89 @@ class PPO(object):
         :param old_pi: old pi distribution
         :return: kl_mean or None
         """
-        with tf.GradientTape() as tape:
+        s_all = np.array(self.state_buffer, np.float32)
+        a_all = np.array(self.action_buffer, np.float32)
+        r_all = np.array(self.cumulative_reward_buffer, np.float32)
+        
+        batch_size = s_all.shape[0]
+        
+        for _ in range(self.hyperparams["ACTOR_UPDATE_STEPS"]):
+            minibatch_ind = np.random.randint(0, batch_size, self.hyperparams["MINIBATCH_SIZE"])
+            
+            state = s_all[minibatch_ind,:]
+            action = a_all[minibatch_ind,:]
+            reward = r_all[minibatch_ind,:]
+            
             mean, std = self.actor(state), tf.exp(self.actor.logstd)
-            pi = tfp.distributions.Normal(mean, std)
+            old_pi = tfp.distributions.Normal(mean, std)
+            adv = reward - self.critic(state)
+            
+            with tf.GradientTape() as tape:
+                mean, std = self.actor(state), tf.exp(self.actor.logstd)
+                pi = tfp.distributions.Normal(mean, std)
 
-            ratio = tf.exp(pi.log_prob(action) - old_pi.log_prob(action))
-            surr = ratio * adv
-            if self.method == 'penalty':  # ppo penalty
-                kl = tfp.distributions.kl_divergence(old_pi, pi)
-                kl_mean = tf.reduce_mean(kl)
-                loss = -(tf.reduce_mean(surr - self.lam * kl))
-            else:  # ppo clip
-                loss = -tf.reduce_mean(
-                    tf.minimum(surr,
-                               tf.clip_by_value(ratio, 1. - self.epsilon, 1. + self.epsilon) * adv)
-                )
-        a_gard = tape.gradient(loss, self.actor.trainable_weights)
-        self.actor_opt.apply_gradients(zip(a_gard, self.actor.trainable_weights))
+                ratio = tf.exp(pi.log_prob(action) - old_pi.log_prob(action))
+                surr = ratio * adv
+                if self.method == 'penalty':  # ppo penalty
+                    kl = tfp.distributions.kl_divergence(old_pi, pi)
+                    kl_mean = tf.reduce_mean(kl)
+                    loss = -(tf.reduce_mean(surr - self.lam * kl))
+                else:  # ppo clip
+                    loss = -tf.reduce_mean(
+                        tf.minimum(surr,
+                                tf.clip_by_value(ratio, 1. - self.epsilon, 1. + self.epsilon) * adv)
+                    )
+            a_gard = tape.gradient(loss, self.actor.trainable_weights)
+            self.actor_opt.apply_gradients(zip(a_gard, self.actor.trainable_weights))
 
         if self.method == 'penalty':
             return kl_mean
 
-    def train_critic(self, reward, state):
+    #def train_critic(self, reward, state):
+    def train_critic(self):
         """
         Update actor network
         :param reward: cumulative reward batch
         :param state: state batch
         :return: None
         """
-        reward = np.array(reward, dtype=np.float32)
-        with tf.GradientTape() as tape:
-            advantage = reward - self.critic(state)
-            loss = tf.reduce_mean(tf.square(advantage))
-        grad = tape.gradient(loss, self.critic.trainable_weights)
-        self.critic_opt.apply_gradients(zip(grad, self.critic.trainable_weights))
+        #reward = np.array(reward, dtype=np.float32)
+        s_all = np.array(self.state_buffer, np.float32)        
+        r_all = np.array(self.cumulative_reward_buffer, np.float32)
+        
+        batch_size = s_all.shape[0]
+        
+        for _ in range(self.hyperparams["CRITIC_UPDATE_STEPS"]):
+            minibatch_ind = np.random.randint(0, batch_size, self.hyperparams["MINIBATCH_SIZE"])
+            
+            state = s_all[minibatch_ind,:]            
+            reward = r_all[minibatch_ind,:]
+        
+            with tf.GradientTape() as tape:
+                advantage = reward - self.critic(state)
+                loss = tf.reduce_mean(tf.square(advantage))
+            grad = tape.gradient(loss, self.critic.trainable_weights)
+            self.critic_opt.apply_gradients(zip(grad, self.critic.trainable_weights))
 
     def update(self):
         """
         Update parameter with the constraint of KL divergent
         :return: None
         """
-        s = np.array(self.state_buffer, np.float32)
-        a = np.array(self.action_buffer, np.float32)
-        r = np.array(self.cumulative_reward_buffer, np.float32)
-        mean, std = self.actor(s), tf.exp(self.actor.logstd)
-        pi = tfp.distributions.Normal(mean, std)
-        adv = r - self.critic(s)
+        #s_all = np.array(self.state_buffer, np.float32)
+        #a_all = np.array(self.action_buffer, np.float32)
+        #r_all = np.array(self.cumulative_reward_buffer, np.float32)
+        
+        #batch_size = r_all.size[0]
+        #minibatch_ind = np.random.randint(0, batch_size, self.hyperparams["MINIBATCH_SIZE"])
+        
+        #s = s_all[minibatch_ind,:]
+        #a = a_all[minibatch_ind,:]
+        #r = r_all[minibatch_ind,:]
+        
+        #mean, std = self.actor(s), tf.exp(self.actor.logstd)
+        #pi = tfp.distributions.Normal(mean, std)
+        #adv = r - self.critic(s)
 
         # update actor
         if self.method == 'penalty':
@@ -118,17 +156,19 @@ class PPO(object):
             elif kl > self.kl_target * 1.5:
                 self.lam *= 2
         else:
-            for _ in range(self.hyperparams["ACTOR_UPDATE_STEPS"]):
-                self.train_actor(s, a, adv, pi)
+            #for _ in range(self.hyperparams["ACTOR_UPDATE_STEPS"]):
+                #self.train_actor(s, a, adv, pi)
+            self.train_actor()
 
         # update critic
-        for _ in range(self.hyperparams["CRITIC_UPDATE_STEPS"]):
-            self.train_critic(r, s)
+        #for _ in range(self.hyperparams["CRITIC_UPDATE_STEPS"]):
+            #self.train_critic(r, s)
+        self.train_critic()
 
-        self.state_buffer.clear()
-        self.action_buffer.clear()
-        self.cumulative_reward_buffer.clear()
-        self.reward_buffer.clear()
+        #self.state_buffer.clear()
+        #self.action_buffer.clear()
+        #self.cumulative_reward_buffer.clear()
+        #self.reward_buffer.clear()
 
     def get_action(self, state, greedy=False):
         """

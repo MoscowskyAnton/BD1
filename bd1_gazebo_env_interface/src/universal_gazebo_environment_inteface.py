@@ -107,7 +107,10 @@ class UniversalGazeboEnvironmentInterface(object):
                              "stup_reward_z_body_pitch_com_cop_head_pitch_2": self.stup_reward_z_body_pitch_com_cop_head_pitch_2,
                              "stup_reward_z_body_pitch_com_cop_head_pitch_3":
                                  self.stup_reward_z_body_pitch_com_cop_head_pitch_3,
-                                 "just_fall": self.just_fall_reward}
+                                 "just_fall": self.just_fall_reward,
+                                 "just_z": self.just_Z_reward,
+                                 "max_z_and_body_pitch_1":self.max_z_and_body_pitch_1,
+                                 "stup_reward_z_fall_penalty_1":self.stup_reward_z_fall_penalty_1}
         
         self.requested_state = []
         self.requested_actions = []
@@ -224,10 +227,13 @@ class UniversalGazeboEnvironmentInterface(object):
     
     # rewards
     def stup_reward_z_1(self, model_state):
-        return 0
+        return -(0.26 - model_state.pose.position.z)**2
     
     def stup_reward_z_2(self, model_state):
-        return 0
+        return -np.absolute(0.3 - model_state.pose.position.z)
+    
+    def stup_reward_z_fall_penalty_1(self, model_state):
+        return -np.absolute(0.3 - model_state.pose.position.z) - int(self.check_done())
     
     def stup_reward_z_pitch_vel_1(self, model_state):
         P = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
@@ -281,11 +287,17 @@ class UniversalGazeboEnvironmentInterface(object):
         quat = self.last_link_states.pose[ind_head].orientation
         headP = euler_from_quaternion([quat.x, quat.y, quat.z, quat.w])[1]                
         
-        return 10*-z_part**2 - com_cop_part - 0.1 * bodyP**2 - 0.1 * headP**2 - int(self.check_done())
+        return 10*-z_part**2 - com_cop_part - 0.1 * bodyP**2 - 0.1 * headP**2 - int(self.check_done())        
     
     def just_fall_reward(self, model_state):
         return int(self.check_done())
     
+    def just_Z_reward(self, model_state):
+        return model_state.pose.position.z
+    
+    def max_z_and_body_pitch_1(self, model_state):
+        P = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
+        return model_state.pose.position.z + (1 - np.absolute(np.sin(P)))
     
     def get_state(self, get_reward = False):
         
