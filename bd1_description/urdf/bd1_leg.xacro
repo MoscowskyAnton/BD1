@@ -28,6 +28,9 @@
     <xacro:property name="feet_shift_y" value="0.0"/>
     <xacro:property name="feet_shift_z" value="-0.065"/>
     
+    <xacro:property name="servo_friction" value="1000"/>
+    
+    
     <xacro:include filename="$(find bd1_description)/urdf/transmission_$(arg servo_control).xacro"/>
     
     <!-- 
@@ -74,6 +77,7 @@
             <origin xyz="0 ${y_mul*legs_baseline/2} 0" rpy="0 ${pi/2+1.5} 0"/>
             <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="${-pi}0" upper="0"/>
             <axis xyz="0 1 0"/>
+            <!--<dynamics damping="${servo_friction}"/>-->
         </joint>
         
         <xacro:servtransmission joint="up_leg_${side}_j"/>
@@ -117,6 +121,7 @@
             <origin xyz="0.15 ${y_mul*0.009} 0" rpy="0 -3 0"/>
             <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="0" upper="${pi}"/>
             <axis xyz="0 1 0"/>
+            <!--<dynamics damping="${servo_friction}"/>-->
         </joint>
         
         <xacro:servtransmission joint="mid_leg_${side}_j"/>
@@ -161,6 +166,7 @@
             <origin xyz="0.15 ${-y_mul*0.0045} 0" rpy="0 0 0"/>
             <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="${-pi}" upper="0"/>
             <axis xyz="0 1 0"/>
+            <!--<dynamics damping="${servo_friction}"/>-->
         </joint>
         
         <gazebo reference="feet_${side}_link">

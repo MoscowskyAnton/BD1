@@ -91,7 +91,8 @@ class UniversalGazeboEnvironmentInterface(object):
                             "com_abs":3,
                             "cop_abs":3,
                             "head_rot_quat":4,
-                            "left_leg_all_quats":12}
+                            "left_leg_all_quats":12,
+                            "right_leg_all_quats":12}
         
         self.actions_types = {"sync_legs_vel":3,
                              "left_legs_vel":3,
@@ -100,6 +101,9 @@ class UniversalGazeboEnvironmentInterface(object):
         
         self.reward_types = {"stup_reward_z_1": self.stup_reward_z_1,
                              "stup_reward_z_2": self.stup_reward_z_2,
+                             "stup_reward_z_3": self.stup_reward_z_3,
+                             "stup_reward_z_pitch_1":self.stup_reward_z_pitch_1,
+                             "stup_reward_z_pitch_2":self.stup_reward_z_pitch_2,
                              "stup_reward_z_pitch_vel_1": self.stup_reward_z_pitch_vel_1,
                              "stup_reward_z_com_cop_1": self.stup_reward_z_com_cop_1,
                              "stup_reward_z_pitch_com_cop_1": self.stup_reward_z_pitch_com_cop_1,
@@ -110,7 +114,8 @@ class UniversalGazeboEnvironmentInterface(object):
                                  "just_fall": self.just_fall_reward,
                                  "just_z": self.just_Z_reward,
                                  "max_z_and_body_pitch_1":self.max_z_and_body_pitch_1,
-                                 "stup_reward_z_fall_penalty_1":self.stup_reward_z_fall_penalty_1}
+                                 "stup_reward_z_fall_penalty_1":self.stup_reward_z_fall_penalty_1,
+                                 "walk_reward_max_vx":self.walk_reward_max_vx}
         
         self.requested_state = []
         self.requested_actions = []
@@ -232,12 +237,23 @@ class UniversalGazeboEnvironmentInterface(object):
     def stup_reward_z_2(self, model_state):
         return -np.absolute(0.3 - model_state.pose.position.z)
     
+    def stup_reward_z_3(self, model_state):
+        return 0.3-np.absolute(0.3 - model_state.pose.position.z)
+    
     def stup_reward_z_fall_penalty_1(self, model_state):
         return -np.absolute(0.3 - model_state.pose.position.z) - int(self.check_done())
     
     def stup_reward_z_pitch_vel_1(self, model_state):
         P = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
         return -((0.26 - model_state.pose.position.z)**2 + 0.1*(P)**2 + 0.01*(model_state.twist.linear.x**2 + model_state.twist.linear.y**2 + model_state.twist.linear.z**2))
+    
+    def stup_reward_z_pitch_1(self, model_state):        
+        P = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
+        return 0.3-np.absolute(0.3 - model_state.pose.position.z) + 0.05 * (np.pi - np.absolute(P))       
+    
+    def stup_reward_z_pitch_2(self, model_state):        
+        P = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
+        return 0.3-np.absolute(0.3 - model_state.pose.position.z) + 0.01 * (np.pi - np.absolute(P))       
     
     def stup_reward_z_com_cop_1(self, model_state):
         z_part = (0.26 - model_state.pose.position.z)                
@@ -298,6 +314,9 @@ class UniversalGazeboEnvironmentInterface(object):
     def max_z_and_body_pitch_1(self, model_state):
         P = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
         return model_state.pose.position.z + (1 - np.absolute(np.sin(P)))
+    
+    def walk_reward_max_vx(self, model_state):
+        return model_state.twist.linear.x
     
     def get_state(self, get_reward = False):
         
@@ -393,6 +412,14 @@ class UniversalGazeboEnvironmentInterface(object):
                 state.append(quat.w)
             elif state_el == "left_leg_all_quats":
                 for link in ["bd1::up_leg_l_link", "bd1::mid_leg_l_link","bd1::feet_l_link"]:
+                    ind = self.last_link_states.name.index(link)
+                    quat = self.last_link_states.pose[ind].orientation
+                    state.append(quat.x)
+                    state.append(quat.y)
+                    state.append(quat.z)
+                    state.append(quat.w)
+            elif state_el == "right_leg_all_quats":
+                for link in ["bd1::up_leg_r_link", "bd1::mid_leg_r_link","bd1::feet_r_link"]:
                     ind = self.last_link_states.name.index(link)
                     quat = self.last_link_states.pose[ind].orientation
                     state.append(quat.x)

@@ -197,7 +197,7 @@ class StandUpTrain(object):
                 plt.cla()       
                 plt.plot(true_all_episode_reward, '-', color = self.cmap(0), label="episode reward", alpha = 0.3)                
                 plt.plot(all_episode_reward, '-', color = self.cmap(0), label="episode reward discounted")                     
-                plt.plot([(i+1)*self.backup_saves for i in range(len(self.backups_rewards))], self.backups_rewards, 'o', color = self.cmap(1), label="backup saves")  
+                plt.plot([(i+1)*self.backup_saves for i in range(len(self.backups_rewards))], self.backups_rewards, '.', color = self.cmap(1), label="backup saves")  
                 if self.best_reward[0] != -1:
                     plt.plot(self.best_reward[0], self.best_reward[1], 'o', color = self.cmap(2), label="best reward save")  
                 plt.legend()
@@ -229,7 +229,7 @@ class StandUpTrain(object):
                 #print(srd.reward)
                 if srd.done:
                     break
-            rospy.loginfo("[{}] Teting | Episode: {}/{} | Episode Reward: {:.4f}".format(self.name, episode, self.test_episodes,  episode_reward))            
+            rospy.loginfo("[{}] Testing | Episode: {}/{} | Episode Reward: {:.4f}".format(self.name, episode, self.test_episodes,  episode_reward))            
             
         exit()
                     
