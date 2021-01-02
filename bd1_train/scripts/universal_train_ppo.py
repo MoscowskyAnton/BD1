@@ -166,9 +166,10 @@ class StandUpTrain(object):
             documents = yaml.dump(params, file)
         
     def save_all(self, name):
-        self.save_agent(name)
         self.export_params(name)
         plt.savefig(self.save_path+"/"+name+"/rewards.png")
+        self.save_agent(name)
+        
         
     def run(self):        
         if self.mode == 'train':

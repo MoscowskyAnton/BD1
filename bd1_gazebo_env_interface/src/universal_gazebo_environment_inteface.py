@@ -111,6 +111,7 @@ class UniversalGazeboEnvironmentInterface(object):
                              "stup_reward_z_contacts_2":self.stup_reward_z_contacts_2,
                              "stup_reward_z_contacts_3":self.stup_reward_z_contacts_3,
                              "stup_reward_z_contacts_4":self.stup_reward_z_contacts_4,
+                             "stup_reward_z_minimize_actions_1":self.stup_reward_z_minimize_actions_1,
                              "stup_reward_z_pitch_1":self.stup_reward_z_pitch_1,
                              "stup_reward_z_pitch_2":self.stup_reward_z_pitch_2,
                              "stup_reward_z_pitch_vel_1": self.stup_reward_z_pitch_vel_1,
@@ -254,8 +255,8 @@ class UniversalGazeboEnvironmentInterface(object):
     def stup_reward_z_3(self, ind_base):
         return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z)
     
-    def stup_reward_z_mimimize_actions(self, ind_base):
-        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + (3 - np.sum(np.absolute(np.array(self.last_action))))
+    def stup_reward_z_minimize_actions_1(self, ind_base):
+        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + 0.1*(3 - np.sum(np.absolute(np.array(self.last_action))))
         
     def stup_reward_z_contacts_1(self, ind_base):
         contacts = 5 / (1+int(self.last_feet_contacts.foot_l) + int(self.last_feet_contacts.foot_r) + int(self.last_feet_contacts.heel_l) + int(self.last_feet_contacts.heel_r))
