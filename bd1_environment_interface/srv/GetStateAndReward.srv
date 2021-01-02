@@ -1,4 +1,0 @@
----
-bd1_environment_interface/State state
-float64 reward
-bool episode_end

@@ -11,6 +11,7 @@ from bd1_gazebo_env_interface.srv import Step, Reset, StepResponse, ResetRespons
 from tf.transformations import euler_from_quaternion
 from geometry_msgs.msg import PointStamped
 from gazebo_msgs.msg import LinkStates
+from bd1_gazebo_utils.msg import FeetContacts
 
 def unnorm(x, x_min, x_max):    
         return ((x+1)/2)*(x_max-x_min)  + x_min
@@ -42,28 +43,31 @@ class UniversalGazeboEnvironmentInterface(object):
         if self.servo_control == "VEL":
             self.head_pub = rospy.Publisher('head_servo_velocity_controller/command', Float64, queue_size = 1)                
             self.neck_pub = rospy.Publisher('neck_servo_velocity_controller/command', Float64, queue_size = 1)            
-            self.up_r_pub = rospy.Publisher('leg_up_r_servo_velocity_controller/command', Float64, queue_size = 1)            
-            self.mid_r_pub = rospy.Publisher('leg_mid_r_servo_velocity_controller/command', Float64, queue_size = 1)            
-            self.feet_r_pub = rospy.Publisher('feet_r_servo_velocity_controller/command', Float64, queue_size = 1)            
-            self.up_l_pub = rospy.Publisher('leg_up_l_servo_velocity_controller/command', Float64, queue_size = 1)            
-            self.mid_l_pub = rospy.Publisher('leg_mid_l_servo_velocity_controller/command', Float64, queue_size = 1)            
-            self.feet_l_pub = rospy.Publisher('feet_l_servo_velocity_controller/command', Float64, queue_size = 1)
+            self.hip_r_pub = rospy.Publisher('hip_r_servo_velocity_controller/command', Float64, queue_size = 1)            
+            self.knee_r_pub = rospy.Publisher('knee_r_servo_velocity_controller/command', Float64, queue_size = 1)            
+            self.foot_r_pub = rospy.Publisher('foot_r_servo_velocity_controller/command', Float64, queue_size = 1)            
+            self.hip_l_pub = rospy.Publisher('hip_l_servo_velocity_controller/command', Float64, queue_size = 1)            
+            self.knee_l_pub = rospy.Publisher('knee_l_servo_velocity_controller/command', Float64, queue_size = 1)            
+            self.foot_l_pub = rospy.Publisher('foot_l_servo_velocity_controller/command', Float64, queue_size = 1)
         elif self.servo_control == "EFF":
             self.head_pub = rospy.Publisher('head_servo_effort_controller/command', Float64, queue_size = 1)                
             self.neck_pub = rospy.Publisher('neck_servo_effort_controller/command', Float64, queue_size = 1)            
-            self.up_r_pub = rospy.Publisher('hip_r_servo_effort_controller/command', Float64, queue_size = 1)            
-            self.mid_r_pub = rospy.Publisher('knee_r_servo_effort_controller/command', Float64, queue_size = 1)            
-            self.feet_r_pub = rospy.Publisher('foot_r_servo_effort_controller/command', Float64, queue_size = 1)            
-            self.up_l_pub = rospy.Publisher('hip_l_servo_effort_controller/command', Float64, queue_size = 1)            
-            self.mid_l_pub = rospy.Publisher('knee_l_servo_effort_controller/command', Float64, queue_size = 1)            
-            self.feet_l_pub = rospy.Publisher('foot_l_servo_effort_controller/command', Float64, queue_size = 1)
+            self.hip_r_pub = rospy.Publisher('hip_r_servo_effort_controller/command', Float64, queue_size = 1)            
+            self.knee_r_pub = rospy.Publisher('knee_r_servo_effort_controller/command', Float64, queue_size = 1)            
+            self.foot_r_pub = rospy.Publisher('foot_r_servo_effort_controller/command', Float64, queue_size = 1)            
+            self.hip_l_pub = rospy.Publisher('hip_l_servo_effort_controller/command', Float64, queue_size = 1)            
+            self.knee_l_pub = rospy.Publisher('knee_l_servo_effort_controller/command', Float64, queue_size = 1)            
+            self.foot_l_pub = rospy.Publisher('foot_l_servo_effort_controller/command', Float64, queue_size = 1)
         
         # subscribers and data containers
         self.last_joint_states = None
         rospy.Subscriber("joint_states", JointState, self.joint_states_cb)
         
         self.last_episode_fall = []
-        rospy.Subscriber("fall_detector/fall", Bool, self.fall_cb)
+        rospy.Subscriber("contacts_handler/fall", Bool, self.fall_cb)
+        
+        self.last_feet_contacts = None
+        rospy.Subscriber("contacts_handler/feet_contacts", FeetContacts, self.feet_contacts_cb)
         
         self.last_mass_center = None
         rospy.Subscriber("center_of_mass", PointStamped, self.com_cb)
@@ -75,24 +79,25 @@ class UniversalGazeboEnvironmentInterface(object):
         rospy.sleep(2) # KOSTYL
         
         self.state_types = {"base_pose": 3,
-                            "base_rot_rpy": 3,
+                            #"base_rot_rpy": 3,
                             "base_rot_quat":4,
                             "base_twist_lin":3,
                             "base_twist_ang":3,
-                            "left_leg_pos":3,
-                            "left_leg_pos_norm":6,
-                            "left_leg_vel":3,
-                            "right_leg_pos":3,
-                            "right_leg_pos_norm":6,
-                            "right_leg_vel":3,
-                            "all_head_pos":2,
-                            "all_head_pos_norm":4,
-                            "all_head_vel":2,
+                            #"left_leg_pos":3,
+                            #"left_leg_pos_norm":6,
+                            #"left_leg_vel":3,
+                            #"right_leg_pos":3,
+                            #"right_leg_pos_norm":6,
+                            #"right_leg_vel":3,
+                            #"all_head_pos":2,
+                            #"all_head_pos_norm":4,
+                            #"all_head_vel":2,
                             "com_abs":3,
                             "cop_abs":3,
                             "head_rot_quat":4,
                             "left_leg_all_quats":12,
-                            "right_leg_all_quats":12}
+                            "right_leg_all_quats":12,
+                            "feet_contacts":4}
         
         self.actions_types = {"sync_legs_vel":3,
                              "left_legs_vel":3,
@@ -102,6 +107,10 @@ class UniversalGazeboEnvironmentInterface(object):
         self.reward_types = {"stup_reward_z_1": self.stup_reward_z_1,
                              "stup_reward_z_2": self.stup_reward_z_2,
                              "stup_reward_z_3": self.stup_reward_z_3,
+                             "stup_reward_z_contacts_1":self.stup_reward_z_contacts_1,
+                             "stup_reward_z_contacts_2":self.stup_reward_z_contacts_2,
+                             "stup_reward_z_contacts_3":self.stup_reward_z_contacts_3,
+                             "stup_reward_z_contacts_4":self.stup_reward_z_contacts_4,
                              "stup_reward_z_pitch_1":self.stup_reward_z_pitch_1,
                              "stup_reward_z_pitch_2":self.stup_reward_z_pitch_2,
                              "stup_reward_z_pitch_vel_1": self.stup_reward_z_pitch_vel_1,
@@ -148,20 +157,20 @@ class UniversalGazeboEnvironmentInterface(object):
                     self.actions_dim += self.actions_types[action_el]
                     self.requested_actions.append(action_el)
                 else:
-                    rospy.logerr("[{}] unknown action element {} skipped!".format(self.name, action_el))          
-                    
+                    rospy.logerr("[{}] unknown action element {} skipped!".format(self.name, action_el))                                          
+            
+            if self.state_dim == 0:
+                rospy.logerr("[{}] state vector is zero! Interface isn't configured, try again.".format(self.name))                                
+                return ConfigureResponse(False, 0, 0, "", 0)
+                
+            if self.actions_dim == 0:
+                rospy.logerr("[{}] action vector is zero! Interface isn't configured, try again.".format(self.name))                                
+                return ConfigureResponse(False, 0, 0, "", 0)
+            
             if req.reward in self.reward_types:
                 self.requested_reward = self.reward_types[req.reward]
             else:
                 rospy.logerr("[{}] {} reward not found! Interface isn't configured, try again.".format(self.name, req.reward))                                
-                return ConfigureResponse(False, 0, 0, "", 0)
-            
-            if self.state_dim == 0:
-                rospy.logerr("[{}] state vector is zero! Interface isn't configured, try again.".format(self.name, action_el))                                
-                return ConfigureResponse(False, 0, 0, "", 0)
-                
-            if self.actions_dim == 0:
-                rospy.logerr("[{}] action vector is zero! Interface isn't configured, try again.".format(self.name, action_el))                                
                 return ConfigureResponse(False, 0, 0, "", 0)
                                 
             self.configured = True                        
@@ -198,28 +207,28 @@ class UniversalGazeboEnvironmentInterface(object):
         index = 0
         for action_el in self.requested_actions:
             if action_el == "sync_legs_vel":
-                self.feet_l_pub.publish(self.unrm(action[index]))                
-                self.feet_r_pub.publish(self.unrm(action[index]))
+                self.foot_l_pub.publish(self.unrm(action[index]))                
+                self.foot_r_pub.publish(self.unrm(action[index]))
                 index+=1
-                self.mid_l_pub.publish(self.unrm(action[index]))                
-                self.mid_r_pub.publish(self.unrm(action[index]))
+                self.knee_l_pub.publish(self.unrm(action[index]))                
+                self.knee_r_pub.publish(self.unrm(action[index]))
                 index+=1
-                self.up_l_pub.publish(self.unrm(action[index]))                
-                self.up_r_pub.publish(self.unrm(action[index]))
+                self.hip_l_pub.publish(self.unrm(action[index]))                
+                self.hip_r_pub.publish(self.unrm(action[index]))
                 index+=1                
             elif action_el == "left_legs_vel":
-                self.feet_l_pub.publish(self.unrm(action[index]))
+                self.foot_l_pub.publish(self.unrm(action[index]))
                 index+=1
-                self.mid_l_pub.publish(self.unrm(action[index]))
+                self.knee_l_pub.publish(self.unrm(action[index]))
                 index+=1
-                self.up_l_pub.publish(self.unrm(action[index]))
+                self.hip_l_pub.publish(self.unrm(action[index]))
                 index+=1
             elif action_el == "right_legs_vel":
-                self.feet_r_pub.publish(self.unrm(action[index]))
+                self.foot_r_pub.publish(self.unrm(action[index]))
                 index+=1
-                self.mid_r_pub.publish(self.unrm(action[index]))
+                self.knee_r_pub.publish(self.unrm(action[index]))
                 index+=1
-                self.up_r_pub.publish(self.unrm(action[index]))
+                self.hip_r_pub.publish(self.unrm(action[index]))
                 index+=1
             elif action_el == "all_head_vel":
                 self.neck_pub.publish(self.unrm(action[index]))
@@ -239,6 +248,22 @@ class UniversalGazeboEnvironmentInterface(object):
     
     def stup_reward_z_3(self, model_state):
         return 0.3-np.absolute(0.3 - model_state.pose.position.z)
+        
+    def stup_reward_z_contacts_1(self, model_state):
+        contacts = 5 / (1+int(self.last_feet_contacts.foot_l) + int(self.last_feet_contacts.foot_r) + int(self.last_feet_contacts.heel_l) + int(self.last_feet_contacts.heel_r))
+        return (0.3-np.absolute(0.3 - model_state.pose.position.z)) * contacts
+    
+    def stup_reward_z_contacts_2(self, model_state):
+        contacts = 4 / (int(self.last_feet_contacts.foot_l) + int(self.last_feet_contacts.foot_r) + int(self.last_feet_contacts.heel_l) + int(self.last_feet_contacts.heel_r))
+        return (0.3-np.absolute(0.3 - model_state.pose.position.z)) + contacts
+    
+    def stup_reward_z_contacts_3(self, model_state):
+        contacts = int(self.last_feet_contacts.foot_l) + int(self.last_feet_contacts.foot_r) + int(self.last_feet_contacts.heel_l) + int(self.last_feet_contacts.heel_r)
+        return (0.3-np.absolute(0.3 - model_state.pose.position.z)) * contacts
+    
+    def stup_reward_z_contacts_4(self, model_state):
+        contacts = int(self.last_feet_contacts.foot_l) + int(self.last_feet_contacts.foot_r) + int(self.last_feet_contacts.heel_l) + int(self.last_feet_contacts.heel_r)
+        return (0.3-np.absolute(0.3 - model_state.pose.position.z)) + 0.01 * contacts
     
     def stup_reward_z_fall_penalty_1(self, model_state):
         return -np.absolute(0.3 - model_state.pose.position.z) - int(self.check_done())
@@ -323,78 +348,88 @@ class UniversalGazeboEnvironmentInterface(object):
         state = []
         
         # Model State                
-        model_state = self.get_model_state_srv("bd1","")
+        #model_state = self.get_model_state_srv("bd1","")
         
         for state_el in self.requested_state:
             ## position as if
+            ind_base = self.last_link_states.name.index("bd1::base_link")
+            
             if state_el == "base_pose":                
-                state.append(model_state.pose.position.x)
-                state.append(model_state.pose.position.y)
-                state.append(model_state.pose.position.z)
+                state.append(self.last_link_states.pose[ind_base].position.x)
+                state.append(self.last_link_states.pose[ind_base].position.y)
+                state.append(self.last_link_states.pose[ind_base].position.z)
+                #state.append(model_state.pose.position.x)
+                #state.append(model_state.pose.position.y)
+                #state.append(model_state.pose.position.z)
                 
-            elif state_el == "base_rot_rpy":        
-                rpy = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])                
-                state += rpy
+            #elif state_el == "base_rot_rpy":        
+                #rpy = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])                
+                #state += rpy
                 
             elif state_el == "base_rot_quat":
-                state.append(model_state.pose.orientation.x)
-                state.append(model_state.pose.orientation.y)
-                state.append(model_state.pose.orientation.z)
-                state.append(model_state.pose.orientation.w)            
+                #state.append(model_state.pose.orientation.x)
+                #state.append(model_state.pose.orientation.y)
+                #state.append(model_state.pose.orientation.z)
+                #state.append(model_state.pose.orientation.w)            
+                state.append(self.last_link_states.pose[ind_base].orientation.x)
+                state.append(self.last_link_states.pose[ind_base].orientation.y)
+                state.append(self.last_link_states.pose[ind_base].orientation.z)
+                state.append(self.last_link_states.pose[ind_base].orientation.w)
             # linear velocities as if
             elif state_el == "base_twist_lin":                
-                state.append(model_state.twist.linear.x)
-                state.append(model_state.twist.linear.y)
-                state.append(model_state.twist.linear.z)
+                state.append(self.last_link_states.twist[ind_base].linear.x)
+                state.append(self.last_link_states.twist[ind_base].linear.y)
+                state.append(self.last_link_states.twist[ind_base].linear.z)                
             elif state_el == "base_twist_ang":
-                state.append(model_state.twist.angular.x)
-                state.append(model_state.twist.angular.y)
-                state.append(model_state.twist.angular.z)
+                state.append(self.last_link_states.twist[ind_base].angular.x)
+                state.append(self.last_link_states.twist[ind_base].angular.y)
+                state.append(self.last_link_states.twist[ind_base].angular.z)
             # Joints Positions as if
-            elif state_el == "left_leg_pos":
-                state.append(self.last_joint_states.position[0])
-                state.append(self.last_joint_states.position[3])
-                state.append(self.last_joint_states.position[6])
-            # Joints Positions normalized
-            elif state_el == "left_leg_pos_norm":
-                state.append( np.sin(self.last_joint_states.position[0] ))
-                state.append( np.cos(self.last_joint_states.position[0] ))
-                state.append( np.sin(self.last_joint_states.position[3] ))
-                state.append( np.cos(self.last_joint_states.position[3] ))
-                state.append( np.sin(self.last_joint_states.position[6] ))
-                state.append( np.cos(self.last_joint_states.position[6] ))
-            elif state_el == "left_leg_vel":
-                state.append(self.last_joint_states.velocity[0])
-                state.append(self.last_joint_states.velocity[3])
-                state.append(self.last_joint_states.velocity[6])
-            # Joints Positions as if
-            elif state_el == "right_leg_pos":
-                state.append(self.last_joint_states.position[1])
-                state.append(self.last_joint_states.position[4])
-                state.append(self.last_joint_states.position[7])
-            # Joints Positions normalized
-            elif state_el == "right_leg_pos_norm":
-                state.append( np.sin(self.last_joint_states.position[1] ))
-                state.append( np.cos(self.last_joint_states.position[1] ))
-                state.append( np.sin(self.last_joint_states.position[4] ))
-                state.append( np.cos(self.last_joint_states.position[4] ))
-                state.append( np.sin(self.last_joint_states.position[7] ))
-                state.append( np.cos(self.last_joint_states.position[7] ))
-            elif state_el == "right_leg_vel":
-                state.append(self.last_joint_states.velocity[1])
-                state.append(self.last_joint_states.velocity[4])
-                state.append(self.last_joint_states.velocity[7])
-            elif state_el == "all_head_pos":
-                state.append(self.last_joint_states.position[2])
-                state.append(self.last_joint_states.position[5])
-            elif state_el == "all_head_pos_norm":
-                state.append( np.sin(self.last_joint_states.position[2] ))
-                state.append( np.cos(self.last_joint_states.position[2] ))
-                state.append( np.sin(self.last_joint_states.position[5] ))
-                state.append( np.cos(self.last_joint_states.position[5] ))
-            elif state_el == "all_head_vel":
-                state.append(self.last_joint_states.velocity[2])
-                state.append(self.last_joint_states.velocity[5])     
+            ## Joint State topic is bad and laggy
+            #elif state_el == "left_leg_pos":
+                #state.append(self.last_joint_states.position[0])
+                #state.append(self.last_joint_states.position[3])
+                #state.append(self.last_joint_states.position[6])
+            ## Joints Positions normalized
+            #elif state_el == "left_leg_pos_norm":
+                #state.append( np.sin(self.last_joint_states.position[0] ))
+                #state.append( np.cos(self.last_joint_states.position[0] ))
+                #state.append( np.sin(self.last_joint_states.position[3] ))
+                #state.append( np.cos(self.last_joint_states.position[3] ))
+                #state.append( np.sin(self.last_joint_states.position[6] ))
+                #state.append( np.cos(self.last_joint_states.position[6] ))
+            #elif state_el == "left_leg_vel":
+                #state.append(self.last_joint_states.velocity[0])
+                #state.append(self.last_joint_states.velocity[3])
+                #state.append(self.last_joint_states.velocity[6])
+            ## Joints Positions as if
+            #elif state_el == "right_leg_pos":
+                #state.append(self.last_joint_states.position[1])
+                #state.append(self.last_joint_states.position[4])
+                #state.append(self.last_joint_states.position[7])
+            ## Joints Positions normalized
+            #elif state_el == "right_leg_pos_norm":
+                #state.append( np.sin(self.last_joint_states.position[1] ))
+                #state.append( np.cos(self.last_joint_states.position[1] ))
+                #state.append( np.sin(self.last_joint_states.position[4] ))
+                #state.append( np.cos(self.last_joint_states.position[4] ))
+                #state.append( np.sin(self.last_joint_states.position[7] ))
+                #state.append( np.cos(self.last_joint_states.position[7] ))
+            #elif state_el == "right_leg_vel":
+                #state.append(self.last_joint_states.velocity[1])
+                #state.append(self.last_joint_states.velocity[4])
+                #state.append(self.last_joint_states.velocity[7])
+            #elif state_el == "all_head_pos":
+                #state.append(self.last_joint_states.position[2])
+                #state.append(self.last_joint_states.position[5])
+            #elif state_el == "all_head_pos_norm":
+                #state.append( np.sin(self.last_joint_states.position[2] ))
+                #state.append( np.cos(self.last_joint_states.position[2] ))
+                #state.append( np.sin(self.last_joint_states.position[5] ))
+                #state.append( np.cos(self.last_joint_states.position[5] ))
+            #elif state_el == "all_head_vel":
+                #state.append(self.last_joint_states.velocity[2])
+                #state.append(self.last_joint_states.velocity[5])     
             elif state_el == "com_abs":
                 state.append(self.last_mass_center.x)
                 state.append(self.last_mass_center.y)
@@ -411,7 +446,7 @@ class UniversalGazeboEnvironmentInterface(object):
                 state.append(quat.z)
                 state.append(quat.w)
             elif state_el == "left_leg_all_quats":
-                for link in ["bd1::up_leg_l_link", "bd1::mid_leg_l_link","bd1::feet_l_link"]:
+                for link in ["bd1::hip_l_link", "bd1::knee_l_link","bd1::foot_l_link"]:
                     ind = self.last_link_states.name.index(link)
                     quat = self.last_link_states.pose[ind].orientation
                     state.append(quat.x)
@@ -419,13 +454,18 @@ class UniversalGazeboEnvironmentInterface(object):
                     state.append(quat.z)
                     state.append(quat.w)
             elif state_el == "right_leg_all_quats":
-                for link in ["bd1::up_leg_r_link", "bd1::mid_leg_r_link","bd1::feet_r_link"]:
+                for link in ["bd1::hip_r_link", "bd1::knee_r_link","bd1::foot_r_link"]:
                     ind = self.last_link_states.name.index(link)
                     quat = self.last_link_states.pose[ind].orientation
                     state.append(quat.x)
                     state.append(quat.y)
                     state.append(quat.z)
                     state.append(quat.w)
+            elif state_el == "feet_contacts":
+                state.append(float(self.last_feet_contacts.foot_r))
+                state.append(float(self.last_feet_contacts.foot_l))
+                state.append(float(self.last_feet_contacts.heel_r))
+                state.append(float(self.last_feet_contacts.heel_l))
                 
         
         if get_reward:            
@@ -450,6 +490,9 @@ class UniversalGazeboEnvironmentInterface(object):
         
     def link_states_cb(self, msg):
         self.last_link_states = msg
+        
+    def feet_contacts_cb(self, msg):
+        self.last_feet_contacts = msg;
         
     def run(self):        
         rospy.spin()

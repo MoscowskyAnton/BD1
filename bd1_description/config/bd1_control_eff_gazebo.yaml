@@ -14,32 +14,32 @@ neck_servo_effort_controller:
     
 hip_r_servo_effort_controller:
     type: "effort_controllers/JointEffortController"
-    joint: up_leg_r_j
+    joint: hip_r_j
     pid: {p: 1.0, i: 0.01, d: 0.1}
     
 knee_r_servo_effort_controller:
     type: "effort_controllers/JointEffortController"
-    joint: mid_leg_r_j
+    joint: knee_r_j
     pid: {p: 1.0, i: 0.01, d: 0.1}
     
 foot_r_servo_effort_controller:
     type: "effort_controllers/JointEffortController"
-    joint: feet_r_j
+    joint: foot_r_j
     pid: {p: 1.0, i: 0.01, d: 0.1}
     
 hip_l_servo_effort_controller:
     type: "effort_controllers/JointEffortController"
-    joint: up_leg_l_j
+    joint: hip_l_j
     pid: {p: 1.0, i: 0.01, d: 0.1}
     
 knee_l_servo_effort_controller:
     type: "effort_controllers/JointEffortController"
-    joint: mid_leg_l_j
+    joint: knee_l_j
     pid: {p: 1.0, i: 0.01, d: 0.1}
     
 foot_l_servo_effort_controller:
     type: "effort_controllers/JointEffortController"
-    joint: feet_l_j
+    joint: foot_l_j
     pid: {p: 1.0, i: 0.01, d: 0.1}
 
 

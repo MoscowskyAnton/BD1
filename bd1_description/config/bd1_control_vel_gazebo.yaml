@@ -12,34 +12,34 @@ neck_servo_velocity_controller:
     joint: neck_j
     pid: {p: 100.0, i: 1, d: 10}
     
-leg_up_r_servo_velocity_controller:
+hip_r_servo_velocity_controller:
     type: "velocity_controllers/JointVelocityController"
-    joint: up_leg_r_j
+    joint: hip_r_j
     pid: {p: 100.0, i: 1, d: 10}
     
-leg_mid_r_servo_velocity_controller:
+knee_r_servo_velocity_controller:
     type: "velocity_controllers/JointVelocityController"
-    joint: mid_leg_r_j
+    joint: knee_r_j
     pid: {p: 100.0, i: 1, d: 10}
     
-feet_r_servo_velocity_controller:
+foot_r_servo_velocity_controller:
     type: "velocity_controllers/JointVelocityController"
-    joint: feet_r_j
+    joint: foot_r_j
     pid: {p: 100.0, i: 1, d: 10}
     
-leg_up_l_servo_velocity_controller:
+hip_l_servo_velocity_controller:
     type: "velocity_controllers/JointVelocityController"
-    joint: up_leg_l_j
+    joint: hip_l_j
     pid: {p: 100.0, i: 1, d: 10}
     
-leg_mid_l_servo_velocity_controller:
+knee_l_servo_velocity_controller:
     type: "velocity_controllers/JointVelocityController"
-    joint: mid_leg_l_j
+    joint: knee_l_j
     pid: {p: 100.0, i: 1, d: 10}
     
-feet_l_servo_velocity_controller:
+foot_l_servo_velocity_controller:
     type: "velocity_controllers/JointVelocityController"
-    joint: feet_l_j
+    joint: foot_l_j
     pid: {p: 100.0, i: 1, d: 10}
 
 

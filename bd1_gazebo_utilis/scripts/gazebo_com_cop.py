@@ -38,6 +38,7 @@ class CalcCenterOfMass(object):
         self.center_of_pressure_pub = rospy.Publisher('center_of_pressure_raw', PointStamped, queue_size=1)
         self.cop_msg = PointStamped()
         self.cop_msg.header.frame_id = "map"
+        self.cop_links = ["bd1::foot_r_link", "bd1::foot_l_link", "bd1::heel_l_link", "bd1::heel_r_link"]
         
         # timer
         self.lock = threading.Lock()  # mutex
@@ -97,7 +98,7 @@ class CalcCenterOfMass(object):
                                               link_pose.position.y + pos[1][0],
                                               link_pose.position.z + pos[2][0])
             sum_mass += v[0]            
-            if k == "bd1::feet_r_link" or k == "bd1::feet_l_link":
+            if k in self.cop_links:
                 self.cop_msg.point.x += link_pose.position.x + pos[0][0]
                 self.cop_msg.point.y += link_pose.position.y + pos[1][0]
                 self.cop_msg.point.z += link_pose.position.z + pos[2][0]

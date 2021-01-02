@@ -12,7 +12,7 @@
     
     <node if="$(eval servo_control == 'VEL')" name="controller_spawner" pkg="controller_manager" type="spawner" 
         respawn="false" output="screen" 
-        args="head_servo_velocity_controller neck_servo_velocity_controller leg_up_r_servo_velocity_controller leg_mid_r_servo_velocity_controller feet_r_servo_velocity_controller leg_up_l_servo_velocity_controller leg_mid_l_servo_velocity_controller feet_l_servo_velocity_controller joint_state_controller" />
+        args="head_servo_velocity_controller neck_servo_velocity_controller hip_r_servo_velocity_controller knee_r_servo_velocity_controller foot_r_servo_velocity_controller hip_l_servo_velocity_controller knee_l_servo_velocity_controller foot_l_servo_velocity_controller joint_state_controller" />
     
     <node if="$(eval servo_control == 'EFF')" name="controller_spawner" pkg="controller_manager" type="spawner" 
         respawn="false" output="screen" 

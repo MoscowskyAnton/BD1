@@ -1,10 +1,12 @@
 <launch>
     <arg name="robot" default="bd1"/>
     <arg name="paused" default="false"/>
-    
-    
+        
     <!-- VEL or TRAJ or EFF-->
     <arg name="servo_control" default="VEL"/>
+    
+    <!-- TEST or TRAIN -->
+    <arg name="trainer_mode" default="TEST"/>
         
     <rosparam if="$(eval servo_control == 'TRAJ')" file="$(find bd1_description)/config/bd1_control_traj_gazebo.yaml" command="load" subst_value="true"/>            
     
@@ -26,63 +28,28 @@
         <arg name="paused" value="$(arg paused)"/>
         <arg name="use_sim_time" value="false"/>
         <arg name="headless" value="false"/>
-    </include>                                
-
-    
-    <node name="standup_gazebo_env_interface" pkg="bd1_gazebo_env_interface" type="universal_gazebo_environment_inteface.py" output="screen">
-        <param name="servo_control" value="$(arg servo_control)"/>
-        <param name="max_servo_vel" value="2"/>
-        <param name="max_servo_eff" value="30"/>
-    </node>
+    </include>                                    
     
     <node if="$(eval servo_control == 'VEL')" name="manual_control" pkg="bd1_manual_control" type="manual_control_vel.py"/>
     
     <node if="$(eval servo_control == 'EFF')" name="manual_control" pkg="bd1_manual_control" type="manual_control_eff.py"/>
     
-    <!--<node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure"/>-->
+    <!--<node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure"/>-->        
     
-    <node name="standup_train_ppo" pkg="bd1_train" type="universal_train_ppo.py" output="screen"  required="true">
-        
-        <rosparam param="state">["base_pose", "base_rot_quat", "base_twist_lin", "left_leg_all_quats", "com_abs", "cop_abs"]</rosparam>
-        <rosparam param="actions">["sync_legs_vel"]</rosparam>
-        <!--<rosparam param="state">["base_pose", "base_rot_quat", "base_twist_lin", "left_leg_all_quats","right_leg_all_quats", "com_abs", "cop_abs"]</rosparam>
-        <rosparam param="actions">["left_legs_vel", "right_legs_vel"]</rosparam>-->        
-        <param name="env_interface_node_name" value="standup_gazebo_env_interface"/>        
-        
-        <param name="reward" value="stup_reward_z_pitch_2"/>
-        <!--<param name="save_path" value="$(find bd1_train)/models/PPO/target_z/clip_minibatch_body_pitch2"/>-->
-        <param name="load_path" value="$(find bd1_train)/models/PPO/target_z/clip_minibatch_body_pitch2/best_reward"/>
-        <param name="mode" value="test"/>
-        
-        <param name="sub_method" value="clip"/>   
-        <param name="num_episodes" value="2000"/>   
-        <param name="backup_saves" value="200"/>
-        <param name="test_episodes" value="50"/>
-        <param name="max_steps" value="500"/>
-        <param name="step_duration_sec" value="0.1"/>
-        <param name="ppo_clip_param" value="0.2"/>
-        <param name="actor_update_steps" value="10"/>   
-        <param name="critic_update_steps" value="10"/>   
-        
-        <param name="batch_size" value="64"/>
-        <param name="minibatch_size" value="32"/>
-        <param name="gamma" value="0.95"/>
-        
-        <param name="critic_layer1_size" value="256"/>
-        <param name="critic_layer2_size" value="256"/>
-        <param name="critic_layer3_size" value="512"/>   
-        <param name="actor_layer1_size" value="256"/>   
-        <param name="actor_layer2_size" value="256"/>
-        <param name="actor_layer3_size" value="512"/>                           
-                                        
-    </node>
-    
-    <node name="gazebo_center_of_mass" pkg="gazebo_center_of_mass" type="gazebo_center_of_mass.py" output="screen">
+    <node name="com_cop_publisher" pkg="bd1_gazebo_utils" type="gazebo_com_cop.py" output="screen">
         <param name="robot_name" value="bd1" />
-    </node>
+    </node>    
     
+    <node name="gazebo_tf_publisher" pkg="bd1_gazebo_utils" type="gazebo_tf_publisher.py" output="screen">        
+    </node>    
     
-    <node name="fall_detector" pkg="bd1_fall_detector" type="fall_detector_contacts" output="screen"/>
+    <node name="contacts_handler" pkg="bd1_gazebo_utils" type="contacts_handler_node" output="screen"/>
+    
+    <include file="$(find bd1_config)/launch/bd1_train.launch">
+        <arg name="servo_control" value="$(arg servo_control)"/>
+        <arg name="trainer_mode" value="$(arg trainer_mode)"/>
+        
+    </include>
     
 </launch>
     

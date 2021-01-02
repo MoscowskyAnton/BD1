@@ -1,0 +1,63 @@
+<launch>
+    <arg name="robot" default="bd1"/>
+    <arg name="servo_control" default="VEL"/>
+    
+    <arg name="test_net_dir" default="$(find bd1_train)/models/PPO/target_z/both_legs_stnd/best_reward"/>
+    
+    <!-- TEST or TRAIN -->
+    <arg name="trainer_mode" default="TEST"/>
+    
+    <node name="universal_gazebo_environment_inteface" pkg="bd1_gazebo_env_interface" type="universal_gazebo_environment_inteface.py" output="screen" required="true">
+        <param name="servo_control" value="$(arg servo_control)"/>
+        <param name="max_servo_vel" value="2"/>
+        <param name="max_servo_eff" value="30"/>
+    </node>
+    
+    <node if="$(eval trainer_mode == 'TEST')" name="ppo_tester" pkg="bd1_train" type="universal_train_ppo.py" output="screen"  required="true">
+        
+        <param name="load_path" value="$(arg test_net_dir)"/>        
+        <param name="mode" value="test"/>
+        <param name="test_episodes" value="50"/>
+        
+        <rosparam file="$(arg test_net_dir)/config.yaml" command="load"/>                
+    </node>
+    
+    <node if="$(eval trainer_mode == 'TRAIN')" name="ppo_trainer" pkg="bd1_train" type="universal_train_ppo.py" output="screen"  required="true">
+        
+        <param name="env_interface_node_name" value="universal_gazebo_environment_inteface"/>        
+        
+        <!--<rosparam param="state">["base_pose", "base_rot_quat", "base_twist_lin", "left_leg_all_quats", "com_abs", "cop_abs", "feet_contacts"]</rosparam>
+        <rosparam param="actions">["sync_legs_vel"]</rosparam>-->
+        <rosparam param="state">["base_pose", "base_rot_quat", "base_twist_lin", "left_leg_all_quats","right_leg_all_quats", "com_abs", "cop_abs"]</rosparam>
+        <rosparam param="actions">["left_legs_vel", "right_legs_vel"]</rosparam>        
+        
+        
+        <param name="reward" value="stup_reward_z_contacts_4"/>
+        
+        <param name="save_path" value="$(find bd1_train)/models/PPO/target_z/both_legs_stnd"/>
+        
+        
+        <param name="sub_method" value="clip"/>   
+        <param name="num_episodes" value="4000"/>   
+        <param name="backup_saves" value="200"/>        
+        <param name="max_steps" value="500"/>
+        <param name="step_duration_sec" value="0.1"/>
+        <param name="ppo_clip_param" value="0.2"/>
+        <param name="actor_update_steps" value="10"/>   
+        <param name="critic_update_steps" value="10"/>
+        <param name="logstd_exploration_noise" value="-0.01"/>   
+        
+        <param name="batch_size" value="64"/>
+        <param name="minibatch_size" value="32"/>
+        <param name="gamma" value="0.95"/>
+        
+        <param name="critic_layer1_size" value="256"/>
+        <param name="critic_layer2_size" value="256"/>
+        <param name="critic_layer3_size" value="512"/>   
+        <param name="actor_layer1_size" value="256"/>   
+        <param name="actor_layer2_size" value="256"/>
+        <param name="actor_layer3_size" value="512"/>                           
+                                        
+    </node>
+
+</launch>

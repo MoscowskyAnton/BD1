@@ -49,6 +49,8 @@ class StandUpTrain(object):
         self.hyper_parameters['LAM'] = rospy.get_param('~ppo_penalty_param2', 0.5)
         self.hyper_parameters['EPSILON'] = rospy.get_param('~ppo_clip_param', 0.2)
         
+        self.hyper_parameters['LOGSTD'] = rospy.get_param('~logstd_exploration_noise', 0)
+        
         self.hyper_parameters['CRITIC_LAYER1_SIZE'] = rospy.get_param('~critic_layer1_size', 64)
         self.hyper_parameters['CRITIC_LAYER2_SIZE'] = rospy.get_param('~critic_layer2_size', 64)
         self.hyper_parameters['CRITIC_LAYER3_SIZE'] = rospy.get_param('~critic_layer3_size', 64)
@@ -130,9 +132,9 @@ class StandUpTrain(object):
         params["state_dim"] = self.state_dim
         
         params["env_interface_node_name"] = self.env_interface_node_name
-        params["req_actions"] = self.req_actions
-        params["req_state"] = self.req_state
-        params["reward_type"] = self.reward_type
+        params["actions"] = self.req_actions
+        params["state"] = self.req_state
+        params["reward"] = self.reward_type
                         
         # hyper
         params["actor_learning_rate"] = self.hyper_parameters['LR_A']
@@ -149,9 +151,13 @@ class StandUpTrain(object):
         params["critic_layer3_size"] = self.hyper_parameters['CRITIC_LAYER3_SIZE']
         params["actor_layer1_size"] = self.hyper_parameters['ACTOR_LAYER1_SIZE']
         params["actor_layer2_size"] = self.hyper_parameters['ACTOR_LAYER2_SIZE']
-        params["actor_layer3_size"] = self.hyper_parameters['ACTOR_LAYER3_SIZE']        
+        params["actor_layer3_size"] = self.hyper_parameters['ACTOR_LAYER3_SIZE']                
+        params["logstd_exploration_noise"] = self.hyper_parameters['LOGSTD']
         
-        params["pretrained model"] = self.load_path                
+        if self.load_path is None:
+            params["pretrained model"] = ""                
+        else:
+            params["pretrained model"] = self.load_path                
         
         params["servo_control"] = self.servo_control
         params["action_real_lim"] = self.action_real_lim

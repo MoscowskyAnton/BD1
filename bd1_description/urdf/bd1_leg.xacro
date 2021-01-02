@@ -4,31 +4,39 @@
             
     <xacro:property name="legs_baseline" value="0.12"/>
     
-    <xacro:property name="up_leg_aprox_x" value="0.24"/>
-    <xacro:property name="up_leg_aprox_y" value="0.04"/>
-    <xacro:property name="up_leg_aprox_z" value="0.12"/>
-    <xacro:property name="up_leg_mass" value="0.25"/>
-    <xacro:property name="up_shift_x" value="0.065"/>
-    <xacro:property name="up_shift_y" value="0.03"/>
-    <xacro:property name="up_shift_z" value="0.0"/>    
+    <xacro:property name="hip_aprox_x" value="0.24"/>
+    <xacro:property name="hip_aprox_y" value="0.04"/>
+    <xacro:property name="hip_aprox_z" value="0.12"/>
+    <xacro:property name="hip_mass" value="0.25"/>
+    <xacro:property name="hip_shift_x" value="0.065"/>
+    <xacro:property name="hip_shift_y" value="0.03"/>
+    <xacro:property name="hip_shift_z" value="0.0"/>    
     
-    <xacro:property name="mid_leg_aprox_x" value="0.22"/>
-    <xacro:property name="mid_leg_aprox_y" value="0.02"/>
-    <xacro:property name="mid_leg_aprox_z" value="0.06"/>
-    <xacro:property name="mid_leg_mass" value="0.25"/>
-    <xacro:property name="mid_shift_x" value="0.07"/>
-    <xacro:property name="mid_shift_y" value="0.01"/>
-    <xacro:property name="mid_shift_z" value="0.0"/>
+    <xacro:property name="hip_aprox_x" value="0.22"/>
+    <xacro:property name="hip_aprox_y" value="0.02"/>
+    <xacro:property name="hip_aprox_z" value="0.06"/>
+    <xacro:property name="hip_mass" value="0.25"/>
+    <xacro:property name="knee_shift_x" value="0.07"/>
+    <xacro:property name="knee_shift_y" value="0.01"/>
+    <xacro:property name="knee_shift_z" value="0.0"/>
     
-    <xacro:property name="feet_aprox_x" value="0.25"/>
-    <xacro:property name="feet_aprox_y" value="0.06"/>
-    <xacro:property name="feet_aprox_z" value="0.025"/>
-    <xacro:property name="feet_mass" value="0.25"/>
-    <xacro:property name="feet_shift_x" value="0.02"/>
-    <xacro:property name="feet_shift_y" value="0.0"/>
-    <xacro:property name="feet_shift_z" value="-0.065"/>
+    <xacro:property name="foot_aprox_x" value="0.09"/>
+    <xacro:property name="foot_aprox_y" value="0.06"/>
+    <xacro:property name="foot_aprox_z" value="0.025"/>
+    <xacro:property name="foot_mass" value="0.25"/>
+    <xacro:property name="foot_shift_x" value="0.1"/>
+    <xacro:property name="foot_shift_y" value="0.0"/>
+    <xacro:property name="foot_shift_z" value="-0.065"/>
     
-    <xacro:property name="servo_friction" value="1000"/>
+    <xacro:property name="heel_aprox_x" value="0.06"/>
+    <xacro:property name="heel_aprox_y" value="0.06"/>
+    <xacro:property name="heel_aprox_z" value="0.025"/>
+    <xacro:property name="heel_mass" value="0.15"/>
+    <xacro:property name="heel_shift_x" value="-0.08"/>
+    <xacro:property name="heel_shift_y" value="0.0"/>
+    <xacro:property name="heel_shift_z" value="-0.065"/>
+    
+    <!--<xacro:property name="servo_friction" value="1000"/>-->
     
     
     <xacro:include filename="$(find bd1_description)/urdf/transmission_$(arg servo_control).xacro"/>
@@ -39,13 +47,13 @@
     <xacro:macro name="bd1_leg" params="side y_mul servo_velocity servo_effort">
         
         <!--
-        UP
+        hip
         -->
-        <link name="up_leg_${side}_link">
+        <link name="hip_${side}_link">
             <visual>            
                 <geometry>
-                    <mesh filename="file://$(find bd1_description)/mesh/up_leg_${side}_m.dae"/>                
-                    <!--<box size="${up_leg_aprox_x} ${up_leg_aprox_y} ${up_leg_aprox_z}"/>-->
+                    <mesh filename="file://$(find bd1_description)/mesh/hip_${side}_m.dae"/>                
+                    <!--<box size="${hip_aprox_x} ${hip_aprox_y} ${hip_aprox_z}"/>-->
                 </geometry>
                 <material name="white">
                 <color rgba="1 1 1 1"/>
@@ -53,26 +61,26 @@
             </visual>
             
             <collision>
-                <origin xyz="${up_shift_x} ${y_mul*up_shift_y} ${up_shift_z}" rpy=" 0 0 0"/>
+                <origin xyz="${hip_shift_x} ${y_mul*hip_shift_y} ${hip_shift_z}" rpy=" 0 0 0"/>
                 <geometry>                
-                    <box size="${up_leg_aprox_x} ${up_leg_aprox_y} ${up_leg_aprox_z}"/>
+                    <box size="${hip_aprox_x} ${hip_aprox_y} ${hip_aprox_z}"/>
                 </geometry>
             </collision>
             
             <inertial>
-                <origin xyz="${up_shift_x} ${y_mul*up_shift_y} ${up_shift_z}" rpy=" 0 0 0"/>
-                <mass value="${up_leg_mass}"/>
+                <origin xyz="${hip_shift_x} ${y_mul*hip_shift_y} ${hip_shift_z}" rpy=" 0 0 0"/>
+                <mass value="${hip_mass}"/>
                 <inertia
-                    ixx="${0.08*up_leg_mass*(up_leg_aprox_y*up_leg_aprox_y+up_leg_aprox_z*up_leg_aprox_z)}" ixy="0" ixz="0"
-                    iyy="${0.08*up_leg_mass*(up_leg_aprox_x*up_leg_aprox_x+up_leg_aprox_z*up_leg_aprox_z)}" iyz="0"
-                    izz="${0.08*up_leg_mass*(up_leg_aprox_y*up_leg_aprox_y+up_leg_aprox_x*up_leg_aprox_x)}"
+                    ixx="${0.08*hip_mass*(hip_aprox_y*hip_aprox_y+hip_aprox_z*hip_aprox_z)}" ixy="0" ixz="0"
+                    iyy="${0.08*hip_mass*(hip_aprox_x*hip_aprox_x+hip_aprox_z*hip_aprox_z)}" iyz="0"
+                    izz="${0.08*hip_mass*(hip_aprox_y*hip_aprox_y+hip_aprox_x*hip_aprox_x)}"
                 />
             </inertial>
         </link>
 
-        <joint name="up_leg_${side}_j" type="revolute">
+        <joint name="hip_${side}_j" type="revolute">
             <parent link="body_link"/>
-            <child link="up_leg_${side}_link"/>
+            <child link="hip_${side}_link"/>
             
             <origin xyz="0 ${y_mul*legs_baseline/2} 0" rpy="0 ${pi/2+1.5} 0"/>
             <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="${-pi}0" upper="0"/>
@@ -80,16 +88,16 @@
             <!--<dynamics damping="${servo_friction}"/>-->
         </joint>
         
-        <xacro:servtransmission joint="up_leg_${side}_j"/>
+        <xacro:servtransmission joint="hip_${side}_j"/>
         
         <!--
-        MID
+        knee
         -->
-        <link name="mid_leg_${side}_link">
+        <link name="knee_${side}_link">
             <visual>            
                 <geometry>
-                    <mesh filename="file://$(find bd1_description)/mesh/mid_leg_${side}_m.dae"/>                
-                    <!--<box size="${mid_leg_aprox_x} ${mid_leg_aprox_y} ${mid_leg_aprox_z}"/>-->
+                    <mesh filename="file://$(find bd1_description)/mesh/knee_${side}_m.dae"/>                
+                    <!--<box size="${hip_aprox_x} ${hip_aprox_y} ${hip_aprox_z}"/>-->
                 </geometry>
                 <material name="white">
                     <color rgba="1 1 1 1"/>
@@ -97,26 +105,26 @@
             </visual>
             
             <collision>
-                <origin xyz="${mid_shift_x} ${-y_mul*mid_shift_y} ${mid_shift_z}" rpy=" 0 0 0"/>
+                <origin xyz="${knee_shift_x} ${-y_mul*knee_shift_y} ${knee_shift_z}" rpy=" 0 0 0"/>
                 <geometry>                
-                    <box size="${mid_leg_aprox_x} ${mid_leg_aprox_y} ${mid_leg_aprox_z}"/>
+                    <box size="${hip_aprox_x} ${hip_aprox_y} ${hip_aprox_z}"/>
                 </geometry>
             </collision>
             
             <inertial>
-                <origin xyz="${mid_shift_x} ${-y_mul*mid_shift_y} ${mid_shift_z}" rpy=" 0 0 0"/>
-                <mass value="${mid_leg_mass}"/>                
+                <origin xyz="${knee_shift_x} ${-y_mul*knee_shift_y} ${knee_shift_z}" rpy=" 0 0 0"/>
+                <mass value="${hip_mass}"/>                
                 <inertia
-                    ixx="${0.08*mid_leg_mass*(mid_leg_aprox_y*mid_leg_aprox_y+mid_leg_aprox_z*mid_leg_aprox_z)}" ixy="0" ixz="0"
-                    iyy="${0.08*mid_leg_mass*(mid_leg_aprox_x*mid_leg_aprox_x+mid_leg_aprox_z*mid_leg_aprox_z)}" iyz="0"
-                    izz="${0.08*mid_leg_mass*(mid_leg_aprox_y*mid_leg_aprox_y+mid_leg_aprox_x*mid_leg_aprox_x)}"
+                    ixx="${0.08*hip_mass*(hip_aprox_y*hip_aprox_y+hip_aprox_z*hip_aprox_z)}" ixy="0" ixz="0"
+                    iyy="${0.08*hip_mass*(hip_aprox_x*hip_aprox_x+hip_aprox_z*hip_aprox_z)}" iyz="0"
+                    izz="${0.08*hip_mass*(hip_aprox_y*hip_aprox_y+hip_aprox_x*hip_aprox_x)}"
                 />
             </inertial>
         </link>
 
-        <joint name="mid_leg_${side}_j" type="revolute">
-            <parent link="up_leg_${side}_link"/>
-            <child link="mid_leg_${side}_link"/>
+        <joint name="knee_${side}_j" type="revolute">
+            <parent link="hip_${side}_link"/>
+            <child link="knee_${side}_link"/>
             
             <origin xyz="0.15 ${y_mul*0.009} 0" rpy="0 -3 0"/>
             <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="0" upper="${pi}"/>
@@ -124,17 +132,17 @@
             <!--<dynamics damping="${servo_friction}"/>-->
         </joint>
         
-        <xacro:servtransmission joint="mid_leg_${side}_j"/>
+        <xacro:servtransmission joint="knee_${side}_j"/>
         
         <!--
-        FEET
+        foot
         -->
         
-        <link name="feet_${side}_link">
+        <link name="foot_${side}_link">
             <visual>            
                 <geometry>
-                    <mesh filename="file://$(find bd1_description)/mesh/feet_m.dae"/>                
-                    <!--<box size="${feet_aprox_x} ${feet_aprox_y} ${feet_aprox_z}"/>-->
+                    <mesh filename="file://$(find bd1_description)/mesh/foot_m.dae"/>                
+                    <!--<box size="${foot_aprox_x} ${foot_aprox_y} ${foot_aprox_z}"/>-->
                 </geometry>
                 <material name="white">
                     <color rgba="1 1 1 1"/>
@@ -142,26 +150,26 @@
             </visual>
             
             <collision>
-                <origin xyz="${feet_shift_x} ${-y_mul*feet_shift_y} ${feet_shift_z}" rpy=" 0 0 0"/>
+                <origin xyz="${foot_shift_x} ${-y_mul*foot_shift_y} ${foot_shift_z}" rpy=" 0 0 0"/>
                 <geometry>                
-                    <box size="${feet_aprox_x} ${feet_aprox_y} ${feet_aprox_z}"/>
+                    <box size="${foot_aprox_x} ${foot_aprox_y} ${foot_aprox_z}"/>
                 </geometry>
             </collision>
             
             <inertial>
-                <origin xyz="${feet_shift_x} ${-y_mul*feet_shift_y} ${feet_shift_z}" rpy=" 0 0 0"/>
-                <mass value="${feet_mass}"/>                
+                <origin xyz="${foot_shift_x} ${-y_mul*foot_shift_y} ${foot_shift_z}" rpy=" 0 0 0"/>
+                <mass value="${foot_mass}"/>                
                 <inertia
-                    ixx="${0.08*feet_mass*(feet_aprox_y*feet_aprox_y+feet_aprox_z*feet_aprox_z)}" ixy="0" ixz="0"
-                    iyy="${0.08*feet_mass*(feet_aprox_x*feet_aprox_x+feet_aprox_z*feet_aprox_z)}" iyz="0"
-                    izz="${0.08*feet_mass*(feet_aprox_y*feet_aprox_y+feet_aprox_x*feet_aprox_x)}"
+                    ixx="${0.08*foot_mass*(foot_aprox_y*foot_aprox_y+foot_aprox_z*foot_aprox_z)}" ixy="0" ixz="0"
+                    iyy="${0.08*foot_mass*(foot_aprox_x*foot_aprox_x+foot_aprox_z*foot_aprox_z)}" iyz="0"
+                    izz="${0.08*foot_mass*(foot_aprox_y*foot_aprox_y+foot_aprox_x*foot_aprox_x)}"
                 />
             </inertial>
         </link>
 
-        <joint name="feet_${side}_j" type="revolute">
-            <parent link="mid_leg_${side}_link"/>
-            <child link="feet_${side}_link"/>
+        <joint name="foot_${side}_j" type="revolute">
+            <parent link="knee_${side}_link"/>
+            <child link="foot_${side}_link"/>
             
             <origin xyz="0.15 ${-y_mul*0.0045} 0" rpy="0 0 0"/>
             <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="${-pi}" upper="0"/>
@@ -169,7 +177,7 @@
             <!--<dynamics damping="${servo_friction}"/>-->
         </joint>
         
-        <gazebo reference="feet_${side}_link">
+        <gazebo reference="foot_${side}_link">
             <!--<material>Gazebo/Black</material>-->
             <mu1>2</mu1>
             <mu2>5</mu2>
@@ -178,7 +186,54 @@
             <kd>1</kd>
         </gazebo>
         
-        <xacro:servtransmission joint="feet_${side}_j"/>
+        <xacro:servtransmission joint="foot_${side}_j"/>
+        
+        <!-- heel -->
+        
+        <link name="heel_${side}_link">
+            <!--<visual>            
+                <geometry>                    
+                    <box size="${heel_aprox_x} ${heel_aprox_y} ${heel_aprox_z}"/>
+                </geometry>
+                <material name="white">
+                    <color rgba="1 1 1 1"/>
+                </material>
+            </visual>-->
+            
+            <collision>
+                <origin xyz="${heel_shift_x} ${-y_mul*heel_shift_y} ${heel_shift_z}" rpy=" 0 0 0"/>
+                <geometry>                
+                    <box size="${heel_aprox_x} ${heel_aprox_y} ${heel_aprox_z}"/>
+                </geometry>
+            </collision>
+            
+            <inertial>
+                <origin xyz="${heel_shift_x} ${-y_mul*heel_shift_y} ${heel_shift_z}" rpy=" 0 0 0"/>
+                <mass value="${heel_mass}"/>                
+                <inertia
+                    ixx="${0.08*heel_mass*(heel_aprox_y*heel_aprox_y+heel_aprox_z*heel_aprox_z)}" ixy="0" ixz="0"
+                    iyy="${0.08*heel_mass*(heel_aprox_x*heel_aprox_x+heel_aprox_z*heel_aprox_z)}" iyz="0"
+                    izz="${0.08*heel_mass*(heel_aprox_y*heel_aprox_y+heel_aprox_x*heel_aprox_x)}"
+                />
+            </inertial>
+        </link>
+        
+        <joint name="heel_${side}_j" type="fixed">
+            <parent link="foot_${side}_link"/>
+            <child link="heel_${side}_link"/>
+            
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <!--<limit effort="${servo_effort}" velocity="${servo_velocity}" lower="${-pi}" hipper="0"/>-->
+            <!--<axis xyz="0 1 0"/>-->
+            <!--<dynamics damping="${servo_friction}"/>-->
+        </joint>
+        
+        <gazebo reference="heel_${side}_link">            
+            <mu1>2</mu1>
+            <mu2>5</mu2>            
+            <kp>100000</kp>
+            <kd>1</kd>
+        </gazebo>
         
     </xacro:macro>
     

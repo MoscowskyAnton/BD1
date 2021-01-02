@@ -1,4 +1,0 @@
-# assume that they goas like
-# [up_p_r mid_p_r feet_p_r up_p_l mid_p_l feet_p_l neck_p head_p]
-float64[8] vector_action
----

@@ -10,26 +10,36 @@
 #include <iostream>
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>
-
+#include <bd1_gazebo_utils/FeetContacts.h>
 
 ros::Publisher fall_pub;
+ros::Publisher feet_contacts_pub;
 /////////////////////////////////////////////////
 // Function is called everytime a message is received.
 void cb(ConstContactsPtr &_msg)
 {
   std_msgs::Bool fall_msg;
+  bd1_gazebo_utils::FeetContacts feet_contacts_msg;
   if( _msg->contact_size() > 0){      
       for( size_t i = 0 ; i < _msg->contact_size() ; i++){
-          if( _msg->contact(i).collision1() != "bd1::feet_r_link::feet_r_link_collision" &&
-              _msg->contact(i).collision1() != "bd1::feet_l_link::feet_l_link_collision"){
-              //std::cout << "collision! with" << _msg->contact(i).collision1() << "\n";
-              fall_msg.data = true;
-              fall_pub.publish(fall_msg);
-              return;
-          }
+          if( _msg->contact(i).collision2() == "ground_plane::link::collision"){
+              
+            if( _msg->contact(i).collision1() == "bd1::foot_r_link::foot_r_link_collision" )
+                feet_contacts_msg.foot_r = true;
+            else if( _msg->contact(i).collision1() == "bd1::foot_l_link::foot_l_link_collision" )
+                feet_contacts_msg.foot_l = true;
+            else if( _msg->contact(i).collision1() == "bd1::foot_l_link::foot_l_link_fixed_joint_lump__heel_l_link_collision_1" )
+                feet_contacts_msg.heel_l = true;
+            else if( _msg->contact(i).collision1() == "bd1::foot_r_link::foot_r_link_fixed_joint_lump__heel_r_link_collision_1" )        
+                feet_contacts_msg.heel_r = true;
+            else{            
+                fall_msg.data = true;                                
+            }
+        }
       }
   }
   fall_pub.publish(fall_msg);
+  feet_contacts_pub.publish(feet_contacts_msg);
 }
 
 /////////////////////////////////////////////////
@@ -40,6 +50,7 @@ int main(int _argc, char **_argv)
   ros::NodeHandle nh_p("~");
   
   fall_pub = nh_p.advertise<std_msgs::Bool>("fall",1);
+  feet_contacts_pub = nh_p.advertise<bd1_gazebo_utils::FeetContacts>("feet_contacts",1);
  
   // Load gazebo
   gazebo::client::setup(_argc, _argv);

@@ -33,10 +33,11 @@ class PPO(object):
             layer = tl.layers.Dense(self.hyperparams["ACTOR_LAYER3_SIZE"], tf.nn.relu)(layer)
             a = tl.layers.Dense(action_dim, tf.nn.tanh)(layer)
             mean = tl.layers.Lambda(lambda x: x * action_bound, name='lambda')(a)
-            logstd = tf.Variable(np.zeros(action_dim, dtype=np.float32))
+            logstd = tf.Variable(np.ones(action_dim, dtype=np.float32) * self.hyperparams["LOGSTD"])
         self.actor = tl.models.Model(inputs, mean)
         self.actor.trainable_weights.append(logstd)
         self.actor.logstd = logstd
+        print("Init logstd", logstd)
         self.actor.train()
 
         self.actor_opt = tf.optimizers.Adam(self.hyperparams["LR_A"])
@@ -179,6 +180,7 @@ class PPO(object):
         """
         state = state[np.newaxis, :].astype(np.float32)
         mean, std = self.actor(state), tf.exp(self.actor.logstd)
+        #print("Action logstd", self.actor.logstd)
         if greedy:
             action = mean[0]
         else:
