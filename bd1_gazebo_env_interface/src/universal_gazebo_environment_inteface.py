@@ -189,6 +189,7 @@ class UniversalGazeboEnvironmentInterface(object):
         self.last_episode_fall = []
         self.set_action(req.action)
         rospy.sleep(req.step_duration_sec)
+        self.last_action = req.action
         state, reward = self.get_state(True)
         return StepResponse(state, reward, self.check_done())
     
@@ -239,64 +240,71 @@ class UniversalGazeboEnvironmentInterface(object):
     def check_done(self):
         return True in self.last_episode_fall        
     
+    # ==============
     # rewards
-    def stup_reward_z_1(self, model_state):
-        return -(0.26 - model_state.pose.position.z)**2
+    # rewards
+    # rewards
+    # ==============
+    def stup_reward_z_1(self, ind_base):
+        return -(0.26 - self.last_link_states.pose[ind_base].position.z)**2
     
-    def stup_reward_z_2(self, model_state):
-        return -np.absolute(0.3 - model_state.pose.position.z)
+    def stup_reward_z_2(self, ind_base):
+        return -np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z)
     
-    def stup_reward_z_3(self, model_state):
-        return 0.3-np.absolute(0.3 - model_state.pose.position.z)
+    def stup_reward_z_3(self, ind_base):
+        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z)
+    
+    def stup_reward_z_mimimize_actions(self, ind_base):
+        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + (3 - np.sum(np.absolute(np.array(self.last_action))))
         
-    def stup_reward_z_contacts_1(self, model_state):
+    def stup_reward_z_contacts_1(self, ind_base):
         contacts = 5 / (1+int(self.last_feet_contacts.foot_l) + int(self.last_feet_contacts.foot_r) + int(self.last_feet_contacts.heel_l) + int(self.last_feet_contacts.heel_r))
-        return (0.3-np.absolute(0.3 - model_state.pose.position.z)) * contacts
+        return (0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z)) * contacts
     
-    def stup_reward_z_contacts_2(self, model_state):
+    def stup_reward_z_contacts_2(self, ind_base):
         contacts = 4 / (int(self.last_feet_contacts.foot_l) + int(self.last_feet_contacts.foot_r) + int(self.last_feet_contacts.heel_l) + int(self.last_feet_contacts.heel_r))
-        return (0.3-np.absolute(0.3 - model_state.pose.position.z)) + contacts
+        return (0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z)) + contacts
     
-    def stup_reward_z_contacts_3(self, model_state):
+    def stup_reward_z_contacts_3(self, ind_base):
         contacts = int(self.last_feet_contacts.foot_l) + int(self.last_feet_contacts.foot_r) + int(self.last_feet_contacts.heel_l) + int(self.last_feet_contacts.heel_r)
-        return (0.3-np.absolute(0.3 - model_state.pose.position.z)) * contacts
+        return (0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z)) * contacts
     
-    def stup_reward_z_contacts_4(self, model_state):
+    def stup_reward_z_contacts_4(self, ind_base):
         contacts = int(self.last_feet_contacts.foot_l) + int(self.last_feet_contacts.foot_r) + int(self.last_feet_contacts.heel_l) + int(self.last_feet_contacts.heel_r)
-        return (0.3-np.absolute(0.3 - model_state.pose.position.z)) + 0.01 * contacts
+        return (0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z)) + 0.01 * contacts
     
-    def stup_reward_z_fall_penalty_1(self, model_state):
-        return -np.absolute(0.3 - model_state.pose.position.z) - int(self.check_done())
+    def stup_reward_z_fall_penalty_1(self, ind_base):
+        return -np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) - int(self.check_done())
     
-    def stup_reward_z_pitch_vel_1(self, model_state):
-        P = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
-        return -((0.26 - model_state.pose.position.z)**2 + 0.1*(P)**2 + 0.01*(model_state.twist.linear.x**2 + model_state.twist.linear.y**2 + model_state.twist.linear.z**2))
+    def stup_reward_z_pitch_vel_1(self, ind_base):
+        P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
+        return -((0.26 - self.last_link_states.pose[ind_base].position.z)**2 + 0.1*(P)**2 + 0.01*(self.last_link_states.twist[ind_base].linear.x**2 + self.last_link_states.twist[ind_base].linear.y**2 + self.last_link_states.twist[ind_base].linear.z**2))
     
-    def stup_reward_z_pitch_1(self, model_state):        
-        P = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
-        return 0.3-np.absolute(0.3 - model_state.pose.position.z) + 0.05 * (np.pi - np.absolute(P))       
+    def stup_reward_z_pitch_1(self, ind_base):        
+        P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
+        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + 0.05 * (np.pi - np.absolute(P))       
     
-    def stup_reward_z_pitch_2(self, model_state):        
-        P = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
-        return 0.3-np.absolute(0.3 - model_state.pose.position.z) + 0.01 * (np.pi - np.absolute(P))       
+    def stup_reward_z_pitch_2(self, ind_base):        
+        P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
+        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + 0.01 * (np.pi - np.absolute(P))       
     
-    def stup_reward_z_com_cop_1(self, model_state):
-        z_part = (0.26 - model_state.pose.position.z)                
+    def stup_reward_z_com_cop_1(self, ind_base):
+        z_part = (0.26 - self.last_link_states.pose[ind_base].position.z)                
         com_cop_part = (self.last_mass_center.x - self.last_press_center.x)**2 + (self.last_mass_center.y - self.last_press_center.y)**2
         return -z_part**2 - com_cop_part
         
-    def stup_reward_z_pitch_com_cop_1(self, model_state):
-        z_part = (0.26 - model_state.pose.position.z)                
+    def stup_reward_z_pitch_com_cop_1(self, ind_base):
+        z_part = (0.26 - self.last_link_states.pose[ind_base].position.z)                
         com_cop_part = (self.last_mass_center.x - self.last_press_center.x)**2 + (self.last_mass_center.y - self.last_press_center.y)**2
-        P = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
+        P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
         return -z_part**2 - com_cop_part - 0.1 * P**2
         
-    def stup_reward_z_body_pitch_com_cop_head_pitch_1(self, model_state):
-        z_part = (0.26 - model_state.pose.position.z)                
+    def stup_reward_z_body_pitch_com_cop_head_pitch_1(self, ind_base):
+        z_part = (0.26 - self.last_link_states.pose[ind_base].position.z)                
         
         com_cop_part = (self.last_mass_center.x - self.last_press_center.x)**2 + (self.last_mass_center.y - self.last_press_center.y)**2
         
-        bodyP = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
+        bodyP = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
         
         ind_head = self.last_link_states.name.index("bd1::head_link")
         quat = self.last_link_states.pose[ind_head].orientation
@@ -304,12 +312,12 @@ class UniversalGazeboEnvironmentInterface(object):
         
         return -z_part**2 - com_cop_part - 0.1 * bodyP**2 - 0.1 * headP**2
     
-    def stup_reward_z_body_pitch_com_cop_head_pitch_2(self, model_state):
-        z_part = (0.26 - model_state.pose.position.z)                
+    def stup_reward_z_body_pitch_com_cop_head_pitch_2(self, ind_base):
+        z_part = (0.26 - self.last_link_states.pose[ind_base].position.z)                
         
         com_cop_part = (self.last_mass_center.x - self.last_press_center.x)**2 + (self.last_mass_center.y - self.last_press_center.y)**2
         
-        bodyP = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
+        bodyP = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
         
         ind_head = self.last_link_states.name.index("bd1::head_link")
         quat = self.last_link_states.pose[ind_head].orientation
@@ -317,12 +325,12 @@ class UniversalGazeboEnvironmentInterface(object):
         
         return -z_part**2 - 0.5 * com_cop_part - 0.1 * bodyP**2 - 0.1 * headP**2
     
-    def stup_reward_z_body_pitch_com_cop_head_pitch_3(self, model_state):
-        z_part = (0.26 - model_state.pose.position.z)                
+    def stup_reward_z_body_pitch_com_cop_head_pitch_3(self, ind_base):
+        z_part = (0.26 - self.last_link_states.pose[ind_base].position.z)                
         
         com_cop_part = (self.last_mass_center.x - self.last_press_center.x)**2 + (self.last_mass_center.y - self.last_press_center.y)**2
         
-        bodyP = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
+        bodyP = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
         
         ind_head = self.last_link_states.name.index("bd1::head_link")
         quat = self.last_link_states.pose[ind_head].orientation
@@ -330,18 +338,20 @@ class UniversalGazeboEnvironmentInterface(object):
         
         return 10*-z_part**2 - com_cop_part - 0.1 * bodyP**2 - 0.1 * headP**2 - int(self.check_done())        
     
-    def just_fall_reward(self, model_state):
+    def just_fall_reward(self, ind_base):
         return int(self.check_done())
     
-    def just_Z_reward(self, model_state):
-        return model_state.pose.position.z
+    def just_Z_reward(self, ind_base):
+        return self.last_link_states.pose[ind_base].position.z
     
-    def max_z_and_body_pitch_1(self, model_state):
-        P = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])[1]
-        return model_state.pose.position.z + (1 - np.absolute(np.sin(P)))
+    def max_z_and_body_pitch_1(self, ind_base):
+        P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
+        return self.last_link_states.pose[ind_base].position.z + (1 - np.absolute(np.sin(P)))
     
-    def walk_reward_max_vx(self, model_state):
-        return model_state.twist.linear.x
+    def walk_reward_max_vx(self, ind_base):
+        return self.last_link_states.twist[ind_base].linear.x
+    
+    # STATE
     
     def get_state(self, get_reward = False):
         
@@ -350,9 +360,9 @@ class UniversalGazeboEnvironmentInterface(object):
         # Model State                
         #model_state = self.get_model_state_srv("bd1","")
         
+        ind_base = self.last_link_states.name.index("bd1::base_link")
         for state_el in self.requested_state:
-            ## position as if
-            ind_base = self.last_link_states.name.index("bd1::base_link")
+            ## position as if            
             
             if state_el == "base_pose":                
                 state.append(self.last_link_states.pose[ind_base].position.x)
@@ -469,7 +479,7 @@ class UniversalGazeboEnvironmentInterface(object):
                 
         
         if get_reward:            
-            return state, self.requested_reward(model_state) 
+            return state, self.requested_reward(ind_base) 
         else:
             return state               
         
