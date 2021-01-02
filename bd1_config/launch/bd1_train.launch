@@ -2,7 +2,7 @@
     <arg name="robot" default="bd1"/>
     <arg name="servo_control" default="VEL"/>
     
-    <arg name="test_net_dir" default="$(find bd1_train)/models/PPO/target_z/minimize_actions/backup-1000"/>
+    <arg name="test_net_dir" default="$(find bd1_train)/models/PPO/target_z/minimize_actions_continue/backup-800"/>
     
     <!-- TEST or TRAIN -->
     <arg name="trainer_mode" default="TEST"/>
@@ -32,10 +32,10 @@
         <rosparam param="actions">["left_legs_vel", "right_legs_vel"]</rosparam>  -->      
         
         
-        <param name="reward" value="stup_reward_z_minimize_actions_1"/>
+        <param name="reward" value="stup_reward_z_minimize_actions_2"/>
         
-        <param name="save_path" value="$(find bd1_train)/models/PPO/target_z/minimize_actions"/>
-        
+        <param name="save_path" value="$(find bd1_train)/models/PPO/target_z/minimize_actions_continue"/>
+        <param name="load_path" value="$(find bd1_train)/models/PPO/target_z/minimize_actions/backup-1000"/>        
         
         <param name="sub_method" value="clip"/>   
         <param name="num_episodes" value="2000"/>   
