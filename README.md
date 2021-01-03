@@ -22,18 +22,18 @@ sudo apt install ros-noetic-effort-controllers
 
 For GPU support you need to install CUDA and cuDNN [here is guide](https://medium.com/analytics-vidhya/installing-tensorflow-with-cuda-cudnn-gpu-support-on-ubuntu-20-04-f6f67745750a).
 ```bash
-pip3 install tensorflow-gpu==2.0.0-rc1
+pip3 install tensorflow-gpu
 ```
 **or** if you has no GPU
 ```bash
-pip3 install tensorflow==2.2.0
+pip3 install tensorflow
 ```
 then
 ```bash
 pip3 install tensorlayer
-pip3 install tensorflow_probability==0.10.1 
+pip3 install tensorflow_probability
 ```
-Version 2.2.0 is newest version that throws no errors for me.
+Than follow solution posted [there](https://github.com/tensorlayer/tensorlayer/issues/1092#issuecomment-753630542) to fix bug in tensorlayer. 
 
 # Repository structure
  - 
