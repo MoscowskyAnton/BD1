@@ -45,10 +45,12 @@
     
     <node name="contacts_handler" pkg="bd1_gazebo_utils" type="contacts_handler_node" output="screen"/>
     
-    <include file="$(find bd1_config)/launch/bd1_train.launch">
+    <!--<include file="$(find bd1_config)/launch/bd1_train.launch">
         <arg name="servo_control" value="$(arg servo_control)"/>
         <arg name="trainer_mode" value="$(arg trainer_mode)"/>
-        
+    </include>-->
+    <include file="$(find bd1_config)/launch/bd1_train_sb3.launch">
+        <arg name="servo_control" value="$(arg servo_control)"/>
     </include>
     
 </launch>
