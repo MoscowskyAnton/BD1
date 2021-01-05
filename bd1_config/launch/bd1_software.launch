@@ -23,6 +23,6 @@
     <!--<node name="rqt_gui" pkg="rqt_gui" type="rqt_gui"/>-->
     <node name="rqt_service_caller" pkg="rqt_service_caller" type="rqt_service_caller"/>
     
-    <node name="bd1_rviz_gazebo" pkg="rviz" type="rviz" args="-d $(find bd1_config)/rviz/default.rviz"/>
+    <!--node name="bd1_rviz_gazebo" pkg="rviz" type="rviz" args="-d $(find bd1_config)/rviz/default.rviz"/>-->
     
 </launch>
