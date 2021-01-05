@@ -1,2 +1,3 @@
 *.pyc
 /bd1_train/models*
+/bd1_train_sb3/models*
