@@ -14,13 +14,14 @@
         <param name="task_name" value="standup"/>
     
         <param name="model_dir" value="$(find bd1_train_sb3)/models"/>
-        <param name="load_path" value="$(find bd1_train_sb3)/models/standup/sac/fully_trained/model"/>
+        <param name="load_path" value="$(find bd1_train_sb3)/models/standup/sac/fully_trained"/>
         <param name="env_interface_node_name" value="universal_gazebo_environment_inteface"/>
         <rosparam param="state">["base_pose", "base_rot_quat", "base_twist_lin", "left_leg_all_quats", "feet_contacts"]</rosparam>
         <rosparam param="actions">["sync_legs_vel"]</rosparam>
-        <param name="reward" value="stup_reward_z_3"/>
+        <param name="reward" value="stup_reward_z_pitch_1"/>
         
-        <param name="learning_rate" value="0.005"/>
+        <param name="total_timesteps" value="100000"/>
+        
         
         <param name="n_steps" value="256"/>
         <rosparam param="policy_kwargs">{net_arch: [400, 300]}</rosparam>
