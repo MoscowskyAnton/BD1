@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import os
 import rospy
+import numpy as np
 import stable_baselines3 as sb3
 from bd1_gazebo_env_interface import bd1_gazebo_gym_wrapper
+from stable_baselines3.common.callbacks import BaseCallback, CheckpointCallback, CallbackList
+from stable_baselines3.common.results_plotter import load_results, ts2xy
+from stable_baselines3.common.monitor import Monitor
 
 class UniversalStableBaselines3Trainer(object):
     def __init__(self):
@@ -16,6 +21,7 @@ class UniversalStableBaselines3Trainer(object):
         self.model_dir = rospy.get_param('~model_dir','/tmp')
         self.task_name = rospy.get_param('~task_name','test')
         self.load_path = rospy.get_param('~load_path',None)
+        self.checkpoint_freq = rospy.get_param('~checkpoint_freq',1000)
         # load hypers
         ## common
         self.algorithm = rospy.get_param('~algorithm', '').lower()
@@ -38,6 +44,15 @@ class UniversalStableBaselines3Trainer(object):
         
         
         self.save_dir = "{}/{}/{}/".format(self.model_dir, self.task_name, self.algorithm)
+        os.makedirs(self.save_dir, exist_ok=True)
+        
+        # wrap env to monitor (need for tensorboard?)
+        self.env = Monitor(self.env, self.save_dir)
+        
+        # learning callbacks
+        checkpoint_callback = CheckpointCallback(save_freq=self.checkpoint_freq, save_path=self.save_dir, name_prefix="checkpoint")
+        bestrewardsave_callback = SaveOnBestTrainingRewardCallback(check_freq=20, log_dir=self.save_dir, verbose=1)
+        self.callbacks = CallbackList([checkpoint_callback, bestrewardsave_callback])
         
         if self.load_path is None:
             if self.algorithm == 'ppo':
@@ -97,7 +112,7 @@ class UniversalStableBaselines3Trainer(object):
         
     def run(self):
         if self.load_path is None:
-            self.model.learn(total_timesteps = self.total_timesteps, tb_log_name="run")
+            self.model.learn(total_timesteps = self.total_timesteps, tb_log_name="run", callback = self.callbacks)
             self.save_model('fully_trained')
         else:
             obs = self.env.reset()
@@ -108,10 +123,51 @@ class UniversalStableBaselines3Trainer(object):
                 if done:
                     obs = self.env.reset()
                     rospy.logwarn("new episode started")
-                    
-        #rospy.spin()
-        #exit()
 
+class SaveOnBestTrainingRewardCallback(BaseCallback):
+    """
+    Callback for saving a model (the check is done every ``check_freq`` steps)
+    based on the training reward (in practice, we recommend using ``EvalCallback``).
+
+    :param check_freq: (int)
+    :param log_dir: (str) Path to the folder where the model will be saved.
+      It must contains the file created by the ``Monitor`` wrapper.
+    :param verbose: (int)
+    """
+    def __init__(self, check_freq, log_dir, verbose=1):
+        super(SaveOnBestTrainingRewardCallback, self).__init__(verbose)
+        self.check_freq = check_freq
+        self.log_dir = log_dir
+        self.save_path = os.path.join(log_dir, 'best_model')
+        self.best_mean_reward = -np.inf
+
+    def _init_callback(self) -> None:
+        # Create folder if needed
+        if self.log_dir is not None:
+            os.makedirs(self.log_dir, exist_ok=True)
+
+    def _on_step(self) -> bool:
+        if self.n_calls % self.check_freq == 0:
+
+          # Retrieve training reward
+          x, y = ts2xy(load_results(self.log_dir), 'timesteps')
+          if len(x) > 0:
+              # Mean training reward over the last 100 episodes
+              mean_reward = np.mean(y[-100:])
+              if self.verbose > 0:
+                print("Num timesteps: {}".format(self.num_timesteps))
+                print("Best mean reward: {:.2f} - Last mean reward per episode: {:.2f}".format(self.best_mean_reward, mean_reward))
+
+              # New best model, you could save the agent here
+              if mean_reward > self.best_mean_reward:
+                  self.best_mean_reward = mean_reward
+                  # Example for saving best model
+                  if self.verbose > 0:
+                    print("Saving new best model at {} timesteps".format(x[-1]))
+                    print("Saving new best model to {}.zip".format(self.save_path))
+                  self.model.save(self.save_path)
+
+        return True
 
 if __name__ == '__main__' :
     usbl3t = UniversalStableBaselines3Trainer()

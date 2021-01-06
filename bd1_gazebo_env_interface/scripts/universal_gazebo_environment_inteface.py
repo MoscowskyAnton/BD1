@@ -113,6 +113,8 @@ class UniversalGazeboEnvironmentInterface(object):
                              "stup_reward_z_contacts_4":self.stup_reward_z_contacts_4,
                              "stup_reward_z_minimize_actions_1":self.stup_reward_z_minimize_actions_1,
                              "stup_reward_z_minimize_actions_2":self.stup_reward_z_minimize_actions_2,
+                             "stup_reward_z_pitch_min_actions_1":self.stup_reward_z_pitch_min_actions_1,
+                             "stup_reward_z_pitch_min_actions_2":self.stup_reward_z_pitch_min_actions_2,
                              "stup_reward_z_pitch_1":self.stup_reward_z_pitch_1,
                              "stup_reward_z_pitch_2":self.stup_reward_z_pitch_2,
                              "stup_reward_z_pitch_vel_1": self.stup_reward_z_pitch_vel_1,
@@ -291,7 +293,15 @@ class UniversalGazeboEnvironmentInterface(object):
     
     def stup_reward_z_pitch_2(self, ind_base):        
         P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
-        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + 0.01 * (np.pi - np.absolute(P))       
+        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + 0.01 * (np.pi - np.absolute(P))      
+    
+    def stup_reward_z_pitch_min_actions_1(self, ind_base):        
+        P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
+        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + 0.05 * (np.pi - np.absolute(P)) + 0.1*(3 - np.sum(np.absolute(np.array(self.last_action))))
+    
+    def stup_reward_z_pitch_min_actions_2(self, ind_base):        
+        P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
+        return -(0.3 - self.last_link_states.pose[ind_base].position.z)**2 - 0.05 * (P)**2 - 0.1*(np.sum((np.array(self.last_action))**2))
     
     def stup_reward_z_com_cop_1(self, ind_base):
         z_part = (0.26 - self.last_link_states.pose[ind_base].position.z)                
