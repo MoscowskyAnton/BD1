@@ -3,7 +3,7 @@
 
 import rospy
 import stable_baselines3 as sb3
-from bd1_gazebo_env_interface import bd1_gazebo_gym_wrapper#BD1GazeboEnv
+from bd1_gazebo_env_interface import bd1_gazebo_gym_wrapper
 
 class UniversalStableBaselines3Trainer(object):
     def __init__(self):
