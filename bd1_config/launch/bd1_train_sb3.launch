@@ -20,7 +20,7 @@
         <rosparam param="actions">["sync_legs_vel"]</rosparam>
         <param name="reward" value="stup_reward_z_pitch_min_actions_2"/>
         
-        <param name="total_timesteps" value="100000"/>
+        <param name="total_timesteps" value="50000"/>
         
         
         <param name="n_steps" value="256"/>

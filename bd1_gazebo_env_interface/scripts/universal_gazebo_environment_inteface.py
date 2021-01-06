@@ -301,7 +301,7 @@ class UniversalGazeboEnvironmentInterface(object):
     
     def stup_reward_z_pitch_min_actions_2(self, ind_base):        
         P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
-        return -(0.3 - self.last_link_states.pose[ind_base].position.z)**2 - 0.05 * (P)**2 - 0.1*(np.sum((np.array(self.last_action))**2))
+        return -(0.3 - self.last_link_states.pose[ind_base].position.z)**2 - 0.05 * (P)**2 - 0.01*(np.sum((np.array(self.last_action))**2))
     
     def stup_reward_z_com_cop_1(self, ind_base):
         z_part = (0.26 - self.last_link_states.pose[ind_base].position.z)                
