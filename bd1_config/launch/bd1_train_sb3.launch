@@ -9,23 +9,39 @@
     </node>
     
     <node name="universal_sb3_trainer" pkg="bd1_train_sb3" type="universal_stable_baselines3_trainer.py" output="screen" required="true">
-        <param name="algorithm" value="SAC"/>
+        
         <param name="verbose" value="1"/>
-        <param name="task_name" value="standup_and_balance"/>
+        <param name="task_name" value="standup_separate_target"/>
         <param name="checkpoint_freq" value="5000"/>
     
         <param name="model_dir" value="$(find bd1_train_sb3)/models"/>
-        <param name="load_path" value="$(find bd1_train_sb3)/models/standup_and_balance/sac/checkpoint_23000_steps"/>
+        <!--<param name="load_path" value="$(find bd1_train_sb3)/models/standup_separate/sac/fully_trained"/>-->
         <param name="env_interface_node_name" value="universal_gazebo_environment_inteface"/>
-        <rosparam param="state">["base_pose", "base_rot_quat", "base_twist_lin", "left_leg_all_quats", "feet_contacts"]</rosparam>
-        <rosparam param="actions">["sync_legs_vel"]</rosparam>
+        <rosparam param="state">["base_pose", "base_rot_quat", "base_twist_lin", "left_leg_all_quats", "right_leg_all_quats", "feet_contacts", "com_abs", "cop_abs"]</rosparam>
+        <rosparam param="actions">["left_legs_vel", "right_legs_vel"]</rosparam>
         <param name="reward" value="stup_reward_z_pitch_min_actions_2"/>
         
-        <param name="total_timesteps" value="50000"/>
+        <param name="total_timesteps" value="200000"/>
         
+        <!-- SAC -->
+        <param name="algorithm" value="SAC"/>
+        <param name="buffer_size" value="300000"/>
+        <param name="batch_size" value="256"/>
+        <param name="gamma" value="0.98"/>
+        <param name="tau" value="0.02"/>
+        <param name="train_freq" value="-1"/>        
+        <param name="n_episodes_rollout" value="2"/>        
+        <param name="gradient_steps" value="64"/>
+        <param name="learning_starts" value="10000"/>
+        <param name="use_sde" value="true"/>
+        <rosparam param="policy_kwargs">{log_std_init: -3, net_arch: [400, 300]}</rosparam>
+        
+        <param name="action_noise_type" value="2"/><!-- 0 for default, 1 for normal, 2 for Ornstein -->
+        <rosparam param="action_noise_mean">[-0.2,0.2,-0.2,-0.2,0.2,-0.2]</rosparam>
+        <rosparam param="action_noise_sigma">1</rosparam>
         
         <param name="n_steps" value="256"/>
-        <rosparam param="policy_kwargs">{net_arch: [400, 300]}</rosparam>
+        
         <!--<param name="" value=""/>-->
     </node>
 </launch>

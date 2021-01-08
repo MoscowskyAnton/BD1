@@ -95,6 +95,7 @@ class UniversalGazeboEnvironmentInterface(object):
                             "com_abs":3,
                             "cop_abs":3,
                             "head_rot_quat":4,
+                            "neck_rot_quat":4,
                             "left_leg_all_quats":12,
                             "right_leg_all_quats":12,
                             "feet_contacts":4}
@@ -115,6 +116,7 @@ class UniversalGazeboEnvironmentInterface(object):
                              "stup_reward_z_minimize_actions_2":self.stup_reward_z_minimize_actions_2,
                              "stup_reward_z_pitch_min_actions_1":self.stup_reward_z_pitch_min_actions_1,
                              "stup_reward_z_pitch_min_actions_2":self.stup_reward_z_pitch_min_actions_2,
+                             "stup_reward_z_pitch_min_actions_3":self.stup_reward_z_pitch_min_actions_3,
                              "stup_reward_z_pitch_1":self.stup_reward_z_pitch_1,
                              "stup_reward_z_pitch_2":self.stup_reward_z_pitch_2,
                              "stup_reward_z_pitch_vel_1": self.stup_reward_z_pitch_vel_1,
@@ -126,6 +128,7 @@ class UniversalGazeboEnvironmentInterface(object):
                                  self.stup_reward_z_body_pitch_com_cop_head_pitch_3,
                                  "just_fall": self.just_fall_reward,
                                  "just_z": self.just_Z_reward,
+                                 "just_z_sq": self.just_z_sq_reward,
                                  "max_z_and_body_pitch_1":self.max_z_and_body_pitch_1,
                                  "stup_reward_z_fall_penalty_1":self.stup_reward_z_fall_penalty_1,
                                  "walk_reward_max_vx":self.walk_reward_max_vx}
@@ -154,14 +157,16 @@ class UniversalGazeboEnvironmentInterface(object):
                     self.state_dim += self.state_types[state_el]                    
                     self.requested_state.append(state_el)
                 else:
-                    rospy.logerr("[{}] unknown state element {} skipped!".format(self.name, state_el))                
+                    rospy.logerr("[{}] unknown state element {} try to config again!".format(self.name, state_el))                
+                    return ConfigureResponse(False, 0, 0, "", 0)
                                     
             for action_el in req.actions:
                 if action_el in self.actions_types:
                     self.actions_dim += self.actions_types[action_el]
                     self.requested_actions.append(action_el)
                 else:
-                    rospy.logerr("[{}] unknown action element {} skipped!".format(self.name, action_el))                                          
+                    rospy.logerr("[{}] unknown action element {} try to config again!".format(self.name, action_el))                                          
+                    return ConfigureResponse(False, 0, 0, "", 0)
             
             if self.state_dim == 0:
                 rospy.logerr("[{}] state vector is zero! Interface isn't configured, try again.".format(self.name))                                
@@ -239,7 +244,7 @@ class UniversalGazeboEnvironmentInterface(object):
                 self.neck_pub.publish(self.unrm(action[index]))
                 index+=1
                 self.head_pub.publish(self.unrm(action[index]))
-                index+=1                                                           
+                index+=1                       
     
     def check_done(self):
         return True in self.last_episode_fall        
@@ -250,13 +255,15 @@ class UniversalGazeboEnvironmentInterface(object):
     # rewards
     # ==============
     def stup_reward_z_1(self, ind_base):
-        return -(0.26 - self.last_link_states.pose[ind_base].position.z)**2
+        return -(0.3 - self.last_link_states.pose[ind_base].position.z)**2
     
     def stup_reward_z_2(self, ind_base):
         return -np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z)
     
     def stup_reward_z_3(self, ind_base):
         return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z)
+    
+    
     
     def stup_reward_z_minimize_actions_1(self, ind_base):
         return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + 0.1*(3 - np.sum(np.absolute(np.array(self.last_action))))
@@ -302,6 +309,10 @@ class UniversalGazeboEnvironmentInterface(object):
     def stup_reward_z_pitch_min_actions_2(self, ind_base):        
         P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
         return -(0.3 - self.last_link_states.pose[ind_base].position.z)**2 - 0.05 * (P)**2 - 0.01*(np.sum((np.array(self.last_action))**2))
+        
+    def stup_reward_z_pitch_min_actions_3(self, ind_base):        
+        P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
+        return -(0.3 - self.last_link_states.pose[ind_base].position.z)**2 - 0.05 * (P)**2 - 0.005*(np.sum((np.array(self.last_action))**2))    
     
     def stup_reward_z_com_cop_1(self, ind_base):
         z_part = (0.26 - self.last_link_states.pose[ind_base].position.z)                
@@ -358,6 +369,9 @@ class UniversalGazeboEnvironmentInterface(object):
     
     def just_Z_reward(self, ind_base):
         return self.last_link_states.pose[ind_base].position.z
+    
+    def just_z_sq_reward(self, ind_base):
+        return self.last_link_states.pose[ind_base].position.z**2
     
     def max_z_and_body_pitch_1(self, ind_base):
         P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
@@ -465,6 +479,13 @@ class UniversalGazeboEnvironmentInterface(object):
                 state.append(self.last_press_center.z)
             elif state_el == "head_rot_quat":
                 ind_head = self.last_link_states.name.index("bd1::head_link")
+                quat = self.last_link_states.pose[ind_head].orientation
+                state.append(quat.x)
+                state.append(quat.y)
+                state.append(quat.z)
+                state.append(quat.w)
+            elif state_el == "neck_rot_quat":
+                ind_head = self.last_link_states.name.index("bd1::neck_link")
                 quat = self.last_link_states.pose[ind_head].orientation
                 state.append(quat.x)
                 state.append(quat.y)

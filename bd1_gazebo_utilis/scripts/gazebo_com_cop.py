@@ -84,7 +84,7 @@ class CalcCenterOfMass(object):
             r = Rotation.from_quat([link_pose.orientation.x,
                                     link_pose.orientation.y,
                                     link_pose.orientation.z,
-                                    link_pose.orientation.w]).as_dcm()
+                                    link_pose.orientation.w]).as_matrix()#.as_dcm()
             pos = np.dot(r, np.matrix([[v[1][0]],
                                        [v[1][1]],
                                        [v[1][2]]]))

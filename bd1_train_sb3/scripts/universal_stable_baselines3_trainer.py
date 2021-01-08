@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import os
+import yaml
 import rospy
 import numpy as np
 import stable_baselines3 as sb3
@@ -9,13 +10,18 @@ from bd1_gazebo_env_interface import bd1_gazebo_gym_wrapper
 from stable_baselines3.common.callbacks import BaseCallback, CheckpointCallback, CallbackList
 from stable_baselines3.common.results_plotter import load_results, ts2xy
 from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.noise import OrnsteinUhlenbeckActionNoise, NormalActionNoise
 
 class UniversalStableBaselines3Trainer(object):
     def __init__(self):
         rospy.init_node('universal_stable_baselines3_trainer')
         
+        self.name = rospy.get_name()
+        
         # load gym-wrapped env
         self.env = bd1_gazebo_gym_wrapper.BD1GazeboEnv()
+        
+        
         
         # load params
         self.model_dir = rospy.get_param('~model_dir','/tmp')
@@ -34,6 +40,19 @@ class UniversalStableBaselines3Trainer(object):
         self.verbose = rospy.get_param('~verbose',0)
         self.batch_size = rospy.get_param('~batch_size', 64)
         self.n_epochs = rospy.get_param('~n_epochs', 10)
+        
+        self.action_noise_type = rospy.get_param('~action_noise_type', 0)        
+        
+        
+        if self.action_noise_type == 1:
+            self.proceed_noise()         
+            self.action_noise = NormalActionNoise(self.action_noise_mean, self.action_noise_sigma)                                                     
+        elif self.action_noise_type == 2:            
+            self.proceed_noise()                                
+            self.action_noise = OrnsteinUhlenbeckActionNoise(self.action_noise_mean, self.action_noise_sigma)                                                     
+        else:
+            self.action_noise = None
+        
         ## ppo
         self.gae_lambda = rospy.get_param('~gae_lambda', 0.95)
         self.clip_range = rospy.get_param('~clip_range', 0.2)
@@ -41,7 +60,11 @@ class UniversalStableBaselines3Trainer(object):
         ## sac
         self.tau = rospy.get_param('~tau', 0.005)
         self.buffer_size = rospy.get_param('~buffer_size', 1000000)
-        
+        self.use_sde = rospy.get_param('~use_sde', False)
+        self.learning_starts = rospy.get_param('~learning_starts', 100)
+        self.train_freq = rospy.get_param('~train_freq', 1)
+        self.gradient_steps = rospy.get_param('~gradient_steps',1)
+        self.n_episodes_rollout = rospy.get_param('~n_episodes_rollout', -1)
         
         self.save_dir = "{}/{}/{}/".format(self.model_dir, self.task_name, self.algorithm)
         os.makedirs(self.save_dir, exist_ok=True)
@@ -69,7 +92,8 @@ class UniversalStableBaselines3Trainer(object):
                                     n_epochs = self.n_epochs)
             #elif self.algorithm == 'a3c':
                 #self.model = sb3.A3C()
-            elif self.algorithm == 'sac':
+            elif self.algorithm == 'sac':                
+                
                 self.model = sb3.SAC(self.policy, 
                                     self.env, 
                                     verbose=self.verbose, 
@@ -79,7 +103,16 @@ class UniversalStableBaselines3Trainer(object):
                                     gamma=self.gamma, 
                                     batch_size= self.batch_size, 
                                     tau = self.tau,
-                                    buffer_size = self.buffer_size)
+                                    buffer_size = self.buffer_size,
+                                    use_sde = self.use_sde,
+                                    learning_starts = self.learning_starts,
+                                    train_freq = self.train_freq,
+                                    gradient_steps = self.gradient_steps,
+                                    n_episodes_rollout = self.n_episodes_rollout,
+                                    action_noise = self.action_noise)
+                
+            with open(self.save_dir + 'params.yaml', 'w') as file:
+                yaml.dump(self.export_params(),file)
             
         else:
             #self.model.load(self.load_path)
@@ -87,6 +120,26 @@ class UniversalStableBaselines3Trainer(object):
                 self.model = sb3.PPO.load(self.load_path)
             elif self.algorithm == 'sac':
                 self.model = sb3.SAC.load(self.load_path)
+                
+    def proceed_noise(self):
+        self.action_noise_mean = rospy.get_param('~action_noise_mean', 0)
+        if isinstance(self.action_noise_mean, (int, float)):
+            self.action_noise_mean = np.array( [self.action_noise_mean] * self.env.action_space.shape[0])
+        elif isinstance(self.action_noise_mean, list):
+            if len(self.action_noise_mean) != self.env.action_space.shape[0]:
+                rospy.logerr("[{}] error! Given action noise mean has wrong length. Exit.".format(self.name))
+                exit()
+            self.action_noise_mean = np.array(self.action_noise_mean)
+        
+        self.action_noise_sigma = rospy.get_param('~action_noise_sigma', 1)
+        if isinstance(self.action_noise_sigma, (int, float)):
+            self.action_noise_sigma = np.array( [self.action_noise_sigma] * self.env.action_space.shape[0])
+        elif isinstance(self.action_noise_sigma, list):
+            if len(self.action_noise_sigma) != self.env.action_space.shape[0]:
+                rospy.logerr("[{}] error! Given action noise sigma has wrong length. Exit.".format(self.name))
+                exit()
+            self.action_noise_sigma = np.array(self.action_noise_sigma)        
+        
         
     def save_model(self, name):
         self.model.save(self.save_dir + name)
@@ -95,6 +148,13 @@ class UniversalStableBaselines3Trainer(object):
     def export_params(self):
         params = {}
         params['algorithm'] = self.algorithm
+        
+        params['reward'] = rospy.get_param('~reward','')
+        params['env_interface_node_name'] = rospy.get_param('~env_interface_node_name','')
+        params['state'] = rospy.get_param('~state','')
+        params['actions'] = rospy.get_param('~actions','')
+        
+        # common hyper
         params['policy'] = self.policy
         params['policy_kwargs'] = self.policy_kwargs
         params['total_timesteps'] = self.total_timesteps
@@ -102,12 +162,28 @@ class UniversalStableBaselines3Trainer(object):
         params['gamma'] = self.gamma
         params['verbose'] = self.verbose
         params['batch_size'] = self.batch_size
-        params['n_epochs'] = self.n_epochs
-        # ppo
-        params['gae_lambda'] = self.gae_lambda
-        params['clip_range'] = self.clip_range
-        params['n_steps'] = self.n_steps
         
+        params['action_noise_type'] = self.action_noise_type
+        params['action_noise_mean'] = self.action_noise_mean
+        params['action_noise_sigma'] = self.action_noise_sigma
+        
+        # ppo
+        if self.algorithm == 'ppo':
+            params['n_epochs'] = self.n_epochs        
+            params['gae_lambda'] = self.gae_lambda
+            params['clip_range'] = self.clip_range
+            params['n_steps'] = self.n_steps
+        # sac
+        if self.algorithm == 'sac':
+            params['tau'] = self.tau
+            params['buffer_size'] = self.buffer_size    
+            params['use_sde'] = self.use_sde
+            params['learning_starts'] = self.learning_starts
+            params['train_freq'] = self.train_freq
+            params['gradient_steps'] = self.gradient_steps
+            params['n_episodes_rollout'] = self.n_episodes_rollout
+            
+            
         return params
         
     def run(self):
@@ -124,6 +200,7 @@ class UniversalStableBaselines3Trainer(object):
                     obs = self.env.reset()
                     rospy.logwarn("new episode started")
 
+# from https://colab.research.google.com/github/araffin/rl-tutorial-jnrr19/blob/sb3/4_callbacks_hyperparameter_tuning.ipynb
 class SaveOnBestTrainingRewardCallback(BaseCallback):
     """
     Callback for saving a model (the check is done every ``check_freq`` steps)
@@ -138,7 +215,7 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         super(SaveOnBestTrainingRewardCallback, self).__init__(verbose)
         self.check_freq = check_freq
         self.log_dir = log_dir
-        self.save_path = os.path.join(log_dir, 'best_model')
+        self.save_path = os.path.join(log_dir, 'best_reward')
         self.best_mean_reward = -np.inf
 
     def _init_callback(self) -> None:
