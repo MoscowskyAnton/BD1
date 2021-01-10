@@ -261,9 +261,7 @@ class UniversalGazeboEnvironmentInterface(object):
         return -np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z)
     
     def stup_reward_z_3(self, ind_base):
-        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z)
-    
-    
+        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z)        
     
     def stup_reward_z_minimize_actions_1(self, ind_base):
         return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + 0.1*(3 - np.sum(np.absolute(np.array(self.last_action))))

@@ -28,6 +28,7 @@ class UniversalStableBaselines3Trainer(object):
         self.task_name = rospy.get_param('~task_name','test')
         self.load_path = rospy.get_param('~load_path',None)
         self.checkpoint_freq = rospy.get_param('~checkpoint_freq',1000)
+        self.test_only = rospy.get_param('~test_only',False)
         # load hypers
         ## common
         self.algorithm = rospy.get_param('~algorithm', '').lower()
@@ -117,9 +118,9 @@ class UniversalStableBaselines3Trainer(object):
         else:
             #self.model.load(self.load_path)
             if self.algorithm == 'ppo':
-                self.model = sb3.PPO.load(self.load_path)
+                self.model = sb3.PPO.load(self.load_path, env = self.env)
             elif self.algorithm == 'sac':
-                self.model = sb3.SAC.load(self.load_path)
+                self.model = sb3.SAC.load(self.load_path, env = self.env)
                 
     def proceed_noise(self):
         self.action_noise_mean = rospy.get_param('~action_noise_mean', 0)
@@ -190,15 +191,20 @@ class UniversalStableBaselines3Trainer(object):
         if self.load_path is None:
             self.model.learn(total_timesteps = self.total_timesteps, tb_log_name="run", callback = self.callbacks)
             self.save_model('fully_trained')
-        else:
-            obs = self.env.reset()
-            rospy.logwarn("testing...")
-            while not rospy.is_shutdown():
-                action, _states = self.model.predict(obs, deterministic=True)
-                obs, reward, done, info = self.env.step(action)
-                if done:
-                    obs = self.env.reset()
-                    rospy.logwarn("new episode started")
+        else:    
+            if not self.test_only:
+                self.model.learn(total_timesteps = self.total_timesteps, tb_log_name="run", callback = self.callbacks, reset_num_timesteps = True)
+                self.save_model('fully_trained')
+        
+            else:
+                obs = self.env.reset()
+                rospy.logwarn("testing...")
+                while not rospy.is_shutdown():
+                    action, _states = self.model.predict(obs, deterministic=True)
+                    obs, reward, done, info = self.env.step(action)
+                    if done:
+                        obs = self.env.reset()
+                        rospy.logwarn("new episode started")
 
 # from https://colab.research.google.com/github/araffin/rl-tutorial-jnrr19/blob/sb3/4_callbacks_hyperparameter_tuning.ipynb
 class SaveOnBestTrainingRewardCallback(BaseCallback):
