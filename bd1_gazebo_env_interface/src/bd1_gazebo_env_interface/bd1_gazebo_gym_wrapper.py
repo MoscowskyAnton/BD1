@@ -33,8 +33,11 @@ class BD1GazeboEnv(gym.Env):
         
         self.action_space = spaces.Box(np.array([-1] * self.config.actions_dim), np.array([1] * self.config.actions_dim), dtype=np.float32)
         
-        high = np.array([np.inf] * self.config.state_dim)# state len!
-        self.observation_space = spaces.Box(-high, high, dtype=np.float32)
+        #high = np.array([np.inf] * self.config.state_dim)# state len!
+        #self.observation_space = spaces.Box(-high, high, dtype=np.float32)
+        high = np.array(self.config.state_high)
+        low = np.array(self.config.state_low)
+        self.observation_space = spaces.Box(low, high, dtype=np.float32)
         
         # services init
         rospy.wait_for_service(self.env_interface_node_name+'/reset')

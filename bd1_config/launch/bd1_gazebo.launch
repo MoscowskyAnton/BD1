@@ -5,6 +5,7 @@
     <!-- VEL or TRAJ or EFF-->
     <arg name="servo_control" default="VEL"/>
     
+    <arg name="fast" default="false"/>
         
     <rosparam if="$(eval servo_control == 'TRAJ')" file="$(find bd1_description)/config/bd1_control_traj_gazebo.yaml" command="load" subst_value="true"/>            
     
@@ -20,11 +21,13 @@
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" 
     args="-param robot_description -urdf -z 0.1 -x 0 -y 0 -Y 0 -model $(arg robot)" />        
     
-    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">        
+        <arg if="$(arg fast)" name="world_name" value="$(find bd1_gazebo_utils)/worlds/simple_fast.world" />
+        <arg unless="$(arg fast)" name="world_name" value="$(find bd1_gazebo_utils)/worlds/simple.world" />
         <arg name="debug" value="false" />
         <arg name="gui" value="true" />
         <arg name="paused" value="$(arg paused)"/>
-        <arg name="use_sim_time" value="false"/>
+        <arg name="use_sim_time" value="true"/>
         <arg name="headless" value="false"/>
     </include>                                    
     
@@ -38,8 +41,8 @@
         <param name="robot_name" value="bd1" />
     </node>    
     
-    <node name="gazebo_tf_publisher" pkg="bd1_gazebo_utils" type="gazebo_tf_publisher.py" output="screen">        
-    </node>    
+    <!--<node name="gazebo_tf_publisher" pkg="bd1_gazebo_utils" type="gazebo_tf_publisher.py" output="screen">        
+    </node>    -->
     
     <node name="contacts_handler" pkg="bd1_gazebo_utils" type="contacts_handler_node" output="screen"/>
         

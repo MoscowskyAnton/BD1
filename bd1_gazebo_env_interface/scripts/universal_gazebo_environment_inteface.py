@@ -3,15 +3,17 @@
 
 import rospy
 from std_srvs.srv import Empty
-from gazebo_msgs.srv import GetModelState
+from gazebo_msgs.srv import GetModelState, SetModelState, SetLinkState
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Bool, Float64
 import numpy as np
 from bd1_gazebo_env_interface.srv import Step, Reset, StepResponse, ResetResponse, Configure, ConfigureResponse
-from tf.transformations import euler_from_quaternion
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from geometry_msgs.msg import PointStamped
 from gazebo_msgs.msg import LinkStates
 from bd1_gazebo_utils.msg import FeetContacts
+from gazebo_msgs.msg import ModelState, LinkState
+
 
 def unnorm(x, x_min, x_max):    
         return ((x+1)/2)*(x_max-x_min)  + x_min
@@ -38,6 +40,12 @@ class UniversalGazeboEnvironmentInterface(object):
         
         rospy.wait_for_service('gazebo/get_model_state')
         self.get_model_state_srv = rospy.ServiceProxy('gazebo/get_model_state', GetModelState)
+        
+        rospy.wait_for_service('gazebo/set_model_state')
+        self.set_model_state_srv = rospy.ServiceProxy('gazebo/set_model_state', SetModelState)
+        
+        rospy.wait_for_service('gazebo/set_link_state')
+        self.set_link_state_srv = rospy.ServiceProxy('gazebo/set_link_state', SetLinkState)
         
         # publishers
         if self.servo_control == "VEL":
@@ -78,20 +86,19 @@ class UniversalGazeboEnvironmentInterface(object):
         
         rospy.sleep(2) # KOSTYL
         
+        self.init_link_states = [["bd1::base_link", "bd1::neck_link", -1.5],
+                                 ["bd1::neck_link", "bd1::head_link", 1.5],
+                                 ["bd1::base_link", "bd1::hip_r_link", np.pi/2 + 1.5],
+                                 ["bd1::base_link", "bd1::hip_l_link", np.pi/2 + 1.5],
+                                 ["bd1::hip_r_link", "bd1::knee_r_link", -3],
+                                 ["bd1::hip_l_link", "bd1::knee_l_link", -3],
+                                 ["bd1::knee_r_link", "bd1::foot_r_link", 0],
+                                 ["bd1::knee_l_link", "bd1::foot_l_link", 0]]
+        
         self.state_types = {"base_pose": 3,
-                            #"base_rot_rpy": 3,
                             "base_rot_quat":4,
                             "base_twist_lin":3,
                             "base_twist_ang":3,
-                            #"left_leg_pos":3,
-                            #"left_leg_pos_norm":6,
-                            #"left_leg_vel":3,
-                            #"right_leg_pos":3,
-                            #"right_leg_pos_norm":6,
-                            #"right_leg_vel":3,
-                            #"all_head_pos":2,
-                            #"all_head_pos_norm":4,
-                            #"all_head_vel":2,
                             "com_abs":3,
                             "cop_abs":3,
                             "head_rot_quat":4,
@@ -99,6 +106,33 @@ class UniversalGazeboEnvironmentInterface(object):
                             "left_leg_all_quats":12,
                             "right_leg_all_quats":12,
                             "feet_contacts":4}
+        
+        self.state_highs = {"base_pose": [1, 1, 1],
+                            "base_rot_quat":[1, 1, 1, 1],
+                            "base_twist_lin":[np.inf, np.inf, np.inf],
+                            "base_twist_ang":[np.inf, np.inf, np.inf],
+                            "com_abs":[1,1,1],
+                            "cop_abs":[1,1,1],
+                            "head_rot_quat":[1,1,1,1],
+                            "neck_rot_quat":[1,1,1,1],
+                            "left_leg_all_quats":[1]*12,
+                            "right_leg_all_quats":[1]*12,
+                            "feet_contacts":[1,1,1,1]}
+        
+        self.state_lows = {"base_pose": [-1, -1, 0],
+                            "base_rot_quat":[-1, -1, -1, -1],
+                            "base_twist_lin":[-np.inf, -np.inf, -np.inf],
+                            "base_twist_ang":[-np.inf, -np.inf, -np.inf],
+                            "com_abs":[-1,-1,0],
+                            "cop_abs":[-1,-1,0],
+                            "head_rot_quat":[-1,-1,-1,-1],
+                            "neck_rot_quat":[-1,-1,-1,-1],
+                            "left_leg_all_quats":[-1]*12,
+                            "right_leg_all_quats":[-1]*12,
+                            "feet_contacts":[0,0,0,0]}
+        
+        self.state_high = []
+        self.state_low = []
         
         self.actions_types = {"sync_legs_vel":3,
                              "left_legs_vel":3,
@@ -119,6 +153,8 @@ class UniversalGazeboEnvironmentInterface(object):
                              "stup_reward_z_pitch_min_actions_3":self.stup_reward_z_pitch_min_actions_3,
                              "stup_reward_z_pitch_1":self.stup_reward_z_pitch_1,
                              "stup_reward_z_pitch_2":self.stup_reward_z_pitch_2,
+                             "stup_reward_z_pitch_3":self.stup_reward_z_pitch_3,
+                             "stup_reward_z_pitch_4":self.stup_reward_z_pitch_4,
                              "stup_reward_z_pitch_vel_1": self.stup_reward_z_pitch_vel_1,
                              "stup_reward_z_com_cop_1": self.stup_reward_z_com_cop_1,
                              "stup_reward_z_pitch_com_cop_1": self.stup_reward_z_pitch_com_cop_1,
@@ -150,12 +186,16 @@ class UniversalGazeboEnvironmentInterface(object):
         if not self.configured:
             self.state_dim = 0
             self.actions_dim = 0
+            self.state_high = []
+            self.state_low = []
             #rospy.logwarn("[{}] got config.".format(self.name))
             
             for state_el in req.state:
                 if state_el in self.state_types:
-                    self.state_dim += self.state_types[state_el]                    
+                    self.state_dim += self.state_types[state_el]                 
                     self.requested_state.append(state_el)
+                    self.state_high += self.state_highs[state_el]
+                    self.state_low += self.state_lows[state_el]
                 else:
                     rospy.logerr("[{}] unknown state element {} try to config again!".format(self.name, state_el))                
                     return ConfigureResponse(False, 0, 0, "", 0)
@@ -166,31 +206,31 @@ class UniversalGazeboEnvironmentInterface(object):
                     self.requested_actions.append(action_el)
                 else:
                     rospy.logerr("[{}] unknown action element {} try to config again!".format(self.name, action_el))                                          
-                    return ConfigureResponse(False, 0, 0, "", 0)
+                    return ConfigureResponse(False, 0, 0, "", 0, [], [])
             
             if self.state_dim == 0:
                 rospy.logerr("[{}] state vector is zero! Interface isn't configured, try again.".format(self.name))                                
-                return ConfigureResponse(False, 0, 0, "", 0)
+                return ConfigureResponse(False, 0, 0, "", 0, [], [])
                 
             if self.actions_dim == 0:
                 rospy.logerr("[{}] action vector is zero! Interface isn't configured, try again.".format(self.name))                                
-                return ConfigureResponse(False, 0, 0, "", 0)
+                return ConfigureResponse(False, 0, 0, "", 0, [], [])
             
             if req.reward in self.reward_types:
                 self.requested_reward = self.reward_types[req.reward]
             else:
                 rospy.logerr("[{}] {} reward not found! Interface isn't configured, try again.".format(self.name, req.reward))                                
-                return ConfigureResponse(False, 0, 0, "", 0)
+                return ConfigureResponse(False, 0, 0, "", 0, [], [])
                                 
             self.configured = True                        
             self.reset_srv = rospy.Service("~reset", Reset, self.reset_cb)
             self.step_srv = rospy.Service("~step", Step, self.step_cb)
             rospy.logwarn("[{}] configured!".format(self.name))
                     
-            return ConfigureResponse(True, self.state_dim, self.actions_dim, self.servo_control, self.max_action_lim)
+            return ConfigureResponse(True, self.state_dim, self.actions_dim, self.servo_control, self.max_action_lim, self.state_high, self.state_low)
         else:
-            rospy.logwarn("[{}] interface already has been congigured.".format(self.name, action_el))                                
-            return ConfigureResponse(True, self.state_dim, self.actions_dim, self.servo_control, self.max_action_lim)
+            rospy.logwarn("[{}] interface already has been congigured.".format(self.name))                                
+            return ConfigureResponse(True, self.state_dim, self.actions_dim, self.servo_control, self.max_action_lim, self.state_high, self.state_low)
                                 
     
     def step_cb(self, req):
@@ -204,12 +244,32 @@ class UniversalGazeboEnvironmentInterface(object):
     
     def reset_cb(self, req):
         self.set_action([0] * self.actions_dim)
-        self.reset_sim_srv()        
+        #self.reset_sim_srv()     
+        self.full_reset()
+        state = ModelState()
+        state.pose.position.z = 0.1 + 0.07
+        state.model_name = "bd1"
+        self.set_model_state_srv(state)
+        rospy.sleep(0.01) # KOSTYL
         return ResetResponse(self.get_state())
     
     #
     # LOW INTERFACE FUNCTIONS
     #
+    
+    def full_reset(self):
+        for l_st_t in self.init_link_states:
+            l_st = LinkState()
+            l_st.link_name = l_st_t[1]
+            l_st.reference_frame = l_st_t[0]
+            quat = quaternion_from_euler(0, l_st_t[2], 0)
+            l_st.pose.orientation.x = quat[0]
+            l_st.pose.orientation.y = quat[1]
+            l_st.pose.orientation.z = quat[2]
+            l_st.pose.orientation.w = quat[3]            
+            self.set_link_state_srv(l_st)
+        
+    
     def unrm(self, val):        
         return unnorm(val, -self.max_action_lim, self.max_action_lim)                
     
@@ -300,6 +360,14 @@ class UniversalGazeboEnvironmentInterface(object):
         P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
         return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + 0.01 * (np.pi - np.absolute(P))      
     
+    def stup_reward_z_pitch_3(self, ind_base):        
+        P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
+        return 0.35-np.absolute(0.35 - self.last_link_states.pose[ind_base].position.z) + 0.1 * (np.pi - np.absolute(P))
+    
+    def stup_reward_z_pitch_4(self, ind_base):        
+        P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
+        return 0.35-np.absolute(0.35 - self.last_link_states.pose[ind_base].position.z) + 0.05 * (np.pi - np.absolute(P))      
+        
     def stup_reward_z_pitch_min_actions_1(self, ind_base):        
         P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
         return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + 0.05 * (np.pi - np.absolute(P)) + 0.1*(3 - np.sum(np.absolute(np.array(self.last_action))))
@@ -382,7 +450,7 @@ class UniversalGazeboEnvironmentInterface(object):
     
     def get_state(self, get_reward = False):
         
-        state = []
+        state = []        
         
         # Model State                
         #model_state = self.get_model_state_srv("bd1","")
@@ -395,19 +463,7 @@ class UniversalGazeboEnvironmentInterface(object):
                 state.append(self.last_link_states.pose[ind_base].position.x)
                 state.append(self.last_link_states.pose[ind_base].position.y)
                 state.append(self.last_link_states.pose[ind_base].position.z)
-                #state.append(model_state.pose.position.x)
-                #state.append(model_state.pose.position.y)
-                #state.append(model_state.pose.position.z)
-                
-            #elif state_el == "base_rot_rpy":        
-                #rpy = euler_from_quaternion([model_state.pose.orientation.x, model_state.pose.orientation.y, model_state.pose.orientation.z, model_state.pose.orientation.w])                
-                #state += rpy
-                
-            elif state_el == "base_rot_quat":
-                #state.append(model_state.pose.orientation.x)
-                #state.append(model_state.pose.orientation.y)
-                #state.append(model_state.pose.orientation.z)
-                #state.append(model_state.pose.orientation.w)            
+            elif state_el == "base_rot_quat":                            
                 state.append(self.last_link_states.pose[ind_base].orientation.x)
                 state.append(self.last_link_states.pose[ind_base].orientation.y)
                 state.append(self.last_link_states.pose[ind_base].orientation.z)
@@ -420,53 +476,7 @@ class UniversalGazeboEnvironmentInterface(object):
             elif state_el == "base_twist_ang":
                 state.append(self.last_link_states.twist[ind_base].angular.x)
                 state.append(self.last_link_states.twist[ind_base].angular.y)
-                state.append(self.last_link_states.twist[ind_base].angular.z)
-            # Joints Positions as if
-            ## Joint State topic is bad and laggy
-            #elif state_el == "left_leg_pos":
-                #state.append(self.last_joint_states.position[0])
-                #state.append(self.last_joint_states.position[3])
-                #state.append(self.last_joint_states.position[6])
-            ## Joints Positions normalized
-            #elif state_el == "left_leg_pos_norm":
-                #state.append( np.sin(self.last_joint_states.position[0] ))
-                #state.append( np.cos(self.last_joint_states.position[0] ))
-                #state.append( np.sin(self.last_joint_states.position[3] ))
-                #state.append( np.cos(self.last_joint_states.position[3] ))
-                #state.append( np.sin(self.last_joint_states.position[6] ))
-                #state.append( np.cos(self.last_joint_states.position[6] ))
-            #elif state_el == "left_leg_vel":
-                #state.append(self.last_joint_states.velocity[0])
-                #state.append(self.last_joint_states.velocity[3])
-                #state.append(self.last_joint_states.velocity[6])
-            ## Joints Positions as if
-            #elif state_el == "right_leg_pos":
-                #state.append(self.last_joint_states.position[1])
-                #state.append(self.last_joint_states.position[4])
-                #state.append(self.last_joint_states.position[7])
-            ## Joints Positions normalized
-            #elif state_el == "right_leg_pos_norm":
-                #state.append( np.sin(self.last_joint_states.position[1] ))
-                #state.append( np.cos(self.last_joint_states.position[1] ))
-                #state.append( np.sin(self.last_joint_states.position[4] ))
-                #state.append( np.cos(self.last_joint_states.position[4] ))
-                #state.append( np.sin(self.last_joint_states.position[7] ))
-                #state.append( np.cos(self.last_joint_states.position[7] ))
-            #elif state_el == "right_leg_vel":
-                #state.append(self.last_joint_states.velocity[1])
-                #state.append(self.last_joint_states.velocity[4])
-                #state.append(self.last_joint_states.velocity[7])
-            #elif state_el == "all_head_pos":
-                #state.append(self.last_joint_states.position[2])
-                #state.append(self.last_joint_states.position[5])
-            #elif state_el == "all_head_pos_norm":
-                #state.append( np.sin(self.last_joint_states.position[2] ))
-                #state.append( np.cos(self.last_joint_states.position[2] ))
-                #state.append( np.sin(self.last_joint_states.position[5] ))
-                #state.append( np.cos(self.last_joint_states.position[5] ))
-            #elif state_el == "all_head_vel":
-                #state.append(self.last_joint_states.velocity[2])
-                #state.append(self.last_joint_states.velocity[5])     
+                state.append(self.last_link_states.twist[ind_base].angular.z)    
             elif state_el == "com_abs":
                 state.append(self.last_mass_center.x)
                 state.append(self.last_mass_center.y)
@@ -544,4 +554,5 @@ class UniversalGazeboEnvironmentInterface(object):
 if __name__ == '__main__' :
     ugei = UniversalGazeboEnvironmentInterface()
     ugei.run()
+
 
