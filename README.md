@@ -1,5 +1,5 @@
 # BD1
-ROS-based BD-1 droid from [Star Wars: The Fallen Order](https://en.wikipedia.org/wiki/Star_Wars_Jedi:_Fallen_Order) game.
+ROS-based [BD1](https://starwars.fandom.com/wiki/BD-1) droid from [Star Wars: The Fallen Order](https://en.wikipedia.org/wiki/Star_Wars_Jedi:_Fallen_Order) game.
 
 ![BD1 Gazebo](doc/images/bd1_gazebo.png)
 
