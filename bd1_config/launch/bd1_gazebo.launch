@@ -5,7 +5,7 @@
     <!-- VEL or TRAJ or EFF-->
     <arg name="servo_control" default="VEL"/>
     
-    <arg name="fast" default="false"/>
+    <arg name="fast" default="true"/>
         
     <rosparam if="$(eval servo_control == 'TRAJ')" file="$(find bd1_description)/config/bd1_control_traj_gazebo.yaml" command="load" subst_value="true"/>            
     
@@ -19,7 +19,7 @@
     </include>            
     
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" 
-    args="-param robot_description -urdf -z 0.1 -x 0 -y 0 -Y 0 -model $(arg robot)" />        
+    args="-param robot_description -urdf -z 0.4 -x 0 -y 0 -Y 0 -model $(arg robot)" />        
     
     <include file="$(find gazebo_ros)/launch/empty_world.launch">        
         <arg if="$(arg fast)" name="world_name" value="$(find bd1_gazebo_utils)/worlds/simple_fast.world" />
@@ -35,7 +35,7 @@
     
     <node if="$(eval servo_control == 'EFF')" name="manual_control" pkg="bd1_manual_control" type="manual_control_eff.py"/>
     
-    <!--<node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure"/>-->        
+    <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure"/>        
     
     <node name="com_cop_publisher" pkg="bd1_gazebo_utils" type="gazebo_com_cop.py" output="screen">
         <param name="robot_name" value="bd1" />
@@ -45,10 +45,16 @@
     </node>    -->
     
     <node name="contacts_handler" pkg="bd1_gazebo_utils" type="contacts_handler_node" output="screen"/>
+    
+    <node name="gazebo_state_recorder" pkg="bd1_gazebo_utils" type="gazebo_state_recorder.py" output="screen">
+        <param name="save_path" value="$(find bd1_gazebo_utils)/share/robot_states"/>
+    </node>
         
     <include file="$(find bd1_config)/launch/bd1_train_sb3.launch">
         <arg name="servo_control" value="$(arg servo_control)"/>
     </include>
+    
+    <node name="bd1_rviz_gazebo" pkg="rviz" type="rviz" args="-d $(find bd1_config)/rviz/default.rviz"/>
     
 </launch>
     

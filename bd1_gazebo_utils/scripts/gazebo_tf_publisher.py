@@ -34,11 +34,8 @@ class GazeboTfBroadcaster(object):
             
         except ValueError:
             rospy.logwarn("[{}] not found bd1::base_link in /gazebo/link_states".format(self.name))
-            return
-
+            return            
             
-        
-        
     def run(self):
         rospy.spin()
         

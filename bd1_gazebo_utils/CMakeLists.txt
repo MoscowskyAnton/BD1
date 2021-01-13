@@ -23,7 +23,7 @@ find_package(gazebo REQUIRED)
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -56,11 +56,11 @@ add_message_files(
 )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  RecordState.srv  
+  SetState.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -218,5 +218,6 @@ if ("$ENV{ROS_DISTRO}" STREQUAL "noetic")
 catkin_install_python(PROGRAMS
     scripts/gazebo_com_cop.py    
     scripts/gazebo_tf_publisher.py
+    scripts/gazebo_state_recorder.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 endif()

@@ -3,7 +3,7 @@
 
 import rospy
 from std_srvs.srv import Empty
-from gazebo_msgs.srv import GetModelState, SetModelState, SetLinkState
+from gazebo_msgs.srv import GetModelState, SetModelState, SetLinkState, GetLinkState, SetModelConfiguration
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Bool, Float64
 import numpy as np
@@ -13,7 +13,7 @@ from geometry_msgs.msg import PointStamped
 from gazebo_msgs.msg import LinkStates
 from bd1_gazebo_utils.msg import FeetContacts
 from gazebo_msgs.msg import ModelState, LinkState
-
+from bd1_gazebo_utils.srv import SetState
 
 def unnorm(x, x_min, x_max):    
         return ((x+1)/2)*(x_max-x_min)  + x_min
@@ -46,6 +46,21 @@ class UniversalGazeboEnvironmentInterface(object):
         
         rospy.wait_for_service('gazebo/set_link_state')
         self.set_link_state_srv = rospy.ServiceProxy('gazebo/set_link_state', SetLinkState)
+        
+        rospy.wait_for_service('gazebo/get_link_state')
+        self.get_link_state_srv = rospy.ServiceProxy('gazebo/get_link_state', GetLinkState)
+        
+        rospy.wait_for_service('gazebo/unpause_physics')
+        self.unpause_srv = rospy.ServiceProxy('gazebo/unpause_physics', Empty)
+        
+        rospy.wait_for_service('gazebo/pause_physics')
+        self.pause_srv = rospy.ServiceProxy('gazebo/pause_physics', Empty)
+        
+        rospy.wait_for_service('gazebo_state_recorder/set_state')
+        self.set_robot_state_srv = rospy.ServiceProxy('gazebo_state_recorder/set_state', SetState)
+        
+        rospy.wait_for_service('gazebo/set_model_configuration')
+        self.set_model_config_srv = rospy.ServiceProxy('gazebo/set_model_configuration', SetModelConfiguration)
         
         # publishers
         if self.servo_control == "VEL":
@@ -88,8 +103,8 @@ class UniversalGazeboEnvironmentInterface(object):
         
         self.init_link_states = [["bd1::base_link", "bd1::neck_link", -1.5],
                                  ["bd1::neck_link", "bd1::head_link", 1.5],
-                                 ["bd1::base_link", "bd1::hip_r_link", np.pi/2 + 1.5],
-                                 ["bd1::base_link", "bd1::hip_l_link", np.pi/2 + 1.5],
+                                 ["bd1::base_link", "bd1::hip_r_link", 0],
+                                 ["bd1::base_link", "bd1::hip_l_link", 0],
                                  ["bd1::hip_r_link", "bd1::knee_r_link", -3],
                                  ["bd1::hip_l_link", "bd1::knee_l_link", -3],
                                  ["bd1::knee_r_link", "bd1::foot_r_link", 0],
@@ -105,7 +120,8 @@ class UniversalGazeboEnvironmentInterface(object):
                             "neck_rot_quat":4,
                             "left_leg_all_quats":12,
                             "right_leg_all_quats":12,
-                            "feet_contacts":4}
+                            "feet_contacts":4,
+                            "all_servo_joints":8}
         
         self.state_highs = {"base_pose": [1, 1, 1],
                             "base_rot_quat":[1, 1, 1, 1],
@@ -117,7 +133,8 @@ class UniversalGazeboEnvironmentInterface(object):
                             "neck_rot_quat":[1,1,1,1],
                             "left_leg_all_quats":[1]*12,
                             "right_leg_all_quats":[1]*12,
-                            "feet_contacts":[1,1,1,1]}
+                            "feet_contacts":[1,1,1,1],
+                            "all_servo_joints":[]}
         
         self.state_lows = {"base_pose": [-1, -1, 0],
                             "base_rot_quat":[-1, -1, -1, -1],
@@ -176,6 +193,7 @@ class UniversalGazeboEnvironmentInterface(object):
         self.state_dim = 0
         self.actions_dim = 0
         self.config_srv = rospy.Service("~configure", Configure, self.config_cb)
+        self.reset_srv = rospy.Service("~reset", Reset, self.reset_cb)
         rospy.logwarn("[{}] awaiting configuration...".format(self.name))                        
         
     
@@ -222,14 +240,13 @@ class UniversalGazeboEnvironmentInterface(object):
                 rospy.logerr("[{}] {} reward not found! Interface isn't configured, try again.".format(self.name, req.reward))                                
                 return ConfigureResponse(False, 0, 0, "", 0, [], [])
                                 
-            self.configured = True                        
-            self.reset_srv = rospy.Service("~reset", Reset, self.reset_cb)
+            self.configured = True                                    
             self.step_srv = rospy.Service("~step", Step, self.step_cb)
             rospy.logwarn("[{}] configured!".format(self.name))
                     
             return ConfigureResponse(True, self.state_dim, self.actions_dim, self.servo_control, self.max_action_lim, self.state_high, self.state_low)
         else:
-            rospy.logwarn("[{}] interface already has been congigured.".format(self.name))                                
+            rospy.logwarn("[{}] interface already has been configured.".format(self.name))                                
             return ConfigureResponse(True, self.state_dim, self.actions_dim, self.servo_control, self.max_action_lim, self.state_high, self.state_low)
                                 
     
@@ -243,15 +260,33 @@ class UniversalGazeboEnvironmentInterface(object):
         return StepResponse(state, reward, self.check_done())
     
     def reset_cb(self, req):
-        self.set_action([0] * self.actions_dim)
-        #self.reset_sim_srv()     
-        self.full_reset()
+        #self.pause_srv()
+        if self.configured:
+            self.set_action([0] * self.actions_dim)
+            
+            
+        self.set_model_config_srv('bd1', 'robot_description',['neck_j', 'head_j', 'hip_l_j', 'hip_r_j', 'knee_r_j', 'knee_l_j', 'foot_l_j', 'foot_r_j'],[1.5,1.5,-1.5,-1.5,3,3,1.5,1.5])
+        #rospy.sleep(0.01) # KOSTYL    
+        #self.set_robot_state_srv('sit')
+        #self.set_robot_state_srv('sit')
+        #self.set_robot_state_srv('sit')
+        #self.set_robot_state_srv('sit')
+        #self.set_robot_state_srv('sit')
+        #rospy.sleep(0.01) # KOSTYL    
+        #self.set_robot_state_srv('sit')
+        ##self.reset_sim_srv()     
         state = ModelState()
         state.pose.position.z = 0.1 + 0.07
+        #state.pose.position.z = 0.5
         state.model_name = "bd1"
         self.set_model_state_srv(state)
-        rospy.sleep(0.01) # KOSTYL
-        return ResetResponse(self.get_state())
+        #self.full_reset()                        
+        #rospy.sleep(0.1) # KOSTYL
+        #self.unpause_srv()
+        if self.configured:
+            return ResetResponse(self.get_state())
+        else:
+            return ResetResponse([])
     
     #
     # LOW INTERFACE FUNCTIONS
@@ -259,9 +294,11 @@ class UniversalGazeboEnvironmentInterface(object):
     
     def full_reset(self):
         for l_st_t in self.init_link_states:
+            #g_l_st = self.get_link_state_srv(l_st_t[1], l_st_t[0]).link_state            
             l_st = LinkState()
             l_st.link_name = l_st_t[1]
             l_st.reference_frame = l_st_t[0]
+            #l_st.pose.position = g_l_st.pose.position
             quat = quaternion_from_euler(0, l_st_t[2], 0)
             l_st.pose.orientation.x = quat[0]
             l_st.pose.orientation.y = quat[1]
@@ -520,6 +557,7 @@ class UniversalGazeboEnvironmentInterface(object):
                 state.append(float(self.last_feet_contacts.foot_l))
                 state.append(float(self.last_feet_contacts.heel_r))
                 state.append(float(self.last_feet_contacts.heel_l))
+            #elif state_el == 
                 
         
         if get_reward:            

@@ -82,9 +82,9 @@
             <parent link="body_link"/>
             <child link="hip_${side}_link"/>
             
-            <origin xyz="0 ${y_mul*legs_baseline/2} 0" rpy="0 ${pi/2+1.5} 0"/>
-            <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="${-pi}0" upper="0"/>
-            <axis xyz="0 1 0"/>
+            <origin xyz="0 ${y_mul*legs_baseline/2} 0" rpy="0 ${pi/2} 0"/>
+            <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="${-pi/2}" upper="0"/>
+            <axis xyz="0 -1 0"/>
             <!--<dynamics damping="${servo_friction}"/>-->
         </joint>
         
@@ -126,9 +126,9 @@
             <parent link="hip_${side}_link"/>
             <child link="knee_${side}_link"/>
             
-            <origin xyz="0.15 ${y_mul*0.009} 0" rpy="0 -3 0"/>
+            <origin xyz="0.15 ${y_mul*0.009} 0" rpy="0 0 0"/>
             <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="0" upper="${pi}"/>
-            <axis xyz="0 1 0"/>
+            <axis xyz="0 -1 0"/>
             <!--<dynamics damping="${servo_friction}"/>-->
         </joint>
         
@@ -171,8 +171,8 @@
             <parent link="knee_${side}_link"/>
             <child link="foot_${side}_link"/>
             
-            <origin xyz="0.15 ${-y_mul*0.0045} 0" rpy="0 0 0"/>
-            <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="${-pi}" upper="0"/>
+            <origin xyz="0.15 ${-y_mul*0.0045} 0" rpy="0 ${-pi/2} 0"/>
+            <limit effort="${servo_effort}" velocity="${servo_velocity}" lower="${-pi/2}" upper="${pi/2}"/>
             <axis xyz="0 1 0"/>
             <!--<dynamics damping="${servo_friction}"/>-->
         </joint>
