@@ -35,6 +35,7 @@ class UniversalGazeboEnvironmentInterface(object):
             rospy.logerr("[{}] unsupported servo control type {}! Exit.".format(self.name, self.servo_control))
         
         # service clients
+        rospy.loginfo("[{}] waiting for services...".format(self.name))
         rospy.wait_for_service('gazebo/reset_simulation')
         self.reset_sim_srv = rospy.ServiceProxy('gazebo/reset_simulation', Empty)
         
@@ -56,11 +57,12 @@ class UniversalGazeboEnvironmentInterface(object):
         rospy.wait_for_service('gazebo/pause_physics')
         self.pause_srv = rospy.ServiceProxy('gazebo/pause_physics', Empty)
         
-        rospy.wait_for_service('gazebo_state_recorder/set_state')
-        self.set_robot_state_srv = rospy.ServiceProxy('gazebo_state_recorder/set_state', SetState)
+        #rospy.wait_for_service('gazebo_state_recorder/set_state')
+        #self.set_robot_state_srv = rospy.ServiceProxy('gazebo_state_recorder/set_state', SetState)
         
         rospy.wait_for_service('gazebo/set_model_configuration')
         self.set_model_config_srv = rospy.ServiceProxy('gazebo/set_model_configuration', SetModelConfiguration)
+        rospy.loginfo("[{}] all services are ready!".format(self.name))
         
         # publishers
         if self.servo_control == "VEL":
@@ -121,7 +123,8 @@ class UniversalGazeboEnvironmentInterface(object):
                             "left_leg_all_quats":12,
                             "right_leg_all_quats":12,
                             "feet_contacts":4,
-                            "all_servo_joints":8}
+                            "all_servo_joints":8,
+                            "all_servo_vels":8}
         
         self.state_highs = {"base_pose": [1, 1, 1],
                             "base_rot_quat":[1, 1, 1, 1],
@@ -134,7 +137,8 @@ class UniversalGazeboEnvironmentInterface(object):
                             "left_leg_all_quats":[1]*12,
                             "right_leg_all_quats":[1]*12,
                             "feet_contacts":[1,1,1,1],
-                            "all_servo_joints":[]}
+                            "all_servo_joints":[np.pi/2, np.pi/2, np.pi/2, 0, 0, np.pi, np.pi, np.pi/2],
+                            "all_servo_vels":[self.max_action_lim] * 8}
         
         self.state_lows = {"base_pose": [-1, -1, 0],
                             "base_rot_quat":[-1, -1, -1, -1],
@@ -146,7 +150,9 @@ class UniversalGazeboEnvironmentInterface(object):
                             "neck_rot_quat":[-1,-1,-1,-1],
                             "left_leg_all_quats":[-1]*12,
                             "right_leg_all_quats":[-1]*12,
-                            "feet_contacts":[0,0,0,0]}
+                            "feet_contacts":[0,0,0,0],
+                            "all_servo_joints":[-np.pi/2, -np.pi/2, 0, -np.pi/2, -np.pi/2, 0, 0, 0],
+                            "all_servo_vels":[-self.max_action_lim] * 8}
         
         self.state_high = []
         self.state_low = []
@@ -182,6 +188,7 @@ class UniversalGazeboEnvironmentInterface(object):
                                  "just_fall": self.just_fall_reward,
                                  "just_z": self.just_Z_reward,
                                  "just_z_sq": self.just_z_sq_reward,
+                                 "z_discrete":self.z_discrete,
                                  "max_z_and_body_pitch_1":self.max_z_and_body_pitch_1,
                                  "stup_reward_z_fall_penalty_1":self.stup_reward_z_fall_penalty_1,
                                  "walk_reward_max_vx":self.walk_reward_max_vx}
@@ -476,6 +483,9 @@ class UniversalGazeboEnvironmentInterface(object):
     def just_z_sq_reward(self, ind_base):
         return self.last_link_states.pose[ind_base].position.z**2
     
+    def z_discrete(self, ind_base):
+        return np.around(self.last_link_states.pose[ind_base].position.z, 2)
+    
     def max_z_and_body_pitch_1(self, ind_base):
         P = euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1]
         return self.last_link_states.pose[ind_base].position.z + (1 - np.absolute(np.sin(P)))
@@ -557,8 +567,10 @@ class UniversalGazeboEnvironmentInterface(object):
                 state.append(float(self.last_feet_contacts.foot_l))
                 state.append(float(self.last_feet_contacts.heel_r))
                 state.append(float(self.last_feet_contacts.heel_l))
-            #elif state_el == 
-                
+            elif state_el == "all_servo_joints":
+                state += self.last_joint_states.position
+            elif state_el == "all_servo_vels":
+                state += self.last_joint_states.velocity    
         
         if get_reward:            
             return state, self.requested_reward(ind_base) 

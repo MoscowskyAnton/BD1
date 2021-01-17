@@ -10,10 +10,13 @@ from bd1_gazebo_env_interface.srv import Step, Reset, Configure
 
 class BD1GazeboEnv(gym.Env):
     
-    def __init__(self):
+    def __init__(self, max_episode_timesteps = 0):
         super(BD1GazeboEnv, self).__init__()
         
         self.name = "BD1 gazebo env"
+        
+        self.max_episode_timesteps = max_episode_timesteps
+        self.timesteps_counter = 0
         
         # MUST HAVE PARAMS
         self.env_interface_node_name = rospy.get_param("~env_interface_node_name", "")         
@@ -49,12 +52,21 @@ class BD1GazeboEnv(gym.Env):
         rospy.loginfo("[{}] step service ready!".format(self.name))
 
     def reset(self):
+        if self.max_episode_timesteps > 0:
+            self.timesteps_counter = 0
         state = np.array(self.env_reset_srv().state)
         return np.array(state).astype(np.float32)
     
     def step(self, action):
         srd = self.env_step_srv(self.step_duration, action.tolist())
-        return np.array(srd.state), srd.reward, srd.done, {}
+        if( self.max_episode_timesteps > 0 ):
+            self.timesteps_counter += 1
+            if self.timesteps_counter >= self.max_episode_timesteps:
+                return np.array(srd.state), srd.reward, True, {}
+            else:
+                return np.array(srd.state), srd.reward, srd.done, {}
+        else:
+            return np.array(srd.state), srd.reward, srd.done, {}
     
     def render(self, mode='console'):
         pass

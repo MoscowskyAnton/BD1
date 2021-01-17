@@ -3,9 +3,7 @@ Panels:
     Help Height: 87
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /Global Options1
-        - /TF1/Status1
+      Expanded: ~
       Splitter Ratio: 0.5
     Tree Height: 667
   - Class: rviz/Selection
@@ -79,8 +77,6 @@ Visualization Manager:
           Value: true
         knee_r_link:
           Value: true
-        map:
-          Value: true
         neck_link:
           Value: true
       Marker Alpha: 1
@@ -90,10 +86,7 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        map:
-          base_link:
-            body_link:
-              {}
+        {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -156,9 +149,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.08014441281557083
-        Y: -0.11694906651973724
-        Z: 0.18590807914733887
+        X: -0.10683567076921463
+        Y: -0.19068008661270142
+        Z: 0.12073111534118652
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

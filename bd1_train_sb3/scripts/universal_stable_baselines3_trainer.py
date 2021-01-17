@@ -17,12 +17,8 @@ class UniversalStableBaselines3Trainer(object):
         rospy.init_node('universal_stable_baselines3_trainer')
         
         self.name = rospy.get_name()
-        
-        # load gym-wrapped env
-        self.env = bd1_gazebo_gym_wrapper.BD1GazeboEnv()
-        
-        
-        
+                
+                        
         # load params
         self.model_dir = rospy.get_param('~model_dir','/tmp')
         self.task_name = rospy.get_param('~task_name','test')
@@ -31,6 +27,8 @@ class UniversalStableBaselines3Trainer(object):
         self.test_only = rospy.get_param('~test_only',False)
         # load hypers
         ## common
+        self.max_episode_timesteps = rospy.get_param('~max_episode_timesteps', 0)
+        
         self.algorithm = rospy.get_param('~algorithm', '').lower()
         self.policy = rospy.get_param('~policy', 'MlpPolicy')
         self.policy_kwargs = rospy.get_param('~policy_kwargs', {})
@@ -44,6 +42,11 @@ class UniversalStableBaselines3Trainer(object):
         
         self.action_noise_type = rospy.get_param('~action_noise_type', 0)        
         
+        # load gym-wrapped env
+        if self.test_only:
+            self.env = bd1_gazebo_gym_wrapper.BD1GazeboEnv(0)
+        else:
+            self.env = bd1_gazebo_gym_wrapper.BD1GazeboEnv(self.max_episode_timesteps)
         
         if self.action_noise_type == 1:
             self.proceed_noise()         
@@ -154,6 +157,7 @@ class UniversalStableBaselines3Trainer(object):
         params['env_interface_node_name'] = rospy.get_param('~env_interface_node_name','')
         params['state'] = rospy.get_param('~state','')
         params['actions'] = rospy.get_param('~actions','')
+        params['step_duration_sec'] = rospy.get_param('~step_duration_sec',0.1)
         
         # common hyper
         params['policy'] = self.policy
@@ -165,8 +169,10 @@ class UniversalStableBaselines3Trainer(object):
         params['batch_size'] = self.batch_size
         
         params['action_noise_type'] = self.action_noise_type
-        params['action_noise_mean'] = self.action_noise_mean
-        params['action_noise_sigma'] = self.action_noise_sigma
+        params['action_noise_mean'] = self.action_noise_mean.tolist()
+        params['action_noise_sigma'] = self.action_noise_sigma.tolist()
+        
+        params['max_episode_timesteps'] = self.max_episode_timesteps
         
         # ppo
         if self.algorithm == 'ppo':
