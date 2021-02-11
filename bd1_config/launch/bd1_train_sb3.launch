@@ -1,6 +1,8 @@
 <launch>
     <arg name="robot" default="bd1"/>
     <arg name="servo_control" default="VEL"/>
+    <arg name="test_model" default="false"/>
+    <arg name="transfer_learning" default="false"/>
     
     <node name="universal_gazebo_environment_inteface" pkg="bd1_gazebo_env_interface" type="universal_gazebo_environment_inteface.py" output="screen" required="true">
         <param name="servo_control" value="$(arg servo_control)"/>
@@ -10,27 +12,29 @@
     
     <node name="universal_sb3_trainer" pkg="bd1_train_sb3" type="universal_stable_baselines3_trainer.py" output="screen" required="true">
         
-        <!--<param name="test_only" value="true"/>
-        <param name="load_path" value="$(find bd1_train_sb3)/models/stup_sep_target_z/sac/best_reward"/>-->
+        <param name="test_only" value="$(arg test_model)"/>
+        <param if="$(arg test_model)" name="load_path" value="$(find bd1_train_sb3)/models/stup_sep_target_z_free_head_min_actions/sac/run_2/fully_trained"/>
+        
+        <param if="$(arg transfer_learning)" name="load_path" value="$(find bd1_train_sb3)/models/stup_sep_target_z_free_head/sac/fully_trained"/>
         
         <param name="verbose" value="1"/>
-        <param name="task_name" value="stup_sep_target_z"/>
-        <param name="checkpoint_freq" value="5000"/>
+        <param name="task_name" value="stup_sep_target_z_free_head_min_actions"/>
+        <param name="checkpoint_freq" value="50000"/>
     
         <param name="model_dir" value="$(find bd1_train_sb3)/models"/>
         
         
         <param name="env_interface_node_name" value="universal_gazebo_environment_inteface"/>
         <rosparam param="state">["base_pose", "base_rot_quat", "base_twist_lin", "all_servo_joints", "all_servo_vels", "feet_contacts", "com_abs", "cop_abs"]</rosparam>
-        <rosparam param="actions">["left_legs_vel", "right_legs_vel"]</rosparam>
+        <rosparam param="actions">["left_legs_vel", "right_legs_vel", "all_head_vel"]</rosparam>
         <!--<rosparam param="actions">["sync_legs_vel"]</rosparam>-->
-        <param name="reward" value="stup_reward_clipped_z"/>
+        <param name="reward" value="stup_reward_z_3_min_actions"/>
         <param name="step_duration_sec" value="0.05"/>
                 
-        <param name="total_timesteps" value="500000"/>        
+        <param name="total_timesteps" value="800000"/>        
         <!-- SAC -->
         <param name="algorithm" value="SAC"/>
-        <param name="buffer_size" value="300000"/>
+        <param name="buffer_size" value="350000"/>
         <param name="batch_size" value="256"/>
         <param name="learning_rate" value="0.00073"/>
         <param name="gamma" value="0.98"/>
@@ -38,7 +42,7 @@
         <param name="train_freq" value="-1"/>        
         <param name="n_episodes_rollout" value="6"/>        
         <param name="gradient_steps" value="64"/>
-        <param name="learning_starts" value="10000"/>
+        <param name="learning_starts" value="50000"/>
         <param name="use_sde" value="true"/>
         <rosparam param="policy_kwargs">{log_std_init: 0.4, net_arch: [400, 300], use_expln: true}</rosparam>
         <param name="max_episode_timesteps" value="120"/>
@@ -47,7 +51,7 @@
         <param name="action_noise_type" value="2"/><!-- 0 for default, 1 for normal, 2 for Ornstein -->
         <!--<rosparam param="action_noise_mean">0</rosparam>-->
         <!--<rosparam param="action_noise_mean">[-0.4,-0.4,0.4,-0.4,-0.4,0.4]</rosparam>-->
-        <rosparam param="action_noise_mean">[0.4,0.4,-0.4,0.4,0.4,-0.4]</rosparam>
+        <rosparam param="action_noise_mean">[0.4,0.4,-0.4,0.4,0.4,-0.4,0,0]</rosparam>
         <!--<rosparam param="action_noise_mean">[0.4,-0.4,0.4]</rosparam>-->
         <rosparam param="action_noise_sigma">0.1</rosparam>
         

@@ -164,9 +164,10 @@ class UniversalGazeboEnvironmentInterface(object):
         
         self.reward_types = {"stup_reward_z_1": self.stup_reward_z_1,
                              "stup_reward_z_2": self.stup_reward_z_2,
-                             "stup_reward_z_3": self.stup_reward_z_3,
+                             "stup_reward_z_3": self.stup_reward_z_3,                             
                              "stup_reward_z_3_discrete":self.stup_reward_z_3_discrete,
                              "stup_reward_clipped_z":self.stup_reward_clipped_z,
+                             "stup_reward_z_3_min_actions":self.stup_reward_z_3_min_actions,
                              "stup_reward_z_contacts_1":self.stup_reward_z_contacts_1,
                              "stup_reward_z_contacts_2":self.stup_reward_z_contacts_2,
                              "stup_reward_z_contacts_3":self.stup_reward_z_contacts_3,
@@ -193,7 +194,13 @@ class UniversalGazeboEnvironmentInterface(object):
                                  "z_discrete":self.z_discrete,
                                  "max_z_and_body_pitch_1":self.max_z_and_body_pitch_1,
                                  "stup_reward_z_fall_penalty_1":self.stup_reward_z_fall_penalty_1,
-                                 "walk_reward_max_vx":self.walk_reward_max_vx}
+                                 "walk_reward_max_vx":self.walk_reward_max_vx,
+                                 "target_body_z_head_p":self.target_body_z_head_p,
+                                 'target_body_z_head_p_1':self.target_body_z_head_p_1,
+                                 'target_body_z_head_dz_p':self.target_body_z_head_dz_p,
+                                 'target_body_z_head_dz_p_1':self.target_body_z_head_dz_p_1,
+                                 'target_body_z_head_dz_p_2':self.target_body_z_head_dz_p_2}
+        
         
         self.requested_state = []
         self.requested_actions = []
@@ -387,6 +394,10 @@ class UniversalGazeboEnvironmentInterface(object):
     def stup_reward_z_3_discrete(self, ind_base):
         return np.around(0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z), 2)        
     
+    def stup_reward_z_3_min_actions(self, ind_base):
+        action_sum = sum(map(abs, self.last_joint_states.velocity))
+        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) - action_sum * 0.01       
+    
     def stup_reward_clipped_z(self, ind_base):
         if self.last_link_states.pose[ind_base].position.z < 0.3:
             return self.last_link_states.pose[ind_base].position.z
@@ -518,6 +529,47 @@ class UniversalGazeboEnvironmentInterface(object):
     
     def walk_reward_max_vx(self, ind_base):
         return self.last_link_states.twist[ind_base].linear.x
+    
+    def target_body_z_head_p(self, ind_base):
+        ind_head = self.last_link_states.name.index("bd1::head_link")
+        
+        P_head = euler_from_quaternion([self.last_link_states.pose[ind_head].orientation.x, self.last_link_states.pose[ind_head].orientation.y, self.last_link_states.pose[ind_head].orientation.z, self.last_link_states.pose[ind_head].orientation.w])[1]
+        
+        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + 0.1 * (np.pi - np.absolute(P_head))      
+    
+    def target_body_z_head_p_1(self, ind_base):
+        ind_head = self.last_link_states.name.index("bd1::head_link")
+        
+        P_head = euler_from_quaternion([self.last_link_states.pose[ind_head].orientation.x, self.last_link_states.pose[ind_head].orientation.y, self.last_link_states.pose[ind_head].orientation.z, self.last_link_states.pose[ind_head].orientation.w])[1]
+        
+        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + 0.01 * (np.pi - np.absolute(P_head))      
+    
+    def target_body_z_head_dz_p(self, ind_base):
+        ind_head = self.last_link_states.name.index("bd1::head_link")
+        
+        P_head = euler_from_quaternion([self.last_link_states.pose[ind_head].orientation.x, self.last_link_states.pose[ind_head].orientation.y, self.last_link_states.pose[ind_head].orientation.z, self.last_link_states.pose[ind_head].orientation.w])[1]
+        
+        dZ_head = self.last_link_states.pose[ind_head].position.z  - self.last_link_states.pose[ind_base].position.z 
+        
+        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + 0.01 * (np.pi - np.absolute(P_head)) + 0.1-np.absolute(0.1 - dZ_head)
+    
+    def target_body_z_head_dz_p_1(self, ind_base):
+        ind_head = self.last_link_states.name.index("bd1::head_link")
+        
+        P_head = euler_from_quaternion([self.last_link_states.pose[ind_head].orientation.x, self.last_link_states.pose[ind_head].orientation.y, self.last_link_states.pose[ind_head].orientation.z, self.last_link_states.pose[ind_head].orientation.w])[1]
+        
+        dZ_head = self.last_link_states.pose[ind_head].position.z  - self.last_link_states.pose[ind_base].position.z 
+        
+        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + 0.1 * (np.pi - np.absolute(P_head)) + 0.1-np.absolute(0.1 - dZ_head)
+    
+    def target_body_z_head_dz_p_2(self, ind_base):
+        ind_head = self.last_link_states.name.index("bd1::head_link")
+        
+        P_head = euler_from_quaternion([self.last_link_states.pose[ind_head].orientation.x, self.last_link_states.pose[ind_head].orientation.y, self.last_link_states.pose[ind_head].orientation.z, self.last_link_states.pose[ind_head].orientation.w])[1]
+        
+        dZ_head = self.last_link_states.pose[ind_head].position.z  - self.last_link_states.pose[ind_base].position.z 
+        
+        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) + 0.1 * (np.pi - np.absolute(P_head)) + 0.05-np.absolute(0.1 - dZ_head)
     
     # STATE
     

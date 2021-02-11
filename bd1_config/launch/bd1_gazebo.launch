@@ -8,7 +8,11 @@
     <arg name="fast" default="true"/>
     <arg name="train" default="true"/>
     <arg name="rviz" default="false"/>
-        
+    
+    <arg name="test_model" default="false"/>
+    <arg name="transfer_learning" default="false"/>
+
+    
     <rosparam if="$(eval servo_control == 'TRAJ')" file="$(find bd1_description)/config/bd1_control_traj_gazebo.yaml" command="load" subst_value="true"/>            
     
     <rosparam if="$(eval servo_control == 'VEL')" file="$(find bd1_description)/config/bd1_control_vel_gazebo.yaml" command="load" subst_value="true"/>
@@ -54,6 +58,8 @@
         
     <include if="$(arg train)" file="$(find bd1_config)/launch/bd1_train_sb3.launch">
         <arg name="servo_control" value="$(arg servo_control)"/>
+        <arg name="test_model" value="$(arg test_model)"/>
+        <arg name="transfer_learning" value="$(arg transfer_learning)"/>
     </include>
     
     <node if="$(arg rviz)" name="bd1_rviz_gazebo" pkg="rviz" type="rviz" args="-d $(find bd1_config)/rviz/default.rviz"/>
