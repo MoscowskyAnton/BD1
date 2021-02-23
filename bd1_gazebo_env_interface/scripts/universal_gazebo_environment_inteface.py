@@ -103,6 +103,15 @@ class UniversalGazeboEnvironmentInterface(object):
         
         rospy.sleep(2) # KOSTYL
         
+        start_state = rospy.get_param("~start_state",'SIT')
+        # ['neck_j', 'head_j', 'hip_l_j', 'hip_r_j', 'knee_r_j', 'knee_l_j', 'foot_l_j', 'foot_r_j']
+        if start_state == 'SIT':
+            self.start_state = [1.5,1.5,-1.5,-1.5,3,3,1.5,1.5]
+        elif start_state == 'DEPLOY': 
+            self.start_state = [0.75,0.75,-0.75,-0.75,1.,1.,0.0,0.0]
+            
+        # # sit
+        
         self.init_link_states = [["bd1::base_link", "bd1::neck_link", -1.5],
                                  ["bd1::neck_link", "bd1::head_link", 1.5],
                                  ["bd1::base_link", "bd1::hip_r_link", 0],
@@ -113,11 +122,14 @@ class UniversalGazeboEnvironmentInterface(object):
                                  ["bd1::knee_l_link", "bd1::foot_l_link", 0]]
         
         self.state_types = {"base_pose": 3,
+                            "base_z": 1,
                             "base_rot_quat":4,
                             "base_twist_lin":3,
                             "base_twist_ang":3,
                             "com_abs":3,
                             "cop_abs":3,
+                            "com_rel":3,
+                            "cop_rel":3,
                             "head_rot_quat":4,
                             "neck_rot_quat":4,
                             "left_leg_all_quats":12,
@@ -127,11 +139,14 @@ class UniversalGazeboEnvironmentInterface(object):
                             "all_servo_vels":8}
         
         self.state_highs = {"base_pose": [1, 1, 1],
+                            "base_z": [1],
                             "base_rot_quat":[1, 1, 1, 1],
                             "base_twist_lin":[np.inf, np.inf, np.inf],
                             "base_twist_ang":[np.inf, np.inf, np.inf],
                             "com_abs":[1,1,1],
                             "cop_abs":[1,1,1],
+                            "com_rel":[1,1,1],
+                            "cop_rel":[1,1,1],
                             "head_rot_quat":[1,1,1,1],
                             "neck_rot_quat":[1,1,1,1],
                             "left_leg_all_quats":[1]*12,
@@ -141,11 +156,14 @@ class UniversalGazeboEnvironmentInterface(object):
                             "all_servo_vels":[self.max_action_lim] * 8}
         
         self.state_lows = {"base_pose": [-1, -1, 0],
+                           "base_z": [0],
                             "base_rot_quat":[-1, -1, -1, -1],
                             "base_twist_lin":[-np.inf, -np.inf, -np.inf],
                             "base_twist_ang":[-np.inf, -np.inf, -np.inf],
                             "com_abs":[-1,-1,0],
                             "cop_abs":[-1,-1,0],
+                            "com_rel":[-1,-1,0],
+                            "cop_rel":[-1,-1,0],
                             "head_rot_quat":[-1,-1,-1,-1],
                             "neck_rot_quat":[-1,-1,-1,-1],
                             "left_leg_all_quats":[-1]*12,
@@ -168,6 +186,7 @@ class UniversalGazeboEnvironmentInterface(object):
                              "stup_reward_z_3_discrete":self.stup_reward_z_3_discrete,
                              "stup_reward_clipped_z":self.stup_reward_clipped_z,
                              "stup_reward_z_3_min_actions":self.stup_reward_z_3_min_actions,
+                             "stup_reward_z_3_min_actions1":self.stup_reward_z_3_min_actions1,
                              "stup_reward_z_contacts_1":self.stup_reward_z_contacts_1,
                              "stup_reward_z_contacts_2":self.stup_reward_z_contacts_2,
                              "stup_reward_z_contacts_3":self.stup_reward_z_contacts_3,
@@ -296,7 +315,7 @@ class UniversalGazeboEnvironmentInterface(object):
             self.set_action([0] * self.actions_dim)
             
             
-        self.set_model_config_srv('bd1', 'robot_description',['neck_j', 'head_j', 'hip_l_j', 'hip_r_j', 'knee_r_j', 'knee_l_j', 'foot_l_j', 'foot_r_j'],[1.5,1.5,-1.5,-1.5,3,3,1.5,1.5])
+        self.set_model_config_srv('bd1', 'robot_description',['neck_j', 'head_j', 'hip_l_j', 'hip_r_j', 'knee_r_j', 'knee_l_j', 'foot_l_j', 'foot_r_j'],self.start_state)
         #rospy.sleep(0.01) # KOSTYL    
         #self.set_robot_state_srv('sit')
         #self.set_robot_state_srv('sit')
@@ -397,6 +416,10 @@ class UniversalGazeboEnvironmentInterface(object):
     def stup_reward_z_3_min_actions(self, ind_base):
         action_sum = sum(map(abs, self.last_joint_states.velocity))
         return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) - action_sum * 0.01       
+    
+    def stup_reward_z_3_min_actions1(self, ind_base):
+        action_sum = sum(map(abs, self.last_joint_states.velocity))
+        return 0.3-np.absolute(0.3 - self.last_link_states.pose[ind_base].position.z) - action_sum * 0.001       
     
     def stup_reward_clipped_z(self, ind_base):
         if self.last_link_states.pose[ind_base].position.z < 0.3:
@@ -588,6 +611,8 @@ class UniversalGazeboEnvironmentInterface(object):
                 state.append(self.last_link_states.pose[ind_base].position.x)
                 state.append(self.last_link_states.pose[ind_base].position.y)
                 state.append(self.last_link_states.pose[ind_base].position.z)
+            elif state_el == "base_z":
+                state.append(self.last_link_states.pose[ind_base].position.z)
             elif state_el == "base_rot_quat":                            
                 state.append(self.last_link_states.pose[ind_base].orientation.x)
                 state.append(self.last_link_states.pose[ind_base].orientation.y)
@@ -610,6 +635,14 @@ class UniversalGazeboEnvironmentInterface(object):
                 state.append(self.last_press_center.x)
                 state.append(self.last_press_center.y)
                 state.append(self.last_press_center.z)
+            elif state_el == "com_rel":
+                state.append(self.last_mass_center.x - self.last_link_states.pose[ind_base].position.x)
+                state.append(self.last_mass_center.y - self.last_link_states.pose[ind_base].position.y)
+                state.append(self.last_mass_center.z - self.last_link_states.pose[ind_base].position.z)
+            elif state_el == "cop_rel":
+                state.append(self.last_press_center.x - self.last_link_states.pose[ind_base].position.x)
+                state.append(self.last_press_center.y - self.last_link_states.pose[ind_base].position.y)
+                state.append(self.last_press_center.z - self.last_link_states.pose[ind_base].position.z)
             elif state_el == "head_rot_quat":
                 ind_head = self.last_link_states.name.index("bd1::head_link")
                 quat = self.last_link_states.pose[ind_head].orientation

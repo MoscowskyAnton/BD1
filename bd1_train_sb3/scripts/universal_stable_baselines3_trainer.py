@@ -199,7 +199,9 @@ class UniversalStableBaselines3Trainer(object):
             self.save_model('fully_trained')
         else:    
             if not self.test_only:
-                self.model.learn(total_timesteps = self.total_timesteps, tb_log_name="run", callback = self.callbacks, reset_num_timesteps = True)
+                rospy.logwarn("CONTINUE TRAINING!")
+                self.model.set_env(self.env)
+                self.model.learn(total_timesteps = self.total_timesteps, tb_log_name="run", callback = self.callbacks)
                 self.save_model('fully_trained')
         
             else:
