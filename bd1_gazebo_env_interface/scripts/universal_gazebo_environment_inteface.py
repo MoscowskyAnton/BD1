@@ -109,7 +109,13 @@ class UniversalGazeboEnvironmentInterface(object):
             self.start_state = [1.5,1.5,-1.5,-1.5,3,3,1.5,1.5]
         elif start_state == 'DEPLOY': 
             self.start_state = [0.75,0.75,-0.75,-0.75,1.,1.,0.0,0.0]
-            
+        elif start_state == 'STAND':
+            self.start_state = [0.,0.,0.,0.,0.,0.,0.0,0.0]
+        elif start_state == 'DEPLOY2':
+            self.start_state = [0.75,0.75,-0.25,-0.25,0.5,0.5,0.25,0.25]
+        else:
+            rospy.logerr("[{}] can't find start state {}! Exit.".format(self.name, start_state))
+            return
         # # sit
         
         self.init_link_states = [["bd1::base_link", "bd1::neck_link", -1.5],
@@ -124,6 +130,9 @@ class UniversalGazeboEnvironmentInterface(object):
         self.state_types = {"base_pose": 3,
                             "base_z": 1,
                             "base_rot_quat":4,
+                            "base_rot_r":1,
+                            "base_rot_p":1,
+                            "base_rot_y":1,
                             "base_twist_lin":3,
                             "base_twist_ang":3,
                             "com_abs":3,
@@ -140,7 +149,10 @@ class UniversalGazeboEnvironmentInterface(object):
         
         self.state_highs = {"base_pose": [1, 1, 1],
                             "base_z": [1],
-                            "base_rot_quat":[1, 1, 1, 1],
+                            "base_rot_quat":[1, 1, 1, 1],                            
+                            "base_rot_r":[np.pi],
+                            "base_rot_p":[np.pi],
+                            "base_rot_y":[np.pi],
                             "base_twist_lin":[np.inf, np.inf, np.inf],
                             "base_twist_ang":[np.inf, np.inf, np.inf],
                             "com_abs":[1,1,1],
@@ -158,6 +170,9 @@ class UniversalGazeboEnvironmentInterface(object):
         self.state_lows = {"base_pose": [-1, -1, 0],
                            "base_z": [0],
                             "base_rot_quat":[-1, -1, -1, -1],
+                            "base_rot_r":[-np.pi],
+                            "base_rot_p":[-np.pi],
+                            "base_rot_y":[-np.pi],
                             "base_twist_lin":[-np.inf, -np.inf, -np.inf],
                             "base_twist_ang":[-np.inf, -np.inf, -np.inf],
                             "com_abs":[-1,-1,0],
@@ -214,6 +229,7 @@ class UniversalGazeboEnvironmentInterface(object):
                                  "max_z_and_body_pitch_1":self.max_z_and_body_pitch_1,
                                  "stup_reward_z_fall_penalty_1":self.stup_reward_z_fall_penalty_1,
                                  "walk_reward_max_vx":self.walk_reward_max_vx,
+                                 "walk_reward_max_vxy":self.walk_reward_max_vxy,
                                  "target_body_z_head_p":self.target_body_z_head_p,
                                  'target_body_z_head_p_1':self.target_body_z_head_p_1,
                                  'target_body_z_head_dz_p':self.target_body_z_head_dz_p,
@@ -553,6 +569,9 @@ class UniversalGazeboEnvironmentInterface(object):
     def walk_reward_max_vx(self, ind_base):
         return self.last_link_states.twist[ind_base].linear.x
     
+    def walk_reward_max_vxy(self, ind_base):
+        return np.hypot(self.last_link_states.twist[ind_base].linear.x, self.last_link_states.twist[ind_base].linear.y)
+    
     def target_body_z_head_p(self, ind_base):
         ind_head = self.last_link_states.name.index("bd1::head_link")
         
@@ -618,6 +637,12 @@ class UniversalGazeboEnvironmentInterface(object):
                 state.append(self.last_link_states.pose[ind_base].orientation.y)
                 state.append(self.last_link_states.pose[ind_base].orientation.z)
                 state.append(self.last_link_states.pose[ind_base].orientation.w)
+            elif state_el == "base_rot_r":
+                state.append(euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[0])                
+            elif state_el == "base_rot_p":
+                state.append(euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[1])
+            elif state_el == "base_rot_y":
+                state.append(euler_from_quaternion([self.last_link_states.pose[ind_base].orientation.x, self.last_link_states.pose[ind_base].orientation.y, self.last_link_states.pose[ind_base].orientation.z, self.last_link_states.pose[ind_base].orientation.w])[2])
             # linear velocities as if
             elif state_el == "base_twist_lin":                
                 state.append(self.last_link_states.twist[ind_base].linear.x)
