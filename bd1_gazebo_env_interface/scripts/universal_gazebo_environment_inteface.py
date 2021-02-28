@@ -229,7 +229,10 @@ class UniversalGazeboEnvironmentInterface(object):
                                  "max_z_and_body_pitch_1":self.max_z_and_body_pitch_1,
                                  "stup_reward_z_fall_penalty_1":self.stup_reward_z_fall_penalty_1,
                                  "walk_reward_max_vx":self.walk_reward_max_vx,
+                                 "walk_reward_max_mvx":self.walk_reward_max_mvx,
+                                 "walk_reward_max_vx2":self.walk_reward_max_vx2,
                                  "walk_reward_max_vxy":self.walk_reward_max_vxy,
+                                 'walk_reward_max_x':self.walk_reward_max_x,
                                  "target_body_z_head_p":self.target_body_z_head_p,
                                  'target_body_z_head_p_1':self.target_body_z_head_p_1,
                                  'target_body_z_head_dz_p':self.target_body_z_head_dz_p,
@@ -569,8 +572,17 @@ class UniversalGazeboEnvironmentInterface(object):
     def walk_reward_max_vx(self, ind_base):
         return self.last_link_states.twist[ind_base].linear.x
     
+    def walk_reward_max_mvx(self, ind_base):
+        return -self.last_link_states.twist[ind_base].linear.x
+    
+    def walk_reward_max_vx2(self, ind_base):
+        return (self.last_link_states.twist[ind_base].linear.x)**2
+    
     def walk_reward_max_vxy(self, ind_base):
         return np.hypot(self.last_link_states.twist[ind_base].linear.x, self.last_link_states.twist[ind_base].linear.y)
+    
+    def walk_reward_max_x(self, ind_base):
+        return self.last_link_states.pose[ind_base].position.x
     
     def target_body_z_head_p(self, ind_base):
         ind_head = self.last_link_states.name.index("bd1::head_link")

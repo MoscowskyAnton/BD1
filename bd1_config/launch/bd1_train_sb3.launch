@@ -14,12 +14,12 @@
     <node name="universal_sb3_trainer" pkg="bd1_train_sb3" type="universal_stable_baselines3_trainer.py" output="screen" required="true">
         
         <param name="test_only" value="$(arg test_model)"/>
-        <param if="$(arg test_model)" name="load_path" value="$(find bd1_train_sb3)/models/walk_vxy/sac/best_reward"/>
+        <param if="$(arg test_model)" name="load_path" value="$(find bd1_train_sb3)/models/walk_vx/sac/run_3/best_reward"/>
         
         <param if="$(arg transfer_learning)" name="load_path" value="$(find bd1_train_sb3)/models/stup_sep_target_z/sac/run_12/best_reward"/>
         
         <param name="verbose" value="1"/>
-        <param name="task_name" value="walk_vx"/>
+        <param name="task_name" value="walk_x"/>
         <param name="checkpoint_freq" value="50000"/>
     
         <param name="model_dir" value="$(find bd1_train_sb3)/models"/>
@@ -29,7 +29,7 @@
         <rosparam param="state">["base_z", "base_rot_r", "base_rot_p", "base_twist_lin", "all_servo_joints", "all_servo_vels", "feet_contacts", "com_rel", "cop_rel"]</rosparam>
         <rosparam param="actions">["left_legs_vel", "right_legs_vel", "all_head_vel"]</rosparam>
         <!--<rosparam param="actions">["sync_legs_vel"]</rosparam>-->
-        <param name="reward" value="walk_reward_max_vxy"/>
+        <param name="reward" value="walk_reward_max_x"/>
         <param name="step_duration_sec" value="0.05"/>
                 
         <param name="total_timesteps" value="800000"/>        
