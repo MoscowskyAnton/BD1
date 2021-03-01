@@ -36,6 +36,8 @@
     <xacro:property name="heel_shift_y" value="0.0"/>
     <xacro:property name="heel_shift_z" value="-0.065"/>
     
+    <xacro:property name="foot_heel_kp" value="10000"/>
+    
     <!--<xacro:property name="servo_friction" value="1000"/>-->
     
     
@@ -182,7 +184,7 @@
             <mu1>2</mu1>
             <mu2>5</mu2>
             <!--<dampingFactor>0.05</dampingFactor>-->
-            <kp>100000</kp>
+            <kp>${foot_heel_kp}</kp>
             <kd>1</kd>
         </gazebo>
         
@@ -231,7 +233,7 @@
         <gazebo reference="heel_${side}_link">            
             <mu1>2</mu1>
             <mu2>5</mu2>            
-            <kp>100000</kp>
+            <kp>${foot_heel_kp}</kp>
             <kd>1</kd>
         </gazebo>
         
