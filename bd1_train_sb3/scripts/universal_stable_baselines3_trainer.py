@@ -112,7 +112,7 @@ class UniversalStableBaselines3Trainer(object):
                                     learning_starts = self.learning_starts,
                                     train_freq = self.train_freq,
                                     gradient_steps = self.gradient_steps,
-                                    n_episodes_rollout = self.n_episodes_rollout,
+                                    #n_episodes_rollout = self.n_episodes_rollout,
                                     action_noise = self.action_noise)
                 
             with open(self.save_dir + 'params.yaml', 'w') as file:

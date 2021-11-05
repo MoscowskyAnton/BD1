@@ -34,7 +34,7 @@
                 
         <param name="total_timesteps" value="800000"/>        
         <!-- SAC -->
-        <param name="algorithm" value="SAC"/>
+        <param name="algorithm" value="PPO"/>
         <param name="buffer_size" value="350000"/>
         <param name="batch_size" value="256"/>
         <param name="learning_rate" value="0.00073"/>
