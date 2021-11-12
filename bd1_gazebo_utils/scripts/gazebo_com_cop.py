@@ -7,7 +7,8 @@ import xml
 import xml.etree.ElementTree as ET
 
 import numpy as np
-from scipy.spatial.transform import Rotation
+#from scipy.spatial.transform import Rotation
+import tf
 
 import rospy
 
@@ -81,10 +82,16 @@ class CalcCenterOfMass(object):
                 continue
             link_pose = curr_pos[k]
             # rotate position of the center of mass
+            r = tf.transformations.quaternion_matrix([link_pose.orientation.x,
+                                    link_pose.orientation.y,
+                                    link_pose.orientation.z,
+                                    link_pose.orientation.w])
+            '''
             r = Rotation.from_quat([link_pose.orientation.x,
                                     link_pose.orientation.y,
                                     link_pose.orientation.z,
                                     link_pose.orientation.w]).as_matrix()#.as_dcm()
+            '''
             pos = np.dot(r, np.matrix([[v[1][0]],
                                        [v[1][1]],
                                        [v[1][2]]]))

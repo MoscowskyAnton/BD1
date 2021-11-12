@@ -22,6 +22,13 @@
     
     <!--<node name="rqt_gui" pkg="rqt_gui" type="rqt_gui"/>-->
     <node name="rqt_service_caller" pkg="rqt_service_caller" type="rqt_service_caller"/>
+    
+    <node name="universal_gazebo_environment_inteface" pkg="bd1_gazebo_env_interface" type="universal_gazebo_environment_inteface.py" output="screen" required="true">
+        <param name="servo_control" value="$(arg servo_control)"/>
+        <param name="max_servo_vel" value="2"/>
+        <param name="max_servo_eff" value="30"/>
+        <param name="start_state" value="DEPLOY2"/>
+    </node>
         
     
 </launch>

@@ -6,7 +6,7 @@
     <arg name="servo_control" default="VEL"/>
     
     <arg name="fast" default="true"/>
-    <arg name="train" default="true"/>
+    <arg name="train" default="false"/>
     <arg name="rviz" default="false"/>
     
     <arg name="test_model" default="false"/>
@@ -49,6 +49,7 @@
     
     <!--<node name="gazebo_tf_publisher" pkg="bd1_gazebo_utils" type="gazebo_tf_publisher.py" output="screen">        
     </node>    -->
+    
     
     <node name="contacts_handler" pkg="bd1_gazebo_utils" type="contacts_handler_node" output="screen"/>
     
