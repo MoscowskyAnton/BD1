@@ -13,7 +13,7 @@
         <param if="$(arg transfer_learning)" name="load_path" value="$(find bd1_train_sb3)/models/stup_sep_target_z/sac/run_12/best_reward"/>
         
         <param name="verbose" value="1"/>
-        <param name="task_name" value="walk_x"/>
+        <param name="task_name" value="stup_reward_z_2"/>
         <param name="checkpoint_freq" value="50000"/>
     
         <param name="model_dir" value="$(find bd1_train_sb3)/models"/>
@@ -23,11 +23,12 @@
         <rosparam param="state">["base_z", "base_rot_r", "base_rot_p", "base_twist_lin", "all_servo_joints", "all_servo_vels", "feet_contacts", "com_rel", "cop_rel"]</rosparam>
         <rosparam param="actions">["left_legs_vel", "right_legs_vel", "all_head_vel"]</rosparam>
         <!--<rosparam param="actions">["sync_legs_vel"]</rosparam>-->
-        <param name="reward" value="walk_reward_max_x"/>
+        <!--<param name="reward" value="walk_reward_max_x"/>-->
+        <param name="reward" value="stup_reward_z_2"/>
         <param name="step_duration_sec" value="0.05"/>
                 
         <param name="total_timesteps" value="800000"/>        
-        <!-- SAC -->
+        <!-- PPO -->
         <param name="algorithm" value="PPO"/>
         <param name="buffer_size" value="350000"/>
         <param name="batch_size" value="256"/>

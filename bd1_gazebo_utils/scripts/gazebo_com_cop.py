@@ -92,7 +92,7 @@ class CalcCenterOfMass(object):
                                     link_pose.orientation.z,
                                     link_pose.orientation.w]).as_matrix()#.as_dcm()
             '''
-            pos = np.dot(r, np.matrix([[v[1][0]],
+            pos = np.dot(r[:3,:3], np.matrix([[v[1][0]],
                                        [v[1][1]],
                                        [v[1][2]]]))
             # shift position
