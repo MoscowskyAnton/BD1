@@ -22,7 +22,13 @@ sudo apt install ros-noetic-velocity-controllers
 6. Clone this repo in your workspace and build it
 
 # Repository structure
- - 
+ - __bd1_config__ - main launches
+ - __bd1_description__ - robot model
+ - __bd1_gazebo_env_interface__ - utils to wrap Gazebo in Gym environment
+ - __bd1_gazebo_utils__ - some Gazebo additional utilities like contact handler
+ - __bd1_manual_control__ - manual robot control for testing
+ - __bd1_simple_moves__ - some handmade movements like deploy\undeploy
+ - __bd1_train_sb3__ - nodes implementing learning with stable-baselines3
 # Launch training
 ```
 roslaunch bd1_config bd1_gazebo.launch
