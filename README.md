@@ -26,3 +26,11 @@ pip3 install scipy
 
 # Repository structure
  - 
+# Launch training
+```
+roslaunch bd1_config bd1_gazebo.launch
+```
+Wait until Gazebo starts, then
+```
+roslaunch bd1_config bd1_train_sb3.launch 
+```
