@@ -1,0 +1,14 @@
+string[] state
+string[] actions
+string[] goal
+---
+bool configured
+int64 state_dim
+int64 actions_dim
+int64 goal_dim
+string servo_control
+float64 action_real_lim
+float64[] state_high
+float64[] state_low
+float64[] goal_high
+float64[] goal_low

@@ -206,5 +206,6 @@ include_directories(
 if ("$ENV{ROS_DISTRO}" STREQUAL "noetic")
 catkin_install_python(PROGRAMS
     scripts/universal_stable_baselines3_trainer.py
+    scripts/goal_stable_baselines3_trainer.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 endif()

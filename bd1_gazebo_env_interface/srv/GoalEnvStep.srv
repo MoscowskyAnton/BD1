@@ -1,0 +1,7 @@
+float64 step_duration_sec
+float64[] action
+---
+float64[] observation
+float64[] achieved_goal
+float64[] desired_goal
+bool done
