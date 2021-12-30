@@ -18,11 +18,8 @@ sudo apt install ros-noetic-velocity-controllers
 3. If you want to use GPU, install CUDA and cuDNN, [here is guide](https://medium.com/analytics-vidhya/installing-tensorflow-with-cuda-cudnn-gpu-support-on-ubuntu-20-04-f6f67745750a) _need to be followed until 'Finally to verify the correct installation'_
 4. Install [pytorch](https://pytorch.org/)
 5. Install [stable-baselines3](https://github.com/DLR-RM/stable-baselines3)
-6. Install scipy
-```
-pip3 install scipy
-```
-8. Clone this repo in your workspace and build it
+
+6. Clone this repo in your workspace and build it
 
 # Repository structure
  - 
