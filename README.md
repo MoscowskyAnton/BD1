@@ -37,3 +37,7 @@ Wait until Gazebo starts, then
 ```
 roslaunch bd1_config bd1_train_sb3.launch 
 ```
+Run tensorboard with 
+```
+tensorboard --logdir bd1_train_sb3/models/...
+```
