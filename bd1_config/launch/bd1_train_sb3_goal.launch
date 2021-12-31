@@ -33,27 +33,29 @@
         
         <param name="step_duration_sec" value="0.05"/>
                 
-        <param name="total_timesteps" value="800000"/>        
+        <param name="total_timesteps" value="500000"/>        
         <!-- SAC -->
         <param name="algorithm" value="SAC"/>
-        <param name="buffer_size" value="350000"/>
+        <param name="buffer_size" value="300000"/>
         <param name="batch_size" value="256"/>
         <param name="learning_rate" value="0.00073"/>
         <param name="gamma" value="0.98"/>
         <param name="tau" value="0.02"/>
-        <param name="train_freq" value="1"/>        
+        <!--<param name="train_freq" value="1"/>        -->
+        <rosparam param="train_freq">[1, "episode"]</rosparam>
+        
         <!--<param name="n_episodes_rollout" value="6"/>      -->  
         <param name="gradient_steps" value="64"/>
         <param name="learning_starts" value="2000"/>
-        <param name="use_sde" value="false"/>
+        <param name="use_sde" value="true"/>
         <rosparam param="policy_kwargs">{log_std_init: 0.4, net_arch: [400, 300], use_expln: true}</rosparam>
-        <param name="max_episode_timesteps" value="500"/>
+        <param name="max_episode_timesteps" value="1200"/>
         
         
         <param name="action_noise_type" value="2"/><!-- 0 for default, 1 for normal, 2 for Ornstein -->
-        <!--<rosparam param="action_noise_mean">0</rosparam>-->
+        <rosparam param="action_noise_mean">0</rosparam>
         <!--<rosparam param="action_noise_mean">[-0.4,-0.4,0.4,-0.4,-0.4,0.4]</rosparam>-->
-        <rosparam param="action_noise_mean">[0.4,0.4,-0.4,0.4,0.4,-0.4,0,0]</rosparam>
+        <!--<rosparam param="action_noise_mean">[0.4,0.4,-0.4,0.4,0.4,-0.4,0,0]</rosparam>-->
         <!--<rosparam param="action_noise_mean">[0.4,-0.4,0.4]</rosparam>-->
         <rosparam param="action_noise_sigma">0.1</rosparam>
         

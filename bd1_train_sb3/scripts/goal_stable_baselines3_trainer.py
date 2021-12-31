@@ -44,9 +44,10 @@ class GoalStableBaselines3Trainer(object):
         
         # load gym-wrapped env
         if self.test_only:
-            self.env = bd1_gazebo_gym_goal_env_wrapper.BD1GazeboGoalEnv(0)
-        else:
-            self.env = bd1_gazebo_gym_goal_env_wrapper.BD1GazeboGoalEnv(self.max_episode_timesteps)
+            self.max_episode_timesteps = 0
+            #self.env = bd1_gazebo_gym_goal_env_wrapper.BD1GazeboGoalEnv(0)
+        #else:
+        self.env = bd1_gazebo_gym_goal_env_wrapper.BD1GazeboGoalEnv(self.max_episode_timesteps)
         
         if self.action_noise_type == 1:
             self.proceed_noise()         
@@ -67,6 +68,8 @@ class GoalStableBaselines3Trainer(object):
         self.use_sde = rospy.get_param('~use_sde', False)
         self.learning_starts = rospy.get_param('~learning_starts', 100)
         self.train_freq = rospy.get_param('~train_freq', 1)
+        if isinstance(self.train_freq, list):
+                self.train_freq = tuple(self.train_freq)
         self.gradient_steps = rospy.get_param('~gradient_steps',1)
         self.n_episodes_rollout = rospy.get_param('~n_episodes_rollout', -1)
         

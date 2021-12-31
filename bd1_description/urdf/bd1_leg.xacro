@@ -36,7 +36,7 @@
     <xacro:property name="heel_shift_y" value="0.0"/>
     <xacro:property name="heel_shift_z" value="-0.065"/>
     
-    <xacro:property name="foot_heel_kp" value="10000"/>
+    <xacro:property name="foot_heel_kp" value="100000"/>
     
     <!--<xacro:property name="servo_friction" value="1000"/>-->
     
