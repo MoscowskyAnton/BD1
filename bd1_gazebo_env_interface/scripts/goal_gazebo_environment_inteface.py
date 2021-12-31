@@ -168,7 +168,7 @@ class GoalGazeboEnvironmentInterface(object):
                             "all_servo_vels":[self.max_action_lim] * 8}
         
         self.state_lows = {"base_pose": [-1, -1, 0],
-                           "base_z": [0],
+                           "base_z": [0.1],
                             "base_rot_quat":[-1, -1, -1, -1],
                             "base_rot_r":[-np.pi],
                             "base_rot_p":[-np.pi],

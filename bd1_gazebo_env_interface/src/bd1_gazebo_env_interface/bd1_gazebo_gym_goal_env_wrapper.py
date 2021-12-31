@@ -105,7 +105,8 @@ class BD1GazeboGoalEnv(gym.GoalEnv):
     
     def compute_reward(self, achieved_goal, desired_goal, info):
         #print(type(achieved_goal), type(desired_goal))
-        reward = -np.power(np.dot(np.abs(achieved_goal - desired_goal) , self.reward_coeffs), self.p)
+        #reward = 1-np.power(np.dot(np.abs(achieved_goal - desired_goal) , self.reward_coeffs), self.p)
+        reward = np.sum(desired_goal - np.abs(achieved_goal - desired_goal))
         #print(achieved_goal, desired_goal, achieved_goal - desired_goal, reward)
         return reward
     

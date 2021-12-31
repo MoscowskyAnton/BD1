@@ -10,9 +10,9 @@
         <param name="policy" value="MultiInputPolicy"/>
         
         <param name="test_only" value="$(arg test_model)"/>
-        <param if="$(arg test_model)" name="load_path" value="$(find bd1_train_sb3)/models/stup/sac/best_reward"/>
+        <param if="$(arg test_model)" name="load_path" value="$(find bd1_train_sb3)/models/stup/sac/run_20/fully_trained"/>
         
-        <param if="$(arg transfer_learning)" name="load_path" value="$(find bd1_train_sb3)/models/stup_sep_target_z/sac/run_12/best_reward"/>
+        <param if="$(arg transfer_learning)" name="load_path" value="$(find bd1_train_sb3)/models/stup_sep_target_z/sac/best_reward"/>
         
         <param name="verbose" value="1"/>
         <param name="task_name" value="stup"/>
@@ -26,6 +26,8 @@
         
         <rosparam param="goal">["base_z"]</rosparam>
         <rosparam param="reward_coeffs">["1"]</rosparam>
+        <param name="reward_p" value="1"/>
+        
         
         <rosparam param="actions">["left_legs_vel", "right_legs_vel", "all_head_vel"]</rosparam>
         <!--<rosparam param="actions">["sync_legs_vel"]</rosparam>-->
@@ -42,14 +44,14 @@
         <param name="gamma" value="0.98"/>
         <param name="tau" value="0.02"/>
         <!--<param name="train_freq" value="1"/>        -->
-        <rosparam param="train_freq">[1, "episode"]</rosparam>
+        <rosparam param="train_freq">[6, "episode"]</rosparam>
         
         <!--<param name="n_episodes_rollout" value="6"/>      -->  
         <param name="gradient_steps" value="64"/>
-        <param name="learning_starts" value="2000"/>
+        <param name="learning_starts" value="10000"/>
         <param name="use_sde" value="true"/>
-        <rosparam param="policy_kwargs">{log_std_init: 0.4, net_arch: [400, 300], use_expln: true}</rosparam>
-        <param name="max_episode_timesteps" value="1200"/>
+        <rosparam param="policy_kwargs">{log_std_init: 0.4, net_arch: [256, 256, 256], use_expln: true}</rosparam>
+        <param name="max_episode_timesteps" value="100"/>
         
         
         <param name="action_noise_type" value="2"/><!-- 0 for default, 1 for normal, 2 for Ornstein -->
