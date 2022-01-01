@@ -71,7 +71,7 @@ class GoalStableBaselines3Trainer(object):
         if isinstance(self.train_freq, list):
                 self.train_freq = tuple(self.train_freq)
         self.gradient_steps = rospy.get_param('~gradient_steps',1)
-        self.n_episodes_rollout = rospy.get_param('~n_episodes_rollout', -1)
+        #self.n_episodes_rollout = rospy.get_param('~n_episodes_rollout', -1)
         
         self.save_dir = "{}/{}/{}/".format(self.model_dir, self.task_name, self.algorithm)
         os.makedirs(self.save_dir, exist_ok=True)
@@ -197,7 +197,7 @@ class GoalStableBaselines3Trainer(object):
             params['learning_starts'] = self.learning_starts
             params['train_freq'] = self.train_freq
             params['gradient_steps'] = self.gradient_steps
-            params['n_episodes_rollout'] = self.n_episodes_rollout
+            #params['n_episodes_rollout'] = self.n_episodes_rollout
             
             
         return params

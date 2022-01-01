@@ -5,7 +5,7 @@ import rospy
 from std_srvs.srv import Empty
 from gazebo_msgs.srv import GetModelState, SetModelState, SetLinkState, GetLinkState, SetModelConfiguration
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Bool, Float64
+from std_msgs.msg import Bool, Float64, Float32MultiArray
 import numpy as np
 from bd1_gazebo_env_interface.srv import GoalEnvStep, GoalEnvReset, GoalEnvStepResponse, GoalEnvResetResponse, GoalEnvConfigure, GoalEnvConfigureResponse
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
@@ -14,6 +14,7 @@ from gazebo_msgs.msg import LinkStates
 from bd1_gazebo_utils.msg import FeetContacts
 from gazebo_msgs.msg import ModelState, LinkState
 from bd1_gazebo_utils.srv import SetState
+
 
 def unnorm(x, x_min, x_max):    
         return ((x+1)/2)*(x_max-x_min)  + x_min
@@ -100,6 +101,8 @@ class GoalGazeboEnvironmentInterface(object):
         rospy.Subscriber("center_of_pressure_raw", PointStamped, self.cop_cb)
         self.last_link_states = None
         rospy.Subscriber('/gazebo/link_states', LinkStates, self.link_states_cb)
+        
+        rospy.Subscriber("~goal", Float32MultiArray, self.goal_cb)
         
         rospy.sleep(2) # KOSTYL
         
@@ -308,6 +311,12 @@ class GoalGazeboEnvironmentInterface(object):
     def random_goal(self):
         self.desired_goal = np.random.uniform(self.goal_low, self.goal_high)
         rospy.logwarn(f"[{self.name}] new goal {self.desired_goal}")
+        
+    def goal_cb(self, msg):
+        if len(msg.data) == len(self.goal_low):
+            self.desired_goal = np.array(msg.data)
+        else:
+            rospylogerr(f"[{rospy.name}] goal bust be len of {len(self.goal_low)}, rejected")
     
     def full_reset(self):
         for l_st_t in self.init_link_states:
