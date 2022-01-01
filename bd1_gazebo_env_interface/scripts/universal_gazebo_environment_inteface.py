@@ -233,12 +233,17 @@ class UniversalGazeboEnvironmentInterface(object):
                                  "walk_reward_max_vx2":self.walk_reward_max_vx2,
                                  "walk_reward_max_vxy":self.walk_reward_max_vxy,
                                  'walk_reward_max_x':self.walk_reward_max_x,
+                                 'walk_reward_dx':self.walk_reward_dx,
+                                 'walk_reward_dx_cop':self.walk_reward_dx_cop,
                                  "target_body_z_head_p":self.target_body_z_head_p,
                                  'target_body_z_head_p_1':self.target_body_z_head_p_1,
                                  'target_body_z_head_dz_p':self.target_body_z_head_dz_p,
                                  'target_body_z_head_dz_p_1':self.target_body_z_head_dz_p_1,
                                  'target_body_z_head_dz_p_2':self.target_body_z_head_dz_p_2}
+        self.state = None
+        self.prev_state = None
         
+        self.previous_x = None
         
         self.requested_state = []
         self.requested_actions = []
@@ -325,8 +330,10 @@ class UniversalGazeboEnvironmentInterface(object):
         self.set_action(req.action)
         rospy.sleep(req.step_duration_sec)
         self.last_action = req.action
-        state, reward = self.get_state(True)
-        return StepResponse(state, reward, self.check_done())
+        self.prev_state = self.state
+        self.state, reward = self.get_state(True)
+        
+        return StepResponse(self.state, reward, self.check_done())
     
     def reset_cb(self, req):
         #self.pause_srv()
@@ -352,8 +359,16 @@ class UniversalGazeboEnvironmentInterface(object):
         #self.full_reset()                        
         #rospy.sleep(0.1) # KOSTYL
         #self.unpause_srv()
+        ind_base = self.last_link_states.name.index("bd1::base_link")
+        self.previous_x = self.last_link_states.pose[ind_base].position.x
+        
+        self.prev_press_center_x = self.last_press_center.x
+        
         if self.configured:
-            return ResetResponse(self.get_state())
+            self.prev_state = None
+            self.state = self.get_state()
+            
+            return ResetResponse(self.state)
         else:
             return ResetResponse([])
     
@@ -583,6 +598,16 @@ class UniversalGazeboEnvironmentInterface(object):
     
     def walk_reward_max_x(self, ind_base):
         return self.last_link_states.pose[ind_base].position.x
+    
+    def walk_reward_dx(self, ind_base):
+        r = self.last_link_states.pose[ind_base].position.x - self.previous_x
+        self.previous_x = self.last_link_states.pose[ind_base].position.x
+        return r
+    
+    def walk_reward_dx_cop(self, ind_base):
+        r = self.last_press_center.x - self.prev_press_center_x
+        self.prev_press_center_x = self.last_press_center.x
+        return r
     
     def target_body_z_head_p(self, ind_base):
         ind_head = self.last_link_states.name.index("bd1::head_link")
