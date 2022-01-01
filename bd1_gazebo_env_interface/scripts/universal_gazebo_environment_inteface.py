@@ -235,6 +235,7 @@ class UniversalGazeboEnvironmentInterface(object):
                                  'walk_reward_max_x':self.walk_reward_max_x,
                                  'walk_reward_dx':self.walk_reward_dx,
                                  'walk_reward_dx_cop':self.walk_reward_dx_cop,
+                                 'walk_reward_feet_vx':self.walk_reward_feet_vx,
                                  "target_body_z_head_p":self.target_body_z_head_p,
                                  'target_body_z_head_p_1':self.target_body_z_head_p_1,
                                  'target_body_z_head_dz_p':self.target_body_z_head_dz_p,
@@ -608,6 +609,12 @@ class UniversalGazeboEnvironmentInterface(object):
         r = self.last_press_center.x - self.prev_press_center_x
         self.prev_press_center_x = self.last_press_center.x
         return r
+    
+    def walk_reward_feet_vx(self, ind_base):
+        ind_fl = self.last_link_states.name.index("bd1::foot_l_link")
+        ind_fr = self.last_link_states.name.index("bd1::foot_r_link")
+        
+        return self.last_link_states.twist[ind_fl].linear.x + self.last_link_states.twist[ind_fr].linear.x
     
     def target_body_z_head_p(self, ind_base):
         ind_head = self.last_link_states.name.index("bd1::head_link")
